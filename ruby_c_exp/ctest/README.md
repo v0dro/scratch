@@ -1,0 +1,1 @@
+Implementing stuff told by Aaron Patterson at http://tenderlovemaking.com/2010/12/11/writing-ruby-c-extensions-part-2.html
