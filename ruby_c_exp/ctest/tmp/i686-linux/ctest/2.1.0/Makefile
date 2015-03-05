@@ -81,7 +81,7 @@ CCDLFLAGS = -fPIC
 CFLAGS   = $(CCDLFLAGS) $(cflags)  -fPIC $(ARCH_FLAG)
 INCFLAGS = -I. -I$(arch_hdrdir) -I$(hdrdir)/ruby/backward -I$(hdrdir) -I$(srcdir)
 DEFS     = -D_FILE_OFFSET_BITS=64
-CPPFLAGS =   $(DEFS) $(cppflags)
+CPPFLAGS = -DHAVE_NMATRIX_H  -I/home/sameer/.rvm/gems/ruby-2.1.0/gems/nmatrix-0.1.0/../../extensions/x86-linux/2.1.0/nmatrix-0.1.0 -I$(sitelibdir)/$(sitearch)  $(DEFS) $(cppflags)
 CXXFLAGS = $(CCDLFLAGS) $(cxxflags) $(ARCH_FLAG)
 ldflags  = -L. -fstack-protector -rdynamic -Wl,-export-dynamic
 dldflags =  
@@ -120,8 +120,8 @@ TOUCH = exit >
 
 preload = 
 
-libpath = . $(libdir)
-LIBPATH =  -L. -L$(libdir) -Wl,-R$(libdir)
+libpath = . $(libdir) $(sitelibdir)/$(sitearch)
+LIBPATH =  -L. -L$(libdir) -Wl,-R$(libdir) -L$(sitelibdir)/$(sitearch) -Wl,-R$(sitelibdir)/$(sitearch)
 DEFFILE = 
 
 CLEANFILES = mkmf.log
@@ -132,10 +132,10 @@ extout =
 extout_prefix = 
 target_prefix = 
 LOCAL_LIBS = 
-LIBS = $(LIBRUBYARG_SHARED)  -lpthread -lrt -ldl -lcrypt -lm   -lc
-ORIG_SRCS = ctest.c
+LIBS = $(LIBRUBYARG_SHARED) -lstdc++  -lpthread -lrt -ldl -lcrypt -lm   -lc
+ORIG_SRCS = ruby_ctest.c ctest.cpp
 SRCS = $(ORIG_SRCS) 
-OBJS = ctest.o
+OBJS = ruby_ctest.o ctest.o
 HDRS = 
 TARGET = ctest
 TARGET_NAME = ctest
@@ -231,7 +231,7 @@ site-install-rb: install-rb
 $(DLLIB): $(OBJS) Makefile
 	$(ECHO) linking shared-object $(DLLIB)
 	-$(Q)$(RM) $(@)
-	$(Q) $(LDSHARED) -o $@ $(OBJS) $(LIBPATH) $(DLDFLAGS) $(LOCAL_LIBS) $(LIBS)
+	$(Q) $(LDSHAREDXX) -o $@ $(OBJS) $(LIBPATH) $(DLDFLAGS) $(LOCAL_LIBS) $(LIBS)
 
 
 
