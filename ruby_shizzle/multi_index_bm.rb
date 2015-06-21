@@ -434,3 +434,9 @@ Benchmark.bm do |x|
     end
   end
 end
+
+#        user     system      total        real
+# Old index creation  0.020000   0.000000   0.020000 (  0.021659)
+# New index creation  0.050000   0.000000   0.050000 (  0.045119)
+# Old access  0.000000   0.000000   0.000000 (  0.003012)
+# New access  0.010000   0.000000   0.010000 (  0.006865)
