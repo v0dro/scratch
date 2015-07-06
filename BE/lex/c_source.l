@@ -4,9 +4,9 @@
 
 %%
 #include\ ?(<.*>|\".*\") { printf("Found header file %s", yytext); }
-(int|float|char|void)    { printf("Found identifier %s", yytext); }
+\ (int|float|char|void)\ { printf("Found identifier %s", yytext); }
 (=|>|<) { printf("Found operator %s", yytext);}
-[a-zA-Z]+\ *\(.*\) { printf(); }
+[a-zA-Z]+\ *\(.*\).* { printf("Found function %s", yytext); }
 %%
 
 int yywrap() { return 1; }
