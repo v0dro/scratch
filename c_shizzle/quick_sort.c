@@ -1,6 +1,51 @@
 #include <stdio.h>
 #define LENGTH 10
 
+struct stack 
+{
+  int top;
+  int elements[LENGTH];
+} stack;
+
+void
+push(int num)
+{
+  if (stack.top == LENGTH) {
+    cout << "Stack is full. Do something!\n";
+  }
+
+  stack.top++;
+  stack.elements[stack.top] = num;
+}
+
+int
+top()
+{
+  return stack.elements[stack.top];
+}
+
+int
+empty()
+{
+  if (stack.top == -1) return 1;
+
+  return 0;
+}
+
+void
+pop()
+{ 
+  int popped;
+
+  if (stack.empty()) {
+    cout << "Stack is empty.\n";
+  }
+  popped = stack.elements[stack.top];
+  stack.top--;
+
+  return popped;
+}
+
 void
 print(long int numbers[])
 {
@@ -12,11 +57,12 @@ print(long int numbers[])
 }
 
 void
-quick_sort(long int numbers[], int start, int end)
+quick_sort(long int numbers[], int leftlower, int rightupper)
 { 
+  int leftupper, rightupper;
+  
   if (start < end) {
-    partition(numbers, start, end);
-    quick_sort(numbers, )
+    partition(numbers, leftlower, rightupper, leftupper, rightlower);
   }
 }
 

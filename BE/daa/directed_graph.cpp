@@ -117,14 +117,19 @@ class Graph
 int
 main()
 {
-  Graph graph(6);
+  Graph graph(9);
   graph.add_node(0,1);
   graph.add_node(0,2);
-  graph.add_node(0,4);
-  graph.add_node(2,3);
-  graph.add_node(3,5);
-  graph.add_node(4,2);
-
+  graph.add_node(0,3);
+  graph.add_node(2,4);
+  graph.add_node(3,4);
+  graph.add_node(4,3);
+  graph.add_node(4,5);
+  graph.add_node(5,6);
+  graph.add_node(6,7);
+  graph.add_node(6,8);
+   graph.add_node(7,6);
+   graph.add_node(7,8);
   graph.print_mat();
   
   cout << "DEPTH FIRST SEARCH\n";
