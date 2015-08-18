@@ -22,7 +22,7 @@ class Multiplier implements Runnable {
 class Implementation {
 
   long num1, num2;
-  static Vector shared_vector = new Vector();
+  static Vector<Long> shared_vector = new Vector<Long>();
   
   public void compute() {
     Scanner in = new Scanner(System.in);
@@ -33,12 +33,22 @@ class Implementation {
     System.out.println("\nEnter num2: ");
     num2 = in.nextLong();
     
+//    System.out.println("num1 " + num1);
+//    System.out.println("num2 " + num2);
+//    System.out.println("num2/10 " + num2/10);
+//    System.out.println("num2%10" + num2%10);
     long i = 1;
     
-    while ((num2 = num2 % 10) != 0) {
-      Thread thread = new Thread(new Multiplier(i,num2,num1));
+    
+    while (true) {
+      Thread thread = new Thread(new Multiplier(i,num2%10,num1));
       thread.start();
       threadPool.addElement(thread);
+      i *= 10;
+      num2 = num2 / 10;
+      if (num2 == 0) {
+        break;
+      }
     }
     
     for (int j = 0; j < threadPool.size(); ++j) {
@@ -49,12 +59,19 @@ class Implementation {
       }
     }
     
+    long product = 0;
+    
+    for (int j = 0; j < Implementation.shared_vector.size(); ++j) {
+      product += Implementation.shared_vector.get(j);
+    }
+    
+    System.out.println("Product is : " + product);
     in.close();
   }
 }
 
 public class Runner {
-	public static void main() {
+  public static void main(String[] args) {
 	  Implementation i = new Implementation();
 	  i.compute();	  
 	}
