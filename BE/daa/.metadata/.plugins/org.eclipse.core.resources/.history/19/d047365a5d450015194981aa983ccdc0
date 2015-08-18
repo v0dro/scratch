@@ -1,0 +1,35 @@
+// Program for spawning threads to multiply two large multi digit integers.
+
+import java.util.Scanner;
+
+class Multiplier implements Runnable {
+
+  @Override
+  public void run() {
+    // TODO Auto-generated method stub
+    
+  }
+  
+}
+
+class Implementation {
+
+  long num1, num2;
+  
+  public void compute() {
+    Scanner in = new Scanner(System.in);
+    
+    System.out.println("Enter num1: ");
+    num1 = in.nextLong();
+    System.out.println("Enter num2: ");
+  }
+}
+
+public class Runner {
+  
+  
+	public static void main() {
+	  Implementation i = new Implementation();
+	  i.compute();	  
+	}
+}

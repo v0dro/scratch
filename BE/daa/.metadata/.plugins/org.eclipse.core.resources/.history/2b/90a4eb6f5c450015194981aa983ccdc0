@@ -1,0 +1,17 @@
+// Program for spawning threads to multiply two large multi digit integers.
+
+class Multiplier implements Runnable {
+
+  @Override
+  public void run() {
+    // TODO Auto-generated method stub
+    
+  }
+  
+}
+
+public class Runner {
+	public static void main() {
+	  
+	}
+}

@@ -1,0 +1,10 @@
+// Program for spawning threads to multiply two large multi digit integers.
+
+class Multiplier {
+  
+}
+public class Runner {
+	public static void main() {
+
+	}
+}
