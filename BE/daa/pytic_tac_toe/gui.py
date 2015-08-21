@@ -1,14 +1,77 @@
 from Tkinter import *
 from Tkconstants import *
 import tkMessageBox
-import logic
+import copy
+
+# Defaults: Human is ALWAYS 'X' and machine is ALWAYS 'O'
+
+GRID_SIZE = 3
+
+class Grid(object):
+  def __init__(self, player_state, **kwargs):
+    if kwargs['without_buttons'] == True:
+      self.grid = player_state
+    else:
+      self.grid = []
+      for i in xrange(0,3):
+        grid.append([])
+        for j in xrange(0,3):
+          grid[i].append(player_state[i*GRID_SIZE + j]["text"])
+
+  @classmethod
+  def without_buttons(cls, buttons):
+    Grid(buttons, without_buttons=True)
+
+  def is_over():
+    for row in xrange(0,3):
+      for col in xrange(0,3):
+        if self.grid[row][col] != "":
+          return False
+
+    return True
+
+  def get_all_possible_states():
+    possible_states = []
+
+    for i in xrange(0,3):
+      for j in xrange(0,3):
+        if self.grid[i][j] == "":
+          temp = copy.copy(self.grid)
+          temp[i][j] = "O"
+          possible_states.append(Grid.without_buttons(temp))
+
+    return possible_states
 
 class MiniMax(object):
   def __init__(self):
     pass
 
   def compute(self, pressed_button_name, button_list):
-    pass
+    game = Grid(button_list)
+
+    _actual_compute(game)
+
+  def _score(self, game):
+    arr = []
+    # check horizontal winning combinations
+    for row in xrange(0,GRID_SIZE):
+      for col in xrange(0,GRID_SIZE):
+        arr.append(self.grid[row][col])
+
+      if len(set(arr)) == 1:
+        return True
+
+  def _actual_compute(self, game):
+    if game.is_over():
+      return _score(game)
+
+    scores = []
+    moves = []
+
+    all_possible_states = game.get_all_possible_states()
+    for state in all_possible_states:
+      _actual_compute(state)   
+
 
 class GUI(object):
   """GUI"""
