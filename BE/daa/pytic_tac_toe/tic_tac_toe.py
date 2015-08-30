@@ -18,8 +18,6 @@ class Grid(object):
         for j in xrange(0,GRID_SIZE):
           self.grid[i].append(player_state[i*GRID_SIZE + j]["text"])
 
-    print self.grid
-
   @classmethod
   def without_buttons(cls, buttons):
     Grid(buttons, without_buttons=True)
@@ -29,63 +27,45 @@ class Grid(object):
     if self.o_wins() or self.x_wins():
       return True
     # Check for all boxes full
+    all_full = True
     for row in xrange(0,GRID_SIZE):
       for col in xrange(0,GRID_SIZE):
         if self.grid[row][col] == "":
-          return False
+          all_full = False
 
-    return True
+    if all_full:
+      return True
+
+    return False
 
   def check_win(self, sym):
-
-    # Check rows
-    for row in xrange(0,GRID_SIZE):
-      we_have_a_winner = True
-
-      for col in xrange(0,GRID_SIZE):
-        if self.grid[row][col] != sym:
-          we_have_a_winner = False
-
-      if we_have_a_winner:
-        return True
-      else:
-        return False
-
-    # Check cols
-    for col in xrange(0,GRID_SIZE):
-      we_have_a_winner = True
-
-      for row in xrange(0,GRID_SIZE):
-        if self.grid[row][col] != sym:
-          we_have_a_winner = False
-
-      if we_have_a_winner:
-        return True
-      else:
-        return False
-
-    we_have_a_winner = True
-    # Check one diag
-    for diag in xrange(0,GRID_SIZE):
-      if self.grid[diag][diag] != sym:
-        we_have_a_winner = False
-
-    if we_have_a_winner:
+    # check rows
+    if (self.grid[0][0] == self.grid[0][1] == self.grid[0][2] == sym) or \
+       (self.grid[1][0] == self.grid[1][1] == self.grid[1][2] == sym) or \
+       (self.grid[2][0] == self.grid[2][1] == self.grid[2][2] == sym):
       return True
-    else:
-      return False
 
-    # Check the other diag
+    # check cols
+    if (self.grid[0][0] == self.grid[1][0] == self.grid[2][0] == sym) or \
+       (self.grid[0][1] == self.grid[1][1] == self.grid[2][1] == sym) or \
+       (self.grid[0][2] == self.grid[1][2] == self.grid[2][2] == sym):
+      return True
+
+    # check diag
+    if self.grid[0][0] == self.grid[1][1] == self.grid[2][0] == sym:
+      return True
+
+    # check other diag
     if self.grid[2][0] == self.grid[1][1] == self.grid[0][2] == sym:
       return True
-    else:
-      return False
+
+    return False
 
   def o_wins(self):
-    self.check_win('O')
+    return self.check_win('O')
 
   def x_wins(self):
-    self.check_win('X')
+    return self.check_win('X')
 
   def get_all_possible_states(self, move_symbol):
     possible_states = []
@@ -114,6 +94,11 @@ class MiniMax(object):
     recent_move = 'X'
     self._actual_compute(game, recent_move,0)
 
+    if self.chosen_grid.o_wins():
+      print "O has won"
+    elif self.chosen_grid.x_wins():
+      print "X has won"
+
     return self.chosen_grid
 
   def _score(self, game, depth):
@@ -135,13 +120,11 @@ class MiniMax(object):
     next_move = ('O' if recent_move == 'X' else 'X')
     all_possible_states = game.get_all_possible_states(next_move)
 
-    print "\nstates\n" + str(all_possible_states)
     for state in all_possible_states:
       scores.append(self._actual_compute(state, next_move, depth))
       moves.append(state)
 
-    print "scores list :: " + str(scores)
-    if recent_move == 'O':
+    if recent_move == 'X':
       # Computer move so maximize scores.
       max_score_index = scores.index(max(scores))
       self.chosen_grid = moves[max_score_index]
@@ -180,7 +163,10 @@ class GUI(object):
     self.app.mainloop()
 
   def _check_for_already_set(self, button):
-    pass
+    if button['text'] == 'X' or button['text'] == 'O':
+      return True
+
+    return False
 
   def _update_buttons(self, solution_from_bot):
     lst = solution_from_bot.to_list()
@@ -193,11 +179,9 @@ class GUI(object):
 
   def _report_change_to_minimax(self,event):
     button = event.widget
-    self._check_for_already_set(button)
-    button["text"] = "X"
-    solution_from_bot = self.minimax.compute(self.button_list)
-    self._update_buttons(solution_from_bot)
+    if not self._check_for_already_set(button):
+      button["text"] = "X"
+      solution_from_bot = self.minimax.compute(self.button_list)
+      self._update_buttons(solution_from_bot)
 
 x = GUI()
-
-# www.ayatists.in
