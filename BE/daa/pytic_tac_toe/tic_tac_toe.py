@@ -40,23 +40,19 @@ class Grid(object):
 
   def check_win(self, sym):
     # check rows
-    if (self.grid[0][0] == self.grid[0][1] == self.grid[0][2] == sym) or \
-       (self.grid[1][0] == self.grid[1][1] == self.grid[1][2] == sym) or \
-       (self.grid[2][0] == self.grid[2][1] == self.grid[2][2] == sym):
+    if (self.grid[0][0] == self.grid[0][1] == self.grid[0][2] == sym) or (self.grid[1][0] == self.grid[1][1] == self.grid[1][2] == sym) or (self.grid[2][0] == self.grid[2][1] == self.grid[2][2] == sym):
       return True
 
     # check cols
-    if (self.grid[0][0] == self.grid[1][0] == self.grid[2][0] == sym) or \
-       (self.grid[0][1] == self.grid[1][1] == self.grid[2][1] == sym) or \
-       (self.grid[0][2] == self.grid[1][2] == self.grid[2][2] == sym):
+    if (self.grid[0][0] == self.grid[1][0] == self.grid[2][0] == sym) or (self.grid[0][1] == self.grid[1][1] == self.grid[2][1] == sym) or (self.grid[0][2] == self.grid[1][2] == self.grid[2][2] == sym):
       return True
 
     # check diag
-    if self.grid[0][0] == self.grid[1][1] == self.grid[2][0] == sym:
+    if (self.grid[0][0] == self.grid[1][1] == self.grid[2][2] == sym):
       return True
 
     # check other diag
-    if self.grid[2][0] == self.grid[1][1] == self.grid[0][2] == sym:
+    if (self.grid[2][0] == self.grid[1][1] == self.grid[0][2] == sym):
       return True
 
     return False
@@ -101,17 +97,17 @@ class MiniMax(object):
 
     return self.chosen_grid
 
-  def _score(self, game, depth):
-    if game.o_wins():
-      return 10 - depth
-    elif game.x_wins():
-      return depth - 10
-    else:
-      return 0
+  def _score(self, game, depth, recent_move):
+      if game.o_wins():
+        return 10 - depth
+      elif game.x_wins():
+        return depth - 10
+      else:
+        return 0
 
   def _actual_compute(self, game, recent_move,depth):
     if game.is_over():
-      return self._score(game, depth)
+      return self._score(game, depth, recent_move)
 
     depth += 1
     scores = []
