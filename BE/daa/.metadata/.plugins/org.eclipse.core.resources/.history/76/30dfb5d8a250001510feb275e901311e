@@ -1,0 +1,11 @@
+package naive_bayes;
+
+class NaiveBayes {
+  
+}
+
+public class Runner {
+  public static void main(String[] args) {
+    
+  }
+}

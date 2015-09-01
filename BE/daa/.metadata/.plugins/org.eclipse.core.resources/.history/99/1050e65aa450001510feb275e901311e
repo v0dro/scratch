@@ -1,0 +1,7 @@
+package naive_bayes;
+
+public class NaiveBayes {
+  public void fit() {
+    
+  }
+}

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename local variable &apos;test_data&apos; in &apos;naive_bayes.Starter.Starter()&apos; to &apos;predictor&apos;&#x0A;- Original project: &apos;naive_bayes&apos;&#x0A;- Original element: &apos;naive_bayes.Starter.Starter().test_data&apos;&#x0A;- Renamed element: &apos;test_data&apos;&#x0A;- Update references to refactored element" description="Rename local variable &apos;test_data&apos;" id="org.eclipse.jdt.ui.rename.local.variable" input="/src&lt;naive_bayes{Starter.java[Starter~Starter@test_data!1311!1338!1316!1324!QData;!0!false" name="predictor" references="true" stamp="1441110568693" version="1.0"/>
+</session>
