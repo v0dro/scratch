@@ -189,7 +189,7 @@ class Grid
     int h=0, m = 0;
     
     // calculate number of tiles out of place
-    // h = displaced_tiles(goal);
+    h = displaced_tiles(goal);
 
     // calculate manhattan distances
     int orig_row, orig_col, curr_row, curr_col;
@@ -255,13 +255,7 @@ class AStar
   };
 
   Grid *start, *goal;
-
-  struct game_state {
-    Grid *current, *previous;
-    int steps;
-  };
-  typedef struct game_state game_state;
-
+  
  public:
   AStar()
   { 
@@ -286,21 +280,15 @@ class AStar
     Grid current = start->copy();
     vector<Grid> positions, open_list, close_list;
     vector<int>  heuristic_values;
-    // vector<game_state> state_list;
-    // game_state state;
     int min_index, value, steps = 0;
-
-    // state.steps = 0;
-    // state.current = &current;
-    // state.previous = NULL;
-    // state_list.push_back(state);
     int ii = 0;
+
     do
     {
       positions = current.get_possible_positions();
 
       for (int i = 0; i < positions.size(); ++i) {
-        heuristic_values.push_back(positions[i].compute_heuristic(*start, *goal) + steps);
+        heuristic_values.push_back(positions[i].compute_heuristic(*start, *goal));
       }
 
       min_index = get_min_index(heuristic_values);
@@ -308,10 +296,8 @@ class AStar
       heuristic_values.clear();
       current   = positions[min_index].copy();
       pretty_print(current);
-      cout << "\n value :: " << value << "\n";
       positions.clear(); ++ii;
-    } while (ii < 6);
-    // } while(current.displaced_tiles(*goal) != 0);
+    } while(current.displaced_tiles(*goal) != 0);
 
     cout << "heuristic_values " << min_index << "\n";
 

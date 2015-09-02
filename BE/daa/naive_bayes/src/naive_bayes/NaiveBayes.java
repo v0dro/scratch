@@ -2,19 +2,19 @@ package naive_bayes;
 import java.util.*;
 import java.lang.Math;
 
-class ClassifiedData {
+class ClsData {
   public Double ageMean, qualMean, expMean, ageStd, qualStd, expStd;
 }
 
 public class NaiveBayes {
   private Vector<Data> trainingData;
   private HashMap<Integer, Vector<Data> > classifiedData;
-  private HashMap<Integer, ClassifiedData> summarizedData;
+  private HashMap<Integer, ClsData> summarizedData;
   
   NaiveBayes() {
     trainingData = new Vector<Data>();
     classifiedData = new HashMap<Integer, Vector<Data> >();
-    summarizedData = new HashMap<Integer, ClassifiedData>();
+    summarizedData = new HashMap<Integer, ClsData>();
   }
   
   private Double mean(Vector<Integer> numbers) {
@@ -89,7 +89,7 @@ public class NaiveBayes {
     // the values in each class are a Vector stored in the form of (mean,std)
     while (it.hasNext()) {
       Map.Entry pair       = (Map.Entry) it.next();
-      ClassifiedData clf   = new ClassifiedData();
+      ClsData clf   = new ClsData();
       Vector<Data> value   = (Vector<Data>)pair.getValue();
       Integer workType     = (Integer)pair.getKey();
       
@@ -123,8 +123,8 @@ public class NaiveBayes {
     
     while (it.hasNext()) {
       probability = 1.0;
-      Map.Entry<Integer, ClassifiedData> pair = (Map.Entry<Integer, ClassifiedData>)it.next();
-      ClassifiedData value = pair.getValue();
+      Map.Entry<Integer, ClsData> pair = (Map.Entry<Integer, ClsData>)it.next();
+      ClsData value = pair.getValue();
       probability *= calculateProbability(predictor.age, value.ageMean, value.ageStd);
       probability *= calculateProbability(predictor.exp, value.expMean, value.expStd);
       probability *= calculateProbability(predictor.qual, value.qualMean, value.qualStd);
@@ -154,5 +154,11 @@ public class NaiveBayes {
     predictor.workType =  classWithMaxProbability(probabilities);
     
     return predictor;
+  }
+  
+  public Collection<Double> predict_proba(Data predictor) {
+    HashMap<Integer, Double> probabilities = calculateClassProbabilities(predictor);
+    
+    return probabilities.values();
   }
 }

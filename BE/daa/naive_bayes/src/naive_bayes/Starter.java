@@ -87,6 +87,20 @@ public class Starter {
     predictor.qual = 1;
     predictor.workType = -1;
     
-    System.out.println("Classifier says : " + classifier.predict(predictor).workType);
+    Integer predicted = classifier.predict(predictor).workType;
+    
+    if (predicted == 0) {
+      System.out.println("Classifier predicts Consultancy");
+    }
+    else if (predicted == 1) {
+      System.out.println("Classifier predicts Service");
+    }
+    else if (predicted == 2) {
+      System.out.println("Classifier predicts Research");
+    }
+    
+    predictor.workType = -1;
+    
+    System.out.println("Probabilities: " + classifier.predict_proba(predictor).toString());
   }
 }
