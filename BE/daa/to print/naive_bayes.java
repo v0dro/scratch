@@ -1,3 +1,5 @@
+// Name
+
 // File name
 
 package naive_bayes;
@@ -175,6 +177,7 @@ public class NaiveBayes {
   }
 }
 
+// File name: Starter.java
 
 package naive_bayes;
 
@@ -284,5 +287,6 @@ public class Starter {
 }
 
 
-Classifier predicts Research
-Probabilities: [4.748589043541152E-4, 0.001927707610143047, 0.003166401546476043]
+// OUTPUT
+// Classifier predicts Research
+// Probabilities: [4.748589043541152E-4, 0.001927707610143047, 0.003166401546476043]

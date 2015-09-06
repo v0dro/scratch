@@ -1,3 +1,8 @@
+// Name: Sameer Deshmukh
+// Title: Informed search with the A Star algorithm
+// Class: BE I
+// Roll: 119
+
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -6,10 +11,10 @@
 using namespace std;
 
 class Grid;
+class AStar;
 void swap(int *num1, int* num2);
 void pretty_print(Grid mat);
 void copy_matrix(int clone[GRID_SIZE][GRID_SIZE], int original[GRID_SIZE][GRID_SIZE]);
-void init_matrix(int state[GRID_SIZE][GRID_SIZE], int value);
 
 class Grid
 { 
@@ -41,9 +46,11 @@ class Grid
 
  public:
   Grid(int gr[GRID_SIZE][GRID_SIZE]) 
-  {
+  { 
     copy_matrix(grid, gr);
   }
+
+  Grid() {}
 
   void
   find(int element, int *row, int *col)
@@ -184,9 +191,9 @@ class Grid
   }
 
   int
-  compute_heuristic(Grid &start, Grid &goal)
+  compute_heuristic(Grid &start, Grid &goal, Grid parent)
   {
-    int h=0, m = 0;
+    int h = 0, m = 0;
     
     // calculate number of tiles out of place
     h = displaced_tiles(goal);
@@ -195,12 +202,12 @@ class Grid
     int orig_row, orig_col, curr_row, curr_col;
     for (int i = 1; i < GRID_SIZE*GRID_SIZE; ++i) {
       this->find(i, &curr_row, &curr_col);
-      goal.find(i, &orig_row, &orig_col);
+      parent.find(i, &orig_row, &orig_col);
       m += abs(curr_row - orig_row) + abs(curr_col - orig_col);
     }
 
     this->find(-1, &curr_row, &curr_col);
-    goal.find (-1, &orig_row, &orig_col);
+    parent.find (-1, &orig_row, &orig_col);
     m += abs(curr_row - orig_row) + abs(curr_col - orig_col);
 
     return h + m;
@@ -226,7 +233,7 @@ class Grid
 
     for (int i = 0; i < GRID_SIZE; ++i) {
       for (int j = 0; j < GRID_SIZE; ++j) {
-        if (this->get(i,j) == other.get(i,j)) {
+        if (this->get(i,j) != other.get(i,j)) {
           equal = false;
           break;
         }
@@ -235,10 +242,29 @@ class Grid
 
     return equal;
   }
+
+  Grid
+  operator= (Grid other) 
+  {
+    for (int i = 0; i < GRID_SIZE; ++i) {
+      for (int j = 0; j < GRID_SIZE; ++j) {
+        this->grid[i][j] = other.get(i,j);
+      }
+    }
+
+    return *this;
+  }
 };
 
 class AStar
 { 
+  Grid *start, *goal;
+  struct node {
+    Grid parent,current;
+    int f;
+  };
+  typedef struct node node;
+  
   int
   get_min_index(vector<int> values)
   {
@@ -254,8 +280,45 @@ class AStar
     return idx;
   };
 
-  Grid *start, *goal;
-  
+  int
+  min_heuristic_node(vector<node> list)
+  {
+    int min = list[0].f;
+    int smallest_index = 0;
+
+    for (int i = 0; i < list.size(); ++i) {
+      if (min > list[i].f) {
+        min = list[i].f;
+        smallest_index = i;
+      }
+    }
+
+    return smallest_index;
+  };
+
+  bool
+  node_with_same_position_and_better_f_is_in_list(node current_node, vector<node> list)
+  {
+    for (int i = 0; i < list.size(); ++i) {
+      if (current_node.current == list[i].current) {
+        if (current_node.f >= list[i].f) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  void
+  print_list(vector<node> list)
+  {
+    for (int i = 0; i < list.size(); ++i) {
+      pretty_print(list[i].current);
+      cout << "\n";
+    }
+  }
+
  public:
   AStar()
   { 
@@ -278,33 +341,52 @@ class AStar
   compute()
   { 
     Grid current = start->copy();
-    vector<Grid> positions, open_list, close_list;
-    vector<int>  heuristic_values;
-    int min_index, value, steps = 0;
-    int ii = 0;
+    vector<Grid> successors;
+    vector<node> open_list, closed_list;
+    node *curr = new node();
+    int ex = 0;
 
-    do
-    {
-      positions = current.get_possible_positions();
+    curr->current = current;
+    curr->f = 0;
+    open_list.push_back(*curr);
 
-      for (int i = 0; i < positions.size(); ++i) {
-        heuristic_values.push_back(positions[i].compute_heuristic(*start, *goal));
+    while (open_list.size() != 0) {
+      int smallest_f_node_index = min_heuristic_node(open_list);
+      node current_node = open_list[smallest_f_node_index];
+      open_list.erase(open_list.begin() + smallest_f_node_index); // erase element with smallest heuristic
+      // get all possible positions of the current node
+      successors = current_node.current.get_possible_positions();
+
+      for (int i = 0; i < successors.size(); ++i) {
+        if (successors[i] == *goal) {
+          ex = 1;
+        }
+        else {
+          node *successor_node    = new node();
+          successor_node->current = successors[i];
+          successor_node->f       = successors[i].compute_heuristic(*start, *goal, current_node.current);
+          successor_node->parent  = current_node.current;
+
+          if (node_with_same_position_and_better_f_is_in_list(*successor_node, open_list)) {
+            continue;
+          }
+          else if (node_with_same_position_and_better_f_is_in_list(*successor_node, closed_list)) {
+            continue;
+          }
+          else {
+            open_list.push_back(*successor_node);
+          }
+        }
       }
 
-      min_index = get_min_index(heuristic_values);
-      value     = heuristic_values[min_index];
-      heuristic_values.clear();
-      current   = positions[min_index].copy();
-      pretty_print(current);
-      positions.clear(); ++ii;
-    } while(current.displaced_tiles(*goal) != 0);
+      closed_list.push_back(current_node);
+      if (ex == 1) break;
+    }
 
-    cout << "heuristic_values " << min_index << "\n";
-
-    pretty_print(current);
+    print_list(closed_list);
+    pretty_print(*goal);
   }
 };
-
 
 // GLOBAL FUNCTIONS
 void
@@ -338,19 +420,57 @@ copy_matrix(int clone[GRID_SIZE][GRID_SIZE], int original[GRID_SIZE][GRID_SIZE])
   }
 }
 
-void
-init_matrix(int state[GRID_SIZE][GRID_SIZE], int value)
-{
-  for (int i = 0; i < GRID_SIZE; ++i) {
-    for (int j = 0; j < GRID_SIZE; ++j) {
-      state[i][j] = value;
-    }
-  }
-};
-
 int
 main()
 {
   AStar a;
   a.compute();
+
+  return 0;
 }
+
+// OUTPUT
+
+// 1 8 2 
+// -1 4 3 
+// 7 6 5 
+
+// 1 8 2 
+// 4 -1 3 
+// 7 6 5 
+
+// 1 -1 2 
+// 4 8 3 
+// 7 6 5 
+
+// 1 2 -1 
+// 4 8 3 
+// 7 6 5 
+
+// 1 2 3 
+// 4 8 -1 
+// 7 6 5 
+
+// 1 2 3 
+// 4 8 5 
+// 7 6 -1 
+
+// 1 2 3 
+// 4 -1 8 
+// 7 6 5 
+
+// 1 2 3 
+// 4 8 5 
+// 7 -1 6 
+
+// 1 2 3 
+// 4 -1 5 
+// 7 8 6 
+
+// 1 2 3 
+// 4 5 -1 
+// 7 8 6 
+
+// 1 2 3 
+// 4 5 6 
+// 7 8 -1 

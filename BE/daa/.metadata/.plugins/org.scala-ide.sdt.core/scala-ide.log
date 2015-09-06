@@ -1,0 +1,37 @@
+2015-09-03 00:44:09,518  WARN [ModalContext] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-03 00:44:09,539  WARN [ModalContext] - ScalaProject - Project unification runs on platform default installation.
+2015-09-03 00:44:44,993  WARN [ModalContext] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-03 00:44:44,993  WARN [ModalContext] - ScalaProject - Project unification runs on platform default installation.
+2015-09-03 00:45:03,871  WARN [ModalContext] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-03 00:45:03,872  WARN [ModalContext] - ScalaProject - Project unification runs on platform default installation.
+2015-09-03 00:45:07,013  WARN [Worker-0] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-03 00:45:07,013  WARN [Worker-0] - ScalaProject - Project unification runs on platform default installation.
+2015-09-03 00:45:22,995  WARN [main] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-03 00:45:22,995  WARN [main] - ScalaProject - Project unification runs on platform default installation.
+2015-09-03 00:45:23,396  WARN [Worker-0] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-03 00:45:23,397  WARN [Worker-0] - ScalaProject - Project unification runs on platform default installation.
+2015-09-03 00:45:23,415  WARN [Worker-0] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-03 00:45:23,415  WARN [Worker-0] - ScalaProject - Project unification runs on platform default installation.
+2015-09-03 00:45:27,355  WARN [main] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-03 00:45:27,356  WARN [main] - ScalaProject - Project unification runs on platform default installation.
+2015-09-03 00:45:28,033  WARN [Worker-4] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-03 00:45:28,033  WARN [Worker-4] - ScalaProject - Project unification runs on platform default installation.
+2015-09-03 00:45:28,048  WARN [Worker-4] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-03 00:45:28,048  WARN [Worker-4] - ScalaProject - Project unification runs on platform default installation.
+2015-09-03 00:45:33,166  WARN [Worker-4] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-03 00:45:33,167  WARN [Worker-4] - ScalaProject - Project unification runs on platform default installation.
+2015-09-03 00:45:34,209  WARN [Worker-4] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-03 00:45:34,210  WARN [Worker-4] - ScalaProject - Project unification runs on platform default installation.
+2015-09-03 00:45:34,231  WARN [Worker-4] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-03 00:45:34,231  WARN [Worker-4] - ScalaProject - Project unification runs on platform default installation.
+2015-09-03 00:45:35,831  WARN [Worker-4] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-03 00:45:35,831  WARN [Worker-4] - ScalaProject - Project unification runs on platform default installation.
+2015-09-03 00:49:03,443  WARN [Worker-4] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-03 00:49:03,444  WARN [Worker-4] - ScalaProject - Project unification runs on platform default installation.
+2015-09-03 00:49:03,455  WARN [Worker-4] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-03 00:49:03,455  WARN [Worker-4] - ScalaProject - Project unification runs on platform default installation.
+2015-09-03 00:49:08,273  WARN [Worker-4] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-03 00:49:08,274  WARN [Worker-4] - ScalaProject - Project unification runs on platform default installation.
+2015-09-03 00:49:12,096 ERROR [Worker-2] - System.err - SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+2015-09-03 00:49:12,096 ERROR [Worker-2] - System.err - SLF4J: Defaulting to no-operation (NOP) logger implementation
+2015-09-03 00:49:12,096 ERROR [Worker-2] - System.err - SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
