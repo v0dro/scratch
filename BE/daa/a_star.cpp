@@ -360,6 +360,7 @@ class AStar
       for (int i = 0; i < successors.size(); ++i) {
         if (successors[i] == *goal) {
           ex = 1;
+          break;
         }
         else {
           node *successor_node    = new node();

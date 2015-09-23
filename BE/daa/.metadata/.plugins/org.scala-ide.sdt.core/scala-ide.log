@@ -35,3 +35,20 @@
 2015-09-03 00:49:12,096 ERROR [Worker-2] - System.err - SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 2015-09-03 00:49:12,096 ERROR [Worker-2] - System.err - SLF4J: Defaulting to no-operation (NOP) logger implementation
 2015-09-03 00:49:12,096 ERROR [Worker-2] - System.err - SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+2015-09-22 12:12:08,508  WARN [main] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-22 12:12:08,525  WARN [main] - ScalaProject - Project unification runs on platform default installation.
+2015-09-22 12:12:08,558  WARN [main] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-22 12:12:08,559  WARN [main] - ScalaProject - Project unification runs on platform default installation.
+2015-09-22 12:12:23,845  WARN [org.scalaide.ui.internal.reconciliation.ScalaReconciler] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-22 12:12:23,846  WARN [org.scalaide.ui.internal.reconciliation.ScalaReconciler] - ScalaProject - Project unification runs on platform default installation.
+2015-09-22 12:12:30,790  WARN [Worker-5] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-22 12:12:30,790  WARN [Worker-5] - ScalaProject - Project unification runs on platform default installation.
+2015-09-22 12:12:30,900  WARN [Worker-5] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-22 12:12:30,900  WARN [Worker-5] - ScalaProject - Project unification runs on platform default installation.
+2015-09-22 12:12:34,013  WARN [Worker-5] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-22 12:12:34,014  WARN [Worker-5] - ScalaProject - Project unification runs on platform default installation.
+2015-09-22 12:12:35,117  WARN [Worker-5] - ScalaProject - Project unification has platform default sourceLevel.
+2015-09-22 12:12:35,117  WARN [Worker-5] - ScalaProject - Project unification runs on platform default installation.
+2015-09-22 12:12:57,611 ERROR [Worker-3] - System.err - SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+2015-09-22 12:12:57,611 ERROR [Worker-3] - System.err - SLF4J: Defaulting to no-operation (NOP) logger implementation
+2015-09-22 12:12:57,611 ERROR [Worker-3] - System.err - SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.

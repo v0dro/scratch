@@ -1,4 +1,7 @@
-// Program for spawning threads to multiply two large multi digit integers.
+// Name: Sameer Deshmukh
+// Class: BE I
+// Roll: 405119
+// Title: Multithreaded multiplication of 2 large integers
 
 import java.util.Scanner;
 import java.util.Vector;
@@ -76,3 +79,13 @@ public class Runner {
 	  i.compute();	  
 	}
 }
+
+// OUTPUT:
+//
+// Enter num1: 
+// 3456552
+//
+// Enter num2: 
+// 456325
+//
+// Product is : 1577311091400
