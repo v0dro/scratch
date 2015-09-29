@@ -115,3 +115,23 @@ int main()
 
   return 0;
 }
+
+/* OUTPUT
+Input an array of length 10
+54
+235
+1
+55
+345
+11
+-235
+315
+1245
+552
+Input single value
+11
+==============LINEAR SEARCH==============
+Linear search returns result: 5
+==============BINARY SEARCH==============
+Binary search returns result: 2
+*/
