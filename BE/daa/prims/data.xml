@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<data>
+  <node>
+    <name>A</name>
+    <distances>
+      <A>99999</A>
+      <B>4</B>
+      <C>99999</C>
+      <D>1</D>
+    </distances>
+  </node>
+
+  <node>
+    <name>B</name>
+    <distances>
+      <A>4</A>
+      <B>99999</B>
+      <C>99999</C>
+      <D>2</D>
+    </distances>
+  </node>
+
+  <node>
+    <name>C</name>
+    <distances>
+      <A>99999</A>
+      <B>99999</B>
+      <C>99999</C>
+      <D>3</D>
+    </distances>
+  </node>
+
+  <node>
+    <name>D</name>
+    <distances>
+      <A>1</A>
+      <B>2</B>
+      <C>3</C>
+      <D>99999</D>
+    </distances>
+  </node>
+</data>
