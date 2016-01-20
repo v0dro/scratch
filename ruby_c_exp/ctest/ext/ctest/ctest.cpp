@@ -1,26 +1,26 @@
 #include <ruby.h>
-#include "nmatrix.h"
+// #include "nmatrix.h"
 
-template <typename T>
-void cpp_creator(VALUE nmatrix)
-{
-  T* a = (T*)NM_DENSE_ELEMENTS(nmatrix);
+// template <typename T>
+// void cpp_creator(VALUE nmatrix)
+// {
+//   T* a = (T*)NM_DENSE_ELEMENTS(nmatrix);
 
-  printf("%lf\n", a[0]);
-  printf("%lf\n", a[1]);
-  printf("%lf\n", a[2]);
-  printf("%lf\n", a[3]);
-}
+//   printf("%lf\n", a[0]);
+//   printf("%lf\n", a[1]);
+//   printf("%lf\n", a[2]);
+//   printf("%lf\n", a[3]);
+// }
 
-void caller_cpp_creator(VALUE nmatrix)
-{ 
-  if (NM_DTYPE(nmatrix) == 5) {
-    cpp_creator<float>(nmatrix);
-  }
-  else if (NM_DTYPE(nmatrix) == 6) {
-    cpp_creator<double>(nmatrix);
-  }
-}
+// void caller_cpp_creator(VALUE nmatrix)
+// { 
+//   if (NM_DTYPE(nmatrix) == 5) {
+//     cpp_creator<float>(nmatrix);
+//   }
+//   else if (NM_DTYPE(nmatrix) == 6) {
+//     cpp_creator<double>(nmatrix);
+//   }
+// }
 
 extern "C" {
   static VALUE hello_world(VALUE mod)
@@ -32,7 +32,7 @@ extern "C" {
   { 
     long long int i;
     double mult=0;
-
+    RARRAY_PTR(nmatrix);
     for (i = 0; i < 500000; ++i)
     {
       mult += 4*4;
