@@ -210,7 +210,7 @@
             android:onClick="numberFunction"
             android:layout_below="@+id/eight"
             android:layout_alignLeft="@+id/eight"
-            android:layout_alignStart="@+id/eight" />
+            android:layout_alignStart="@+id/eight"/>
 
         <Button
             android:layout_width="wrap_content"
@@ -218,6 +218,19 @@
             android:text="="
             android:id="@+id/equals"
             android:layout_below="@+id/multiply"
-            android:layout_centerHorizontal="true" />
+            android:layout_toLeftOf="@+id/divide"
+            android:layout_toStartOf="@+id/divide"
+            android:onClick="masterFunction"/>
+
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CLEAR"
+            android:id="@+id/clear"
+            android:layout_alignTop="@+id/equals"
+            android:layout_toRightOf="@+id/one"
+            android:layout_toEndOf="@+id/one"
+            android:onClick="clearFunction"/>
     </RelativeLayout>
 </android.support.design.widget.CoordinatorLayout>

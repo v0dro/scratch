@@ -16,7 +16,7 @@ public class MainActivity extends AppCompatActivity {
 
     public double total;
     public String lastBinaryOp, lastUnaryOp;
-    public boolean equalsOp, onePress, twoPress, opPressed;
+    public boolean equalsOp, firstTimeNumPad, opPressed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,11 +30,16 @@ public class MainActivity extends AppCompatActivity {
         lastUnaryOp = "";
         equalsOp = false;
         opPressed = false;
+        firstTimeNumPad = true;
     }
 
     public void numberFunction(View view) {
         TextView display = (TextView) findViewById(R.id.main_text);
         String text = "bro";
+
+        if (firstTimeNumPad) {
+            display.setText("");
+        }
 
         switch (view.getId()) {
             case R.id.zero:   text = "0"; break;
@@ -48,11 +53,12 @@ public class MainActivity extends AppCompatActivity {
             case R.id.eight:  text = "8"; break;
             case R.id.nine:   text = "9"; break;
         }
+        firstTimeNumPad = false;
 
         display.setText(display.getText() + text);
     }
 
-    protected void masterFunction(View view) {
+    public void masterFunction(View view) {
         TextView display = (TextView) findViewById(R.id.main_text);
         double currNum = Double.parseDouble(display.getText().toString());
 
@@ -111,6 +117,17 @@ public class MainActivity extends AppCompatActivity {
             opPressed = true;
         }
 
+        firstTimeNumPad = true;
+        if (total == 0.0) {
+            total = currNum;
+        }
         display.setText(String.valueOf(total));
+    }
+
+    public void clearFunction(View view) {
+        total = 0.0;
+
+        TextView display = (TextView) findViewById(R.id.main_text);
+        display.setText("");
     }
 }
