@@ -1,11 +1,13 @@
 package com.example.sameer.sendgetfile;
 
 import android.content.DialogInterface;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import org.apache.commons.net.ftp.FTP;
@@ -20,49 +22,30 @@ import java.net.UnknownHostException;
 
 public class MainActivity extends AppCompatActivity {
     String ipAddress;
+    static public FTPFile[] files;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Button connect = (Button)findViewById(R.id.connectButton);
+        Button connect = (Button) findViewById(R.id.connectButton);
 
-        connect.setOnClickListener(new View.OnClickListener(){
+        connect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                TextView ip = (TextView)findViewById(R.id.ipAddressTextView);
-                String ipAddress = (String)ip.getText();
-                connnectwithFTP(ipAddress, "user", "pass");
+                EditText ip = (EditText) findViewById(R.id.ipAddressText);
+                String ipAddress = ip.getText().toString();
+                Log.v("START: ", "starting server");
+                Thread f = new Thread(new FTPServerConnection(ipAddress));
+                f.start();
+                try {
+                    f.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                Log.v("LENGTH: ", String.valueOf(files.length));
             }
         });
     }
-
-    /**
-     *
-     * @param ip
-     * @param userName
-     * @param pass
-     */
-    public void connnectwithFTP(String ip, String userName, String pass) {
-        boolean status = false;
-        try {
-            FTPClient mFtpClient = new FTPClient();
-            mFtpClient.setConnectTimeout(10 * 1000);
-            mFtpClient.connect(InetAddress.getByName(ip));
-            status = mFtpClient.login(userName, pass);
-            Log.e("isFTPConnected", String.valueOf(status));
-            if (FTPReply.isPositiveCompletion(mFtpClient.getReplyCode())) {
-                mFtpClient.setFileType(FTP.ASCII_FILE_TYPE);
-                mFtpClient.enterLocalPassiveMode();
-                FTPFile[] mFileArray = mFtpClient.listFiles();
-                Log.e("Size", String.valueOf(mFileArray.length));
-            }
-        } catch (SocketException e) {
-            e.printStackTrace();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 }
+

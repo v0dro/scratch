@@ -25,3 +25,11 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.1.1'
     compile 'commons-net:commons-net:3.4'
 }
+android {
+    packagingOptions {
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/maven/commons-net/commons-net/pom.properties'
+        exclude 'META-INF/maven/commons-net/commons-net/pom.xml'
+    }
+}
