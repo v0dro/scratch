@@ -35,8 +35,12 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 EditText ip = (EditText) findViewById(R.id.ipAddressText);
                 String ipAddress = ip.getText().toString();
+
+                EditText file = (EditText) findViewById(R.id.fileName);
+                String fileName = file.getText().toString();
+
                 Log.v("START: ", "starting server");
-                Thread f = new Thread(new FTPServerConnection(ipAddress));
+                Thread f = new Thread(new FTPServerConnection("192.168.1.16", "LICENSE.txt", MainActivity.this));
                 f.start();
                 try {
                     f.join();
