@@ -1,7 +1,19 @@
+import socket
+
 BITS = 5
 
-def get_number_from_client(ip, port):
-  pass
+def get_number_from_client(port):
+  s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  s.bind((socket.gethostname(), port))
+
+  print "Process is listening on port ", str(port), "..."
+  s.listen(5)
+  while True:
+    c, addr = s.accept()
+    number = int(c.recv(2))
+    c.close()
+    print "Received number ", str(number), " from port ", str(port)
+    return number
 
 def add_binary(left, right):
   carry = False
@@ -40,9 +52,10 @@ def right_shift(acc, multiplier, booth_bit):
 
   return [shifted[0:BITS], shifted[BITS:BITS*2], shifted[-1]]
 
-nmulti = multiplier   = 5
-nmul = multiplicand = 3
+nmulti = multiplier   = get_number_from_client(2000)
+nmul   = multiplicand = get_number_from_client(2001)
 
+# Booths
 if multiplicand < 0:
   multiplicand = twos_compliment(bin(multiplicand)[3:].zfill(BITS))
 else:

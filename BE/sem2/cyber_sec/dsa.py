@@ -7,6 +7,8 @@ author: @v0dro
 import math
 import hashlib
 import random
+import socket
+import json
 
 def egcd(a, b):
     if a == 0:
@@ -57,6 +59,22 @@ k_inv = modinv(k, q)
 s = int(k_inv * (H(message) + x*r)) % q
 
 print "sender signatures: r -> ", str(r), " s -> ", str(s)
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.connect((socket.gethostname(), 2500))
+sender_dict = {
+  'p' : p,
+  'q' : q,
+  'g' : g,
+  'y' : y,
+  'message' : message,
+  'r' : r,
+  's' : s,
+}
+# print json.dumps(sender_dict)
+d = json.dumps(sender_dict)
+sock.send(d)
+sock.close()
 
 w = int(modinv(s, q))
 u1 = (H(message) * w) % q

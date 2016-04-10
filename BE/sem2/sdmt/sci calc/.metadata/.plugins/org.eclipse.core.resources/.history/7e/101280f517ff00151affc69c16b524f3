@@ -1,0 +1,118 @@
+package scicalc;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.*;
+
+public class App implements ActionListener {
+	JFrame frame;
+	JPanel panel;
+	JTextField textField;
+	JButton buttons[];
+	String buttonsText[] = {"+", "-", "*", "/", "sin", "cos", "tan", "sqrt", 
+			"READ", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "="};
+	String DIGITS = "0123456789.";
+	boolean numberTypingInProgress = false;
+	int maxx = 400, maxy = 550;
+	
+	public App() {
+		frame = new JFrame("Scientific Calculator");
+		frame.setSize(maxx, maxy);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		panel = new JPanel();
+		panel.setLayout(null);
+		
+		textField = new JTextField();
+		textField.setBounds(10, 30, maxx - 40, 40);
+		textField.setHorizontalAlignment(JTextField.RIGHT);
+		
+		buttons = new JButton[buttonsText.length];
+		int currentX = 0, currentY = 0;
+		
+		for (int i = 0; i < buttonsText.length; i++) {
+			buttons[i] = new JButton(buttonsText[i]);
+			buttons[i].addActionListener(this);
+			
+			if (currentX == 0 && currentY == 0) {
+				buttons[i].setBounds(10, 100, 70, 30);
+				currentX = 10;
+				currentY = 100;
+			}
+			else {
+				if (currentX < maxx - 100) {
+					currentX += 100;
+					buttons[i].setBounds(currentX,currentY,70,30);
+				}
+				else {
+					currentX = 10;
+					currentY += 50;
+					buttons[i].setBounds(currentX,currentY,70,30);	
+				}
+			}
+			panel.add(buttons[i]);
+		}
+		
+		panel.add(textField);
+		frame.add(panel);
+		frame.setVisible(true);
+	}
+	
+	public static void main(String args[]) {
+		new App();
+	}
+	
+	@Override
+	public void actionPerformed(ActionEvent arg0) {
+		// TODO Auto-generated method stub
+		String buttonObj = "";
+		
+		for	(int i = 0; i < buttonsText.length; ++i) {
+			if (arg0.getSource() == buttons[i]) {
+				buttonObj = buttons[i].getText().toString();
+				break;
+			}
+		}
+		
+		if (buttonObj == "READ") {
+			XMLread();
+		}
+		else {
+			calc(buttonObj);
+		}
+	}
+	
+	public void calc(String buttonObj) {
+		if (DIGITS.contains(buttonObj)) {
+			if (numberTypingInProgress) {
+                if (buttonObj.equals(".") && textField.getText().toString().contains(".")) {
+                    
+                } else {
+                	textField.setText(textField.getText()+buttonObj);
+                }
+			}
+			else {
+				if (buttonObj.equals(".")) {
+					textField.setText("0" + buttonObj);
+				}
+				else {
+					textField.setText(textField.getText() + buttonObj);
+				}
+				numberTypingInProgress = true;
+			}
+		}
+		else {
+			if (numberTypingInProgress) {
+				
+			}
+			else {
+				
+			}
+		}
+	}
+	
+	public void XMLread() {
+		
+	}
+}

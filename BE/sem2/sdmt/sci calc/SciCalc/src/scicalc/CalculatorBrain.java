@@ -1,0 +1,15 @@
+package scicalc;
+
+public class CalculatorBrain {
+	public void setOperand(Double operand) {
+		
+	}
+	
+	public void performOperation(String operation) {
+		
+	}
+	
+	public String getResult() {
+		return "";
+	}
+}

@@ -1,0 +1,7 @@
+package scicalc;
+
+public class CalculatorBrain {
+	public void setOperand(Double operand) {
+		
+	}
+}

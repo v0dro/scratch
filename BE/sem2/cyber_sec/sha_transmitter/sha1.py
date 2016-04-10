@@ -64,7 +64,7 @@ def calculate_sha1_key(message):
         f = G(b, c, d)
         k = 0xCA62C1D6
 
-      temp = (leftrotate(a, 5) + f + e + k + w[j]) & 0xFFFFFFFF
+      temp = (leftrotate(a, 5) + f + e + k + w[j]) & 0	xFFFFFFFF
       e = d
       d = c
       c = leftrotate(b, 30)
