@@ -79,5 +79,5 @@ find_libs
 find_headers
 set_linker_flags
 
-create_makefile('nm_atlas')
+create_makefile('nm_atlas_clapack')
 

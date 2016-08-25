@@ -1,0 +1,265 @@
+have_library: checking for main() in -llapack... -------------------- yes
+
+"gcc -o conftest -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/i686-linux -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/ruby/backward -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0 -I../../../../ext/nm_atlas_clapack -I/home/sameer/.rvm/rubies/ruby-2.2.1/include  -D_FILE_OFFSET_BITS=64   -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat  -fPIC conftest.c  -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L. -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L. -fstack-protector -rdynamic -Wl,-export-dynamic     -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -lruby  -lpthread -ldl -lcrypt -lm   -lc"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: int main(int argc, char **argv)
+4: {
+5:   return 0;
+6: }
+/* end */
+
+"gcc -o conftest -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/i686-linux -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/ruby/backward -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0 -I../../../../ext/nm_atlas_clapack -I/home/sameer/.rvm/rubies/ruby-2.2.1/include  -D_FILE_OFFSET_BITS=64   -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat  -fPIC conftest.c  -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L. -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L. -fstack-protector -rdynamic -Wl,-export-dynamic     -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -lruby -llapack  -lpthread -ldl -lcrypt -lm   -lc"
+conftest.c: In function ‘t’:
+conftest.c:13:32: warning: variable ‘p’ set but not used [-Wunused-but-set-variable]
+ int t(void) { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
+                                ^
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: /*top*/
+ 4: extern int t(void);
+ 5: int main(int argc, char **argv)
+ 6: {
+ 7:   if (argc > 1000000) {
+ 8:     printf("%p", &t);
+ 9:   }
+10: 
+11:   return 0;
+12: }
+13: int t(void) { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
+/* end */
+
+--------------------
+
+have_library: checking for main() in -lcblas... -------------------- yes
+
+"gcc -o conftest -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/i686-linux -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/ruby/backward -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0 -I../../../../ext/nm_atlas_clapack -I/home/sameer/.rvm/rubies/ruby-2.2.1/include  -D_FILE_OFFSET_BITS=64   -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat  -fPIC conftest.c  -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L. -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L. -fstack-protector -rdynamic -Wl,-export-dynamic    -llapack  -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -lruby -lcblas -llapack  -lpthread -ldl -lcrypt -lm   -lc"
+conftest.c: In function ‘t’:
+conftest.c:13:32: warning: variable ‘p’ set but not used [-Wunused-but-set-variable]
+ int t(void) { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
+                                ^
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: /*top*/
+ 4: extern int t(void);
+ 5: int main(int argc, char **argv)
+ 6: {
+ 7:   if (argc > 1000000) {
+ 8:     printf("%p", &t);
+ 9:   }
+10: 
+11:   return 0;
+12: }
+13: int t(void) { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
+/* end */
+
+--------------------
+
+have_library: checking for main() in -latlas... -------------------- yes
+
+"gcc -o conftest -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/i686-linux -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/ruby/backward -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0 -I../../../../ext/nm_atlas_clapack -I/home/sameer/.rvm/rubies/ruby-2.2.1/include  -D_FILE_OFFSET_BITS=64   -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat  -fPIC conftest.c  -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L. -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L. -fstack-protector -rdynamic -Wl,-export-dynamic    -lcblas -llapack  -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -lruby -latlas -lcblas -llapack  -lpthread -ldl -lcrypt -lm   -lc"
+conftest.c: In function ‘t’:
+conftest.c:13:32: warning: variable ‘p’ set but not used [-Wunused-but-set-variable]
+ int t(void) { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
+                                ^
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: /*top*/
+ 4: extern int t(void);
+ 5: int main(int argc, char **argv)
+ 6: {
+ 7:   if (argc > 1000000) {
+ 8:     printf("%p", &t);
+ 9:   }
+10: 
+11:   return 0;
+12: }
+13: int t(void) { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
+/* end */
+
+--------------------
+
+have_header: checking for nmatrix.h... -------------------- no
+
+"gcc -E -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/i686-linux -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/ruby/backward -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0 -I../../../../ext/nm_atlas_clapack  -I/home/sameer/.rvm/gems/ruby-2.2.1/gems/nmatrix-0.2.1/home/sameer/.rvm/gems/ruby-2.2.1/extensions/x86-linux/2.2.0/nmatrix-0.2.1 -I/home/sameer/.rvm/rubies/ruby-2.2.1/lib/ruby/site_ruby/2.2.0/i686-linux -I/home/sameer/.rvm/rubies/ruby-2.2.1/include  -D_FILE_OFFSET_BITS=64   -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat  -fPIC  conftest.c -o conftest.i"
+conftest.c:3:21: fatal error: nmatrix.h: No such file or directory
+ #include <nmatrix.h>
+                     ^
+compilation terminated.
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: #include <nmatrix.h>
+/* end */
+
+--------------------
+
+have_header: checking for atlas/cblas.h... -------------------- yes
+
+"gcc -E -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/i686-linux -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/ruby/backward -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0 -I../../../../ext/nm_atlas_clapack  -I/home/sameer/.rvm/gems/ruby-2.2.1/gems/nmatrix-0.2.1/home/sameer/.rvm/gems/ruby-2.2.1/extensions/x86-linux/2.2.0/nmatrix-0.2.1 -I/home/sameer/.rvm/rubies/ruby-2.2.1/lib/ruby/site_ruby/2.2.0/i686-linux -I/home/sameer/.rvm/rubies/ruby-2.2.1/include  -D_FILE_OFFSET_BITS=64   -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat  -fPIC  conftest.c -o conftest.i"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: #include <atlas/cblas.h>
+/* end */
+
+--------------------
+
+have_header: checking for atlas/clapack.h... -------------------- yes
+
+"gcc -E -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/i686-linux -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/ruby/backward -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0 -I../../../../ext/nm_atlas_clapack  -I/home/sameer/.rvm/gems/ruby-2.2.1/gems/nmatrix-0.2.1/home/sameer/.rvm/gems/ruby-2.2.1/extensions/x86-linux/2.2.0/nmatrix-0.2.1 -I/home/sameer/.rvm/rubies/ruby-2.2.1/lib/ruby/site_ruby/2.2.0/i686-linux -I/home/sameer/.rvm/rubies/ruby-2.2.1/include  -D_FILE_OFFSET_BITS=64   -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat  -fPIC  conftest.c -o conftest.i"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: #include <atlas/clapack.h>
+/* end */
+
+--------------------
+
+have_func: checking for clapack_dgetrf() in atlas/clapack.h... -------------------- yes
+
+"gcc -o conftest -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/i686-linux -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/ruby/backward -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0 -I../../../../ext/nm_atlas_clapack  -I/home/sameer/.rvm/gems/ruby-2.2.1/gems/nmatrix-0.2.1/home/sameer/.rvm/gems/ruby-2.2.1/extensions/x86-linux/2.2.0/nmatrix-0.2.1 -I/home/sameer/.rvm/rubies/ruby-2.2.1/lib/ruby/site_ruby/2.2.0/i686-linux -I/home/sameer/.rvm/rubies/ruby-2.2.1/include  -D_FILE_OFFSET_BITS=64   -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat  -fPIC conftest.c  -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib/ruby/site_ruby/2.2.0/i686-linux -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib/ruby/site_ruby/2.2.0/i686-linux -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L. -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L. -fstack-protector -rdynamic -Wl,-export-dynamic    -latlas -lcblas -llapack  -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -lruby -latlas -lcblas -llapack  -lpthread -ldl -lcrypt -lm   -lc"
+conftest.c: In function ‘t’:
+conftest.c:15:32: warning: variable ‘p’ set but not used [-Wunused-but-set-variable]
+ int t(void) { void ((*volatile p)()); p = (void ((*)()))clapack_dgetrf; return 0; }
+                                ^
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: #include <atlas/clapack.h>
+ 4: 
+ 5: /*top*/
+ 6: extern int t(void);
+ 7: int main(int argc, char **argv)
+ 8: {
+ 9:   if (argc > 1000000) {
+10:     printf("%p", &t);
+11:   }
+12: 
+13:   return 0;
+14: }
+15: int t(void) { void ((*volatile p)()); p = (void ((*)()))clapack_dgetrf; return 0; }
+/* end */
+
+--------------------
+
+have_func: checking for clapack_dgetri() in atlas/clapack.h... -------------------- yes
+
+"gcc -o conftest -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/i686-linux -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/ruby/backward -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0 -I../../../../ext/nm_atlas_clapack  -I/home/sameer/.rvm/gems/ruby-2.2.1/gems/nmatrix-0.2.1/home/sameer/.rvm/gems/ruby-2.2.1/extensions/x86-linux/2.2.0/nmatrix-0.2.1 -I/home/sameer/.rvm/rubies/ruby-2.2.1/lib/ruby/site_ruby/2.2.0/i686-linux -I/home/sameer/.rvm/rubies/ruby-2.2.1/include  -D_FILE_OFFSET_BITS=64   -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat  -fPIC conftest.c  -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib/ruby/site_ruby/2.2.0/i686-linux -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib/ruby/site_ruby/2.2.0/i686-linux -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L. -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L. -fstack-protector -rdynamic -Wl,-export-dynamic    -latlas -lcblas -llapack  -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -lruby -latlas -lcblas -llapack  -lpthread -ldl -lcrypt -lm   -lc"
+conftest.c: In function ‘t’:
+conftest.c:15:32: warning: variable ‘p’ set but not used [-Wunused-but-set-variable]
+ int t(void) { void ((*volatile p)()); p = (void ((*)()))clapack_dgetri; return 0; }
+                                ^
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: #include <atlas/clapack.h>
+ 4: 
+ 5: /*top*/
+ 6: extern int t(void);
+ 7: int main(int argc, char **argv)
+ 8: {
+ 9:   if (argc > 1000000) {
+10:     printf("%p", &t);
+11:   }
+12: 
+13:   return 0;
+14: }
+15: int t(void) { void ((*volatile p)()); p = (void ((*)()))clapack_dgetri; return 0; }
+/* end */
+
+--------------------
+
+have_func: checking for dgesvd_() in clapack.h... -------------------- no
+
+"gcc -o conftest -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/i686-linux -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/ruby/backward -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0 -I../../../../ext/nm_atlas_clapack  -I/home/sameer/.rvm/gems/ruby-2.2.1/gems/nmatrix-0.2.1/home/sameer/.rvm/gems/ruby-2.2.1/extensions/x86-linux/2.2.0/nmatrix-0.2.1 -I/home/sameer/.rvm/rubies/ruby-2.2.1/lib/ruby/site_ruby/2.2.0/i686-linux -I/home/sameer/.rvm/rubies/ruby-2.2.1/include  -D_FILE_OFFSET_BITS=64   -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat  -fPIC conftest.c  -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib/ruby/site_ruby/2.2.0/i686-linux -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib/ruby/site_ruby/2.2.0/i686-linux -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L. -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L. -fstack-protector -rdynamic -Wl,-export-dynamic    -latlas -lcblas -llapack  -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -lruby -latlas -lcblas -llapack  -lpthread -ldl -lcrypt -lm   -lc"
+conftest.c:3:21: fatal error: clapack.h: No such file or directory
+ #include <clapack.h>
+                     ^
+compilation terminated.
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: #include <clapack.h>
+ 4: 
+ 5: /*top*/
+ 6: extern int t(void);
+ 7: int main(int argc, char **argv)
+ 8: {
+ 9:   if (argc > 1000000) {
+10:     printf("%p", &t);
+11:   }
+12: 
+13:   return 0;
+14: }
+15: int t(void) { void ((*volatile p)()); p = (void ((*)()))dgesvd_; return 0; }
+/* end */
+
+"gcc -o conftest -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/i686-linux -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/ruby/backward -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0 -I../../../../ext/nm_atlas_clapack  -I/home/sameer/.rvm/gems/ruby-2.2.1/gems/nmatrix-0.2.1/home/sameer/.rvm/gems/ruby-2.2.1/extensions/x86-linux/2.2.0/nmatrix-0.2.1 -I/home/sameer/.rvm/rubies/ruby-2.2.1/lib/ruby/site_ruby/2.2.0/i686-linux -I/home/sameer/.rvm/rubies/ruby-2.2.1/include  -D_FILE_OFFSET_BITS=64   -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat  -fPIC conftest.c  -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib/ruby/site_ruby/2.2.0/i686-linux -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib/ruby/site_ruby/2.2.0/i686-linux -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L. -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L. -fstack-protector -rdynamic -Wl,-export-dynamic    -latlas -lcblas -llapack  -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -lruby -latlas -lcblas -llapack  -lpthread -ldl -lcrypt -lm   -lc"
+conftest.c:3:21: fatal error: clapack.h: No such file or directory
+ #include <clapack.h>
+                     ^
+compilation terminated.
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: #include <clapack.h>
+ 4: 
+ 5: /*top*/
+ 6: extern int t(void);
+ 7: int main(int argc, char **argv)
+ 8: {
+ 9:   if (argc > 1000000) {
+10:     printf("%p", &t);
+11:   }
+12: 
+13:   return 0;
+14: }
+15: int t(void) { dgesvd_(); return 0; }
+/* end */
+
+--------------------
+
+have_func: checking for cblas_dgemm() in cblas.h... -------------------- yes
+
+"gcc -o conftest -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/i686-linux -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0/ruby/backward -I/home/sameer/.rvm/rubies/ruby-2.2.1/include/ruby-2.2.0 -I../../../../ext/nm_atlas_clapack  -I/home/sameer/.rvm/gems/ruby-2.2.1/gems/nmatrix-0.2.1/home/sameer/.rvm/gems/ruby-2.2.1/extensions/x86-linux/2.2.0/nmatrix-0.2.1 -I/home/sameer/.rvm/rubies/ruby-2.2.1/lib/ruby/site_ruby/2.2.0/i686-linux -I/home/sameer/.rvm/rubies/ruby-2.2.1/include  -D_FILE_OFFSET_BITS=64   -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat  -fPIC conftest.c  -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib/ruby/site_ruby/2.2.0/i686-linux -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib/ruby/site_ruby/2.2.0/i686-linux -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L. -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L. -fstack-protector -rdynamic -Wl,-export-dynamic    -latlas -lcblas -llapack  -Wl,-R/home/sameer/.rvm/rubies/ruby-2.2.1/lib -L/home/sameer/.rvm/rubies/ruby-2.2.1/lib -lruby -latlas -lcblas -llapack  -lpthread -ldl -lcrypt -lm   -lc"
+conftest.c: In function ‘t’:
+conftest.c:15:32: warning: variable ‘p’ set but not used [-Wunused-but-set-variable]
+ int t(void) { void ((*volatile p)()); p = (void ((*)()))cblas_dgemm; return 0; }
+                                ^
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: #include <cblas.h>
+ 4: 
+ 5: /*top*/
+ 6: extern int t(void);
+ 7: int main(int argc, char **argv)
+ 8: {
+ 9:   if (argc > 1000000) {
+10:     printf("%p", &t);
+11:   }
+12: 
+13:   return 0;
+14: }
+15: int t(void) { void ((*volatile p)()); p = (void ((*)()))cblas_dgemm; return 0; }
+/* end */
+
+--------------------
+
