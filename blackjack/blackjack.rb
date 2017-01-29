@@ -20,7 +20,7 @@ module BlackJack
     attr_reader :result, :player, :dealer
 
     def initialize decks=4
-      decks < 4 and raise("Must have 4 or more decks.")
+      decks <= 4 or raise("Must have 4 or more decks.")
       @deck = Deck.new decks
       @result = nil
       @over = false
@@ -45,6 +45,7 @@ module BlackJack
     end
 
     def action act
+      [:hit, :stand].include?(act) or raise(ArgumentError, "Only hit/stand allowed.")
       @player.send(act, @deck)
       compute_score_for @player
       change_current_player if act == :stand
@@ -125,9 +126,7 @@ module BlackJack
       @cards << deck.get_card
     end
 
-    def stand deck
-
-    end
+    def stand deck;   end
 
     def == other
       self.class == other.class
