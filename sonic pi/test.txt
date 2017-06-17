@@ -1,0 +1,4 @@
+live_loop :choral_play do
+  sample :ambi_choir, rate: 0.4
+  sleep 1
+end

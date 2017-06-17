@@ -1,0 +1,20 @@
+class Fibonnaci
+  def compute(int n)
+    int i = 0
+    int prev = 1
+    int current = 1
+    int temp
+
+    print 1, "\n"
+    print 1, "\n"
+
+    while i < n do
+      temp = current
+      current = current + prev
+      prev = temp
+      print current, "\n"
+
+      i += 1
+    end
+  end
+end
