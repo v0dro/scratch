@@ -12,12 +12,32 @@ int compare_ints(const void *a, const void *b)
   return (*da > *db) - (*da < *db);
 }
 
+int sort_and_prepare_offset(int *index, int N, int *offset)
+{
+  qsort(index, N, sizeof(int), compare_ints);
+  int ncells = 1, ic;
+
+  offset[0] = 0;
+  ic = index[0];
+  for (int i = 1; i < N; ++i)
+  {
+    if (ic != index[i])
+    {
+      offset[ncells] = i;
+      ic = index[i];
+      ncells++;
+    }
+  }
+
+  return ncells;
+}
+
 int main()
 {
-  int i, j, N = 10; // N points
+  int i, j, N = 100; // N points
   double x[N], y[N], u[N], q[N];
   double r, dx, dy;
-  int index[N];
+  int index[N], offset[N];
 
   for (i = 0; i < N; ++i)
   {
@@ -60,26 +80,112 @@ int main()
     //  and additions we will eventually arrive at the morton index of the number.
     get_index(&index[i], iX, level);
   }
-  qsort(index, N, sizeof(int), compare_ints);
 
-  for (int i = 0; i < N; ++i)
+  // array that denotes the offsets of each level in the Multipole array below.
+  int levelOffset[4];
+  levelOffset[0] = 0;
+  int ncells = sort_and_prepare_offset(index, N, offset);
+  int maxcells = compute_maxcells(level, levelOffset);
+
+  double *Multipole = (double*)malloc(maxcells*sizeof(double));
+
+  // P2M
+  for (i = 0; i < ncells; ++i)
   {
-    printf("%d %d\n", i, index[i]);
+    for (j = offset[i]; j < offset[i+1]; ++j)
+    {
+      // summing all the charges in a box and gaining a simplistic multipole.
+      // using 'level' cuz we're at the bottom level right now (3).
+      Multipole[index[j] + levelOffset[level]] += q[j];
+    }
   }
-  
 
-  // sort indices and prepare offsets.
+  // M2M
+  int l;
+  for (l=level;l>=2;l--)
+  {
+    int nc = 1 << (2*l);
+    // loop over all the levels from bottom to top using this.
+    for(i = 0;i < nc; ++i)
+    { 
+      // want offset of the parent so l-1
+      int ip = i/4 + levelOffset[l-1];
+      // since we are on the M2M level we add all the previously computed
+      //  multipoles and store them in the places where their parents are
+      //  supposed to be (inside the same array).
+      Multipole[ip] += Multipole[i+level];
+    }
+  }
+
+  // M2L
+  // calculate interactions between near and far boxes (i think)
+  int ix, iy;
+  for (int l = 2; l <= level; ++l)
+  {
+    int nc = 1 << (2*l);
+    for (i = 0; i < nc; ++i)
+    {
+      get_IX(i/4, iX);
+      int ix, iy;
+      for (ix++ = -1; ix <= 1; ++ix)
+      {
+        for (iy = -1; iy <= 1;  ++iy)
+        {
+          int iX2[2];
+          // min and max are used to factor in edge cases that arise out of the
+          //  boxes appearing at the corners.
+          iX2[0] = min(max(iX[0]+ix,0), (1<<(2*l)));
+          iX2[1] = min(max(iX[1]+iy,0), (1<<(2*l)));
+
+          if (l == 2)
+            printf("%d %d %d\n", i, iX2[0], iX2[1]);
+        }
+      }
+    }
+  }
+  free(Multipole);
 
   // offset is stored at the index of the morton matrix offset. so having the
   //  morton index lets you get the offset directly.
+  find_neighbours(26);
   return 0;
 }
 
+int compute_maxcells(int level, int *levelOffset)
+{
+  int maxcells = 0;
+
+  for (int i = 0; i <= level; ++i)
+  {
+    maxcells += (1 << (2*i));
+    levelOffset[i+1] = maxcells;
+  }
+
+  return maxcells;
+}
+
+void find_neighbours(int index)
+{
+  int ix, iy, iX[2];
+
+  get_IX(index, iX);
+
+  printf("co-ordinates: %d %d\n", iX[0], iX[1]);
+  for (ix = -1; ix <= 1; ++ix)
+  {
+    for (iy = 0; iy <= 1; ++iy)
+    {
+      printf("New: %d %d\n", iX[0]+ix, iX[1]+iy);
+    }
+  }
+}
 
 // calculate the co-ordinates from the morton index.
 void get_IX(int index, int iX[2])
 {
   int level = 0, d = 0;
+  iX[0] = 0;
+  iX[1] = 0;
   while (index > 0)
   { 
     // check each rightmost bit and collect them (x, y separately) together 
