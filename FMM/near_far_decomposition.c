@@ -7,12 +7,10 @@
 #include <stdio.h>
 #include <math.h>
 
-#define DISTANCE 10
-
 int main()
 {
-  int i, j, N = 4;
-  double xi[N], yi[N], zi[N], ui[N*N*N];
+  int i, j, N = 4; // N points
+  double xi[N], yi[N], zi[N], ui[N*64];
   double xj[N], yj[N], zj[N], qj[N];
   double r, dx, dy, dz;
 
@@ -60,16 +58,23 @@ int main()
   for (ix = 0; ix < 4; ix++) {
     for (iy = 0; iy < 4; iy++) {
       for (iz = 0; iz < 4; iz++) {
-        int ibox = (ix*iy*4 + iz*16)*N;
+        // why multiply by N?
+        // Since you're adding ui to each POINT, the box number should be multiplied
+        //  by the number of points so that you can can the index of each point
+        //  inside each box by looping.
+        int ibox = (ix + iy*4 + iz*16)*N;
         uip = 0;
         for (jx = 0; jx < 4; jx++) {
           for (jy = 0; jy < 4; jy++) {
             for (jz = 0; jz < 4; jz++) {
               if (abs(ix - jx) < 2 && abs(iy - jy) < 2 && abs(iz - jz) < 2) {
                 // this is the near field.
-                for(i =0;i < N; i++) {
+                for(i =0;i < N; i++) { // bodies inside the target blue box.
+                  // these are bodies inside the red boxes that this box is being
+                  //  compared with.
                   for(j=0;j<N;j++) {
                     // below additions simulate co-ordinates inside a box.
+                    //  ix,jx style values.
                     dx = xi[i] + ix - xj[j] - jx;
                     dy = yi[i] + iy - yj[j] - jy;
                     dz = zi[i] + iz - zj[j] - jz;
@@ -94,8 +99,10 @@ int main()
           } 
         }
         // Step 3. 
+        // This takes place for each box. So we iterate on the bodies present
+        //  inside each box and 
         for (i = 0; i < N; i++) {
-          ui[i + ibox] = uip;
+          ui[i+ibox] += uip;
         }
       } 
     }    
@@ -104,23 +111,24 @@ int main()
   for (ix = 0; ix < 4; ix++) {
     for (iy = 0; iy < 4; iy++) {
       for (iz = 0; iz < 4; iz++) {
-        int ibox = (ix*iy*4 + iz*16)*N;
-        for (i =0; i < N; i++) {
+        int ibox = (ix + iy*4 + iz*16)*N;
+        for (i = 0; i < N; i++) {
           double uid = 0;
           for (jx = 0; jx < 4; jx++) {
             for (jy = 0; jy < 4; jy++) {
               for (jz = 0; jz < 4; jz++) {
-                for (j=0; j<N; j++) {
+                for (j = 0; j < N; j++) {
                   dx = xi[i] + ix - xj[j] - jx;
                   dy = yi[i] + iy - yj[j] - jy;
                   dz = zi[i] + iz - zj[j] - jz;
                   r = sqrt(dx*dx + dy*dy + dz*dz);
-                  uid += qj[j]/r;
+                  if (r!=0)
+                    uid += qj[j]/r;
                 }
               } 
             }
           }  
-          printf("uid: %lf ui[i+ibox] %lf\n", uid, ui[i+ibox]);        
+          printf("uid: %lf ui[i+ibox] %lf i+ibox: %d\n", uid, ui[i+ibox],i+ibox);
         }
       } 
     }     
