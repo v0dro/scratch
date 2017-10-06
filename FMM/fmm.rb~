@@ -1,0 +1,13 @@
+# FMM code in Ruby
+
+# 1: create a set of 100 points, each assigned with X and Y co-ordinates. Each number should be a rand between 0 and 1.
+100.times do ||
+             
+end
+
+
+
+
+
+# 2:
+
