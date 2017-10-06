@@ -2,7 +2,16 @@
 include Math
 
 N = 100
-LEVEL = 3
+LEVEL = 2
+
+# Sort the morton indices and corresponding co-ordinates w.r.t the Morton index.
+def sort_index_and_coords morton_index, x, y
+  combined = morton_index.zip(x).zip(y).map!(&:flatten!)
+  combined.sort_by! { |c| c[0] }
+  combined = combined.transpose
+
+  [combined[0], combined[1], combined[2]]
+end
 
 # Calculates the morton index for the given co-ordinates and the level.
 # Works by first taking the Y co-ordinate, shifting it by 'level' bits, and taking the modulus
@@ -39,17 +48,20 @@ end
 # Subdivide the points into their own cells and prepare a morton index for each of them.
 # The end result of this step is a sorted index array that contains the morton index of each point and
 #   X and Y arrays that correspond to the index
-cell_coords = [0.0,0.0]
+cell_coords = [0,0]
 morton_index = []
 N.times do |i|
-  cell_coords[0] = x[i] * 1 << 3
-  cell_coords[1] = y[i] * 1 << 3
+  cell_coords[0] = (x[i] * (1 << LEVEL)).to_i
+  cell_coords[1] = (y[i] * (1 << LEVEL)).to_i
   morton_index << calculate_morton_index(cell_coords)
 end
+morton_index, x, y = sort_index_and_coords morton_index, x, y
 
 # P2M
 
-puts morton_index
+N.times do |i|
+  puts "shiz: #{morton_index[i]} #{(x[i] * 4).to_i} #{(y[i] * 4).to_i}"
+end
 
 # final step: check the results
 result = []
