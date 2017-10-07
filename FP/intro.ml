@@ -26,11 +26,22 @@ let div_num num1 num2 =
   | (Float num1, Float num2) -> Float(num1 /. num2)
   | (_, Error) -> Error
   | (Error, _) -> Error;;
-                                     
+
+type point_type = {mutable x: float; mutable y: float};;
+
+let rotate mp angle =
+  let angle_rad = angle *. pi  /. 180. in
+  let rotation =
+    [|
+      [|cos angle_rad; -.(sin angle_rad) |];
+      [|sin angle_rad; cos angle_rad |]
+    |] in
+  mp.x <- (rotation.(0).(0) *. mp.x) +. (rotation.(0).(1) *. mp.y);
+  mp.y <- (rotation.(1).(0) *. mp.x) +. (rotation.(1).(1) *. mp.y);;
+
 type 'a binary_tree =
   Empty
 | Node of 'a * 'a binary_tree * 'a binary_tree;;
-
 
 let rec find x tree =
   match tree with
