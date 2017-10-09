@@ -51,7 +51,7 @@ def calculate_offset_array morton_index
 end
 
 def calculate_level_offsets
-  level_offsets = []
+  level_offsets = [0]
   memo = 0
   0.upto(LEVEL-1) do |l|
     memo += 2**l * 2**l
@@ -104,7 +104,7 @@ locals = Array.new TOTAL_CELLS, 0
 
 # Then we need level offsets for determining the places in the multipole array where the level changes.
 level_offsets = calculate_level_offsets
-puts "level_offsets : #{level_offsets} T #{TOTAL_CELLS}"
+
 # P2M
 #   The P2M step basically takes the current particles in the domain and lumps them together for each
 #   cell as multipoles. For this purpose, it needs to loop over each particle inside each cell, add their
@@ -113,14 +113,39 @@ offsets.each_cons(2).with_index do |arr, offset_index|
   a = arr[0]
   b = arr[1]
   a.upto(b-1) do |index|
-    multipoles[level_offsets[LEVEL-1] + morton_index[index]] += q[index]
+    multipoles[level_offsets[LEVEL] + morton_index[index]] += q[index]
+  end
+end
+# M2M
+#   M2M basically lumps together the already formed multipoles into several other multipoles. It does this
+#   and stores the multipoles in the multipoles array. I need to access the mutipoles of each level 3 cell,
+#   take a sum of the mutipoles that are part of the larger level 2 cells and store the sum inside that.
+#   The multipole calculation must be done for each and every level other than the topmost.
+
+#   We do not need to store the morton indexes of the lower levels (meaning the ones with lesser cells)
+#   since the index can be easily found out with child/4.
+(LEVEL).downto(1) do |level|
+  total_cells = 2**level * 2**level
+  total_cells.times do |idx|
+    child_index = level_offsets[level] + idx
+    parent_index = level_offsets[level-1] + idx / 4
+    multipoles[parent_index] += multipoles[child_index]
   end
 end
 
-# M2M
-
 # M2L
+#  The M2L step expands on the previous multipoles and creates local interactions. The 'locals' array
+#  comes into play over here. It basically takes the morton index of a cell, figures out the co-ordinates
+#  of the cell, and checks whether the other cell being considered is near or far. These two cells need
+#  to be far from each other, however, their parents must be close to each other (abs distance must be
+#  <= 1). So we also factor in the index of their parents into the calculation.
 
+#  Q -> How do you determine which cells are to be considered for evaluation?
+#  A -> For each level, iterate over the number of cells that can be present in that level. Get the
+#       co-ordinates of the number. Then, in an inner loop, iterate over all the other cells of the level.
+
+# Formula to use:
+#   force = m / sqrt(dx*dx + dy*dy)
 
 N.times do |i|
   puts "shiz: #{offsets[i]} #{morton_index[i]} #{(x[i] * 8).to_i} #{(y[i] * 8).to_i}"

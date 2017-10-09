@@ -98,8 +98,8 @@ int main() {
       // Whenever ic is not equal to the value in icell these statements are run
       //  which sets the leaf nodes properly to the actual value of the leaf node.
 
-      // this step does the correspondence between the actual cell number and 
-      //  the one that we store for convienvience. This allows us to skip the 
+      // this step does the correspondence between the actual cell number and
+      //  the one that we store for convienvience. This allows us to skip the
       //  empty boxes.
       ic = icell[i];
       cells[level][Ncell[level]] = ic;
