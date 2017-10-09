@@ -4,6 +4,17 @@ include Math
 N = 100
 LEVEL = 3
 
+def get_coords morton_index
+  x, y = 0, 0
+  (LEVEL-1).downto(0) do |level|
+    temp = morton_index >> level*2
+    y = y << 1 | temp % 2
+    x = x << 1 | (temp >> 1) % 2
+  end
+
+  [x,y]
+end
+
 # Sort the morton indices and corresponding co-ordinates w.r.t the Morton index.
 def sort_index_and_coords morton_index, x, y
   combined = morton_index.zip(x).zip(y).map!(&:flatten!)
@@ -138,7 +149,9 @@ end
 #  comes into play over here. It basically takes the morton index of a cell, figures out the co-ordinates
 #  of the cell, and checks whether the other cell being considered is near or far. These two cells need
 #  to be far from each other, however, their parents must be close to each other (abs distance must be
-#  <= 1). So we also factor in the index of their parents into the calculation.
+#  <= 1). So we also factor in the index of their parents into the calculation. We consider the condition
+#  that the neihbours of the parents should not be considered because we want to consider only those red
+#  boxes that are not too far (more than one parent box) from the blue box.
 
 #  Q -> How do you determine which cells are to be considered for evaluation?
 #  A -> For each level, iterate over the number of cells that can be present in that level. Get the
