@@ -30,9 +30,9 @@ end
 #   After this, it will create a temp of (y << 1) | x. The index is first left shifted by 2. This
 #   is done before the bitwise addition because in case of co-ords 0-1, shifting after addition leads
 #   to higher result that expected.
-def calculate_morton_index coords
+def calculate_morton_index coords, lvl
   index = 0
-  (LEVEL-1).downto(0) do |level|
+  (lvl-1).downto(0) do |level|
     y = (coords[1] >> level) % 2
     x = (coords[0] >> level) % 2
     temp = (y << 1) | x
@@ -97,7 +97,7 @@ morton_index = []
 N.times do |i|
   cell_coords[0] = (x[i] * (1 << LEVEL)).to_i
   cell_coords[1] = (y[i] * (1 << LEVEL)).to_i
-  morton_index << calculate_morton_index(cell_coords)
+  morton_index << calculate_morton_index(cell_coords, LEVEL)
 end
 morton_index, x, y = sort_index_and_coords morton_index, x, y
 
@@ -115,18 +115,27 @@ locals = Array.new TOTAL_CELLS, 0
 
 # Then we need level offsets for determining the places in the multipole array where the level changes.
 level_offsets = calculate_level_offsets
+non_zeros = morton_index.uniq.size
 
 # P2M
 #   The P2M step basically takes the current particles in the domain and lumps them together for each
 #   cell as multipoles. For this purpose, it needs to loop over each particle inside each cell, add their
 #   forces and store it in the multipoles array starting from the offset for the highest level.
-offsets.each_cons(2).with_index do |arr, offset_index|
-  a = arr[0]
-  b = arr[1]
-  a.upto(b-1) do |index|
-    multipoles[level_offsets[LEVEL] + morton_index[index]] += q[index]
-  end
+# offsets.each_cons(2) do |a, b|
+#  a.upto(b-1) do |index|
+#    multipoles[level_offsets[LEVEL] + morton_index[index]] += q[index]
+#  end
+# end
+
+ix = [0,0]
+nx = 1 << LEVEL
+N.times do |n|
+  ix[0] = (x[n] * nx).to_i
+  ix[1] = (y[n] * nx).to_i
+  j = calculate_morton_index ix, LEVEL
+  multipoles[level_offsets[LEVEL] + j] += q[n]
 end
+
 # M2M
 #   M2M basically lumps together the already formed multipoles into several other multipoles. It does this
 #   and stores the multipoles in the multipoles array. I need to access the mutipoles of each level 3 cell,
@@ -135,7 +144,7 @@ end
 
 #   We do not need to store the morton indexes of the lower levels (meaning the ones with lesser cells)
 #   since the index can be easily found out with child/4.
-(LEVEL).downto(1) do |level|
+(LEVEL).downto(2) do |level|
   total_cells = 2**level * 2**level
   total_cells.times do |idx|
     child_index = level_offsets[level] + idx
@@ -159,10 +168,89 @@ end
 
 # Formula to use:
 #   force = m / sqrt(dx*dx + dy*dy)
+(2).upto(LEVEL) do |level|
+  nx = 2**level
+  total_cells = nx * nx
 
-N.times do |i|
-  puts "shiz: #{offsets[i]} #{morton_index[i]} #{(x[i] * 8).to_i} #{(y[i] * 8).to_i}"
+  total_cells.times do |i|
+    ix = get_coords i
+
+    total_cells.times do |j|
+      jx = get_coords j
+
+      # Figure out if the outer cells are far enough to be eligible for a multipole and close enough
+      #   to be within their parents scope.
+      if ((ix[0] / 2 - jx[0] / 2).abs <= 1) && ((ix[1] / 2 - jx[1] / 2).abs <= 1)
+
+        if (ix[0] - jx[0]).abs > 1 || (ix[1] - jx[1]).abs > 1
+
+          dx = (ix[0] - jx[0]).to_f / nx
+          dy = (ix[1] - jx[1]).to_f / nx
+          r  = sqrt(dx*dx + dy*dy)
+          i = calculate_morton_index ix, level
+          j = calculate_morton_index jx, level
+          locals[level_offsets[level] + j] += multipoles[level_offsets[level] + i] / r
+        end
+      end
+    end
+  end
 end
+
+# L2L
+#  This step further expands on the already expanded local interactions and adds the sums of their
+#  parents into the children. This is a local to local expansion hence it will only apply from level 2
+#  onwards.
+3.upto(LEVEL) do |level|
+  nx = 1 << level
+  (nx*nx).times do |cell|
+    locals[level_offsets[level] + cell] += locals[level_offsets[level-1] + cell/4]
+  end
+end
+
+# L2P
+#  This level creates interactions between the actual points and the topmost local expansions (which now
+#  have been added with the bottom level expansions).
+
+#  We use the offsets array in this case (not used here) so that we get direct access to the places where
+#  elements from one cell end and the other begin. In case we are storing only non-empty cells (which is
+#  not the case in the current code) it will help us to iterate over the cells which only contain some
+#  particles.
+nx = 2**LEVEL
+N.times do |cell|
+  xi = (x[cell]*nx).to_i
+  yi = (y[cell]*nx).to_i
+  n = calculate_morton_index([xi, yi], LEVEL)
+  u[cell] += locals[level_offsets[LEVEL] + n]
+end
+
+# P2P
+#  In this step we only calculate interactions between neighbour particles since we had not factored those
+#  into the previous steps. This calculation is done directly between the particles.
+ix  = [0,0]
+jx = [0,0]
+nx = 2**LEVEL
+N.times do |i|
+  ix[0] = x[i]*nx
+  ix[1] = x[i]*nx
+  N.times do |j|
+    jx[0] = x[i]*nx
+    jx[1] = x[j]*nx
+    if (ix[0] - jx[0]).abs <= 1 && (ix[1] - jx[1]).abs <= 1
+      dx = x[i] - x[j]
+      dy = y[i] - y[j]
+      r = sqrt(dx*dx + dy*dy)
+      if r != 0
+        u[i] += q[j] / r
+      end
+    end
+  end
+end
+
+puts "offset: #{offsets}\n\n"
+puts "morton: #{morton_index}"
+puts "l: #{locals}\n\n"
+puts "m: #{multipoles}\n\n"
+puts "u : #{u}\n\n #{level_offsets}"
 
 # final step: check the results
 result = []
@@ -178,6 +266,4 @@ N.times do |i|
   result << uid
 end
 
-# N.times do |i|
-#   puts "#{x[i]} #{y[i]} #{result[i]}"
-# end
+puts "#{N.times { |n| puts "#{result[n]} #{u[n]}" }}"
