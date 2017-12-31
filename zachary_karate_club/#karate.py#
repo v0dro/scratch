@@ -25,7 +25,7 @@ py.ylim([0,15])
 py.xlim([0,13])
 py.xlabel("Degrees")
 py.ylabel("Number of points")
-#py.show()
+py.show()
 
 # nodes with highest PageRank value
 indegree = graph.indegree()
