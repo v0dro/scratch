@@ -1,5 +1,9 @@
 #include "mpi.h"
 #include <cstdio>
+#include <iostream>
+#include <cstdlib>
+#include <vector>
+using namespace std;
 
 void basic(int argc, char ** argv)
 {
@@ -178,8 +182,108 @@ void send_recv(int argc, char ** argv)
          mpirank, send[0],send[1],send[2],send[3],recv[0],recv[1],recv[2],recv[3]);
   MPI_Finalize();
 }
+
+void struct_comm(int argc, char ** argv)
+{
+  MPI_Init(&argc, &argv);
+  int mpi_size, mpi_rank;
+  MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+
+  typedef struct {
+    int a;
+    float b;
+    char c;
+  } HELLO;
+
+  MPI_Aint intex, floatex, charex;
+  MPI_Type_extent(MPI_INT, &intex);
+  MPI_Type_extent(MPI_FLOAT, &floatex);
+  MPI_Type_extent(MPI_CHAR, &charex);
+
+  HELLO a;
+  MPI_Datatype MPI_CUSTOM; // name of the new struct data type.
+  int structlen = 3;
+  int block_lengths[structlen] = {1,1,1};
+  int displacements[structlen];
+  MPI_Datatype types[3] = {MPI_INT, MPI_FLOAT, MPI_CHAR};
+  displacements[0] = (MPI_Aint) 0;
+  displacements[1] = intex;
+  displacements[2] = intex + floatex;
+  
+  
+  MPI_Finalize();
+};
+
+void dynamic_array(int argc, char ** argv)
+{
+  MPI_Init(&argc, &argv);
+  int mpi_size, mpi_rank;
+  MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+
+  double *a;
+  int s = 10;
+
+  if (mpi_rank == 0) {
+    a = (double*)malloc(s*sizeof(double));
+    for (int i = 0; i < s; ++i) {
+      a[i] = i;
+    }
+    MPI_Send(a, s, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
+  }
+  else {
+    double *c = (double*)malloc(s*sizeof(double));
+    MPI_Recv(c, s, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    for (int i = 0; i < s; ++i) {
+      cout << c[i] << endl;
+    }
+  }
+
+  MPI_Finalize();
+}
+
+void std_vec(int argc, char ** argv)
+{
+  MPI_Init(&argc, &argv);
+  int mpi_size, mpi_rank;
+  MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+
+  vector<double> a;
+  int s = 10;
+  
+  if (mpi_rank == 0) {
+    a.resize(s);
+    for (int i = 0; i < s; ++i) {
+      a[i] = i;
+    }
+    MPI_Send(a.data(), s, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
+  }
+  else {
+    double *c = (double*)malloc(s*sizeof(double));
+    MPI_Recv(c, s, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    for (int i = 0; i < s; ++i) {
+      cout << c[i] << endl;
+    }
+  }
+
+  MPI_Finalize();
+}
+
+void vector_pointers()
+{
+  vector<double> b;
+  b.push_back(1);
+  b.push_back(2);
+  vector<vector<double>* > a;
+  a.push_back(&b);
+  cout << (*a[0])[1];
+}
+
 int main(int argc, char**argv)
 {
+
   // basic(argc, argv);
   //  broadcast(argc, argv);
   // scatter(argc, argv);
@@ -188,5 +292,8 @@ int main(int argc, char**argv)
   //reduce(argc, argv);
   //  all_reduce(argc, argv);
   //all2all(argc, argv);
-  send_recv(argc, argv);
+  // send_recv(argc, argv);
+  //dynamic_array(argc, argv);
+  //std_vec(argc, argv);
+  // vector_pointers();
 }
