@@ -1,8 +1,10 @@
 #include "mpi.h"
+#include <cassert>
 #include <cstdio>
 #include <iostream>
 #include <cstdlib>
 #include <vector>
+#include <cmath>
 using namespace std;
 
 void basic(int argc, char ** argv)
@@ -281,6 +283,59 @@ void vector_pointers()
   cout << (*a[0])[1];
 }
 
+void split_range(int & begin, int & end, int iSplit, int numSplit) {
+  //assert(end > begin);                                      // Check that size > 0
+  int size = end - begin;                                   // Size of range
+  int increment = size / numSplit;                          // Increment of splitting                 
+  int remainder = size % numSplit;                          // Remainder of splitting    
+  begin += iSplit * increment + std::min(iSplit,remainder); // Increment the begin counter
+  end = begin + increment;                                  // Increment the end counter
+  if (remainder > iSplit) end++;                            // Adjust the end counter for remainder
+}
+
+
+void summa(int argc, char ** argv)
+{
+  MPI_Init(&argc, &argv);
+  int mpi_rank, mpi_size;
+  MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+  int N = sqrt(mpi_size);
+  int a; int b; int c = 0;
+  int row_rank = mpi_rank / N;
+  int col_rank = mpi_rank % N;
+
+  a = col_rank + 1; b = 1;
+
+  // send a to all cols in a given row.
+  for (int c = 0; c < N; ++c) {
+    int proc_number = row_rank*N + c;
+    MPI_Send(&a, 1, MPI_INT, proc_number, 0, MPI_COMM_WORLD);
+  }
+
+  // send b to all rows in a given col.
+  for (int r = 0; r < N; ++r) {
+    int proc_number = r*N + col_rank;
+    MPI_Send(&b, 1, MPI_INT, proc_number, 1, MPI_COMM_WORLD);
+  }
+
+  int get_a, get_b;
+  MPI_Status s;
+
+  // send a to all cols in a given row.
+  for (int i = 0; i < N; ++i) {
+    int proc_number_r = row_rank*N + i;
+    int proc_number_c = i*N + col_rank;
+    MPI_Recv(&get_a, 1, MPI_INT, proc_number_r, 0, MPI_COMM_WORLD, &s);
+    MPI_Recv(&get_b, 1, MPI_INT, proc_number_c, 1, MPI_COMM_WORLD, &s);
+    c += get_a*get_b;
+  }
+
+  cout << "r: " << row_rank << " c: " << col_rank << " c: " << c << endl;
+
+  MPI_Finalize();
+}
+
 int main(int argc, char**argv)
 {
 
@@ -296,4 +351,5 @@ int main(int argc, char**argv)
   //dynamic_array(argc, argv);
   //std_vec(argc, argv);
   // vector_pointers();
+  summa(argc, argv);
 }
