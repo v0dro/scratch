@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <vector>
 #include <cmath>
+#include <ctime>
 using namespace std;
 
 void basic(int argc, char ** argv)
@@ -293,6 +294,22 @@ void split_range(int & begin, int & end, int iSplit, int numSplit) {
   if (remainder > iSplit) end++;                            // Adjust the end counter for remainder
 }
 
+void matmul(double *a, double *b, double *c, int nrows_a, int ncols_a, int nrows_b, int ncols_b)
+{
+  cblas_dgemm(
+              CblasRowMajor, CblasNoTrans, CblasNoTrans,
+              nrows_a, ncols_b, nrows_b,
+              1, a, ncols_a, b,
+              ncols_b, 1, c, ncols_b);
+}
+
+
+void generate_rand_array(double *x, int nrows) {
+  srand(time(NULL));
+  for (int i = 0; i < nrows; ++i) {
+    x[i] = (double)rand();
+  }
+}
 
 void summa(int argc, char ** argv)
 {
@@ -300,35 +317,46 @@ void summa(int argc, char ** argv)
   int mpi_rank, mpi_size;
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
-  int N = sqrt(mpi_size);
-  int a; int b; int c = 0;
+  int N = sqrt(mpi_size), NROWS = 10, NCOLS = 10;
+  double *a; double *b; double *c;
   int row_rank = mpi_rank / N;
   int col_rank = mpi_rank % N;
+  double x[NROWS];
+  generate_rand_array(x, NROWS);
+  int nrows = NROWS/N;
+  int ncols = NCOLS/N;
 
-  a = col_rank + 1; b = 1;
+  a = (double*)malloc(nrows*ncols*sizeof(double));
+  b = (double*)malloc(nrows*ncols*sizeof(double));
+  c = (double*)calloc(nrows*ncols, sizeof(double));
+  for (int i = 0; i < nrows; ++i) {
+    for (int j = 0; j < ncols; ++j) {
+      a[i*nrows + j] = 1 / abs(x[i + col_rank*ncols] - x[j + col_rank*ncols] - ncols);
+      b[i*nrows + j] = 1;
+    }
+  }
 
   // send a to all cols in a given row.
   for (int c = 0; c < N; ++c) {
     int proc_number = row_rank*N + c;
-    MPI_Send(&a, 1, MPI_INT, proc_number, 0, MPI_COMM_WORLD);
+    MPI_Send(&a, nrows*ncols, MPI_DOUBLE, proc_number, 0, MPI_COMM_WORLD);
   }
 
   // send b to all rows in a given col.
   for (int r = 0; r < N; ++r) {
     int proc_number = r*N + col_rank;
-    MPI_Send(&b, 1, MPI_INT, proc_number, 1, MPI_COMM_WORLD);
+    MPI_Send(&b, nrows*ncols, MPI_DOUBLE, proc_number, 1, MPI_COMM_WORLD);
   }
 
-  int get_a, get_b;
   MPI_Status s;
 
-  // send a to all cols in a given row.
+  // get numbers from both rows and columns and add them to the product.
   for (int i = 0; i < N; ++i) {
     int proc_number_r = row_rank*N + i;
     int proc_number_c = i*N + col_rank;
-    MPI_Recv(&get_a, 1, MPI_INT, proc_number_r, 0, MPI_COMM_WORLD, &s);
-    MPI_Recv(&get_b, 1, MPI_INT, proc_number_c, 1, MPI_COMM_WORLD, &s);
-    c += get_a*get_b;
+    MPI_Recv(&a, nrows*ncols, MPI_DOUBLE, proc_number_r, 0, MPI_COMM_WORLD, &s);
+    MPI_Recv(&b, nrows*ncols, MPI_DOUBLE, proc_number_c, 1, MPI_COMM_WORLD, &s);
+    c += a*b;
   }
 
   cout << "r: " << row_rank << " c: " << col_rank << " c: " << c << endl;

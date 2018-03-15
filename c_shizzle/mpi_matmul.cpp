@@ -6,6 +6,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 #define MASTER 0
@@ -21,17 +22,17 @@ double get_time()
   return t.tv_sec + t.tv_usec*1e-6;
 }
 
-// double frob_norm(double *A, int nrows, int ncols)
-// {
-//   double norm = 0;
-//   for(size_t i=0; i < nrows*ncols; i++){
-//     double val = A[i];
-//     norm += val*val;
-//   }
+double frob_norm(double *A, int nrows, int ncols)
+{
+  double norm = 0;
+  for(size_t i=0; i < nrows*ncols; i++){
+    double val = A[i];
+    norm += val*val;
+  }
   
-//   norm = sqrt(norm);
-//   return norm;
-// }
+  norm = sqrt(norm);
+  return norm;
+}
 
 // double relative_error(double *A, double *B, int nrows, int ncols)
 // {
@@ -160,73 +161,157 @@ double get_time()
 //   }  
 // }
 
-void setup_processes(double *a, double *b, double *c, int nrows_a, int ncols_a, int nrows_b, int ncols_b)
+// void setup_processes(double *a, double *b, double *c, int nrows_a, int ncols_a, int nrows_b, int ncols_b)
+// {
+  
+// }
+
+// void test_SUMMA()
+// {
+
+//   int mpi_rank, mpi_size;
+//   MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+//   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+
+//   if (mpi_rank == MASTER) {
+//     double start, end, total;
+//     double a[16] = {
+//       1,2,3,4,
+//       1,2,3,4,
+//       1,2,3,4,
+//       1,2,3,4
+//     };
+//     int nrows_a = 4, ncols_a = 4;
+
+//     double b[16] = {
+//       1,1,1,1,
+//       1,1,1,1,
+//       1,1,1,1,
+//       1,1,1,1
+//     };
+//     int nrows_b = 4, ncols_b = 4;
+
+//     double *c = (double*)calloc(16, sizeof(double));
+
+//     start = get_time();
+//     setup_processes(a, b, c, nrows_a, ncols_a, nrows_b, ncols_b);
+//     end = get_time();
+//     cout << "setup processes time: " << end - start << endl;
+//     // create a 4 x 4 processor grid and send one element to each.
+//   }
+//   else {
+//     summa_matmul();
+//   }
+
+
+//   for (int k = 0; k < 4; ++k) {
+//     for (int i = 0; i < 4; ++i) {
+//       for (int j = 0; j < 4; ++j) {
+//         c[i*4 + j] += a[i*4 + k]*b[k + j*4];
+//       }
+//     }
+//   }
+
+//   for (int i = 0; i < 4; ++i) {
+//     for (int j = 0; j < 4; ++j) {
+//       cout << c[i*4 + j] << " ";
+//     }
+//     cout << std::endl;
+//   }
+
+//   //SUMMA();
+// }
+
+void matmul(double *a, double *b, double *c, int nrows_a, int ncols_a, int nrows_b, int ncols_b)
+{
+  cblas_dgemm(
+              CblasRowMajor, CblasNoTrans, CblasNoTrans,
+              nrows_a, ncols_b, nrows_b,
+              1, a, ncols_a, b,
+              ncols_b, 1, c, ncols_b);
+}
+
+
+void generate_rand_array(double *x, int nrows) {
+  srand(time(NULL));
+  for (int i = 0; i < nrows; ++i) {
+    x[i] = (double)rand();
+  }
+}
+
+void reconstruct_matrix(double *c, int NROWS, int NCOLS, int row_rank, int col_rank, int N)
 {
   
 }
 
-void test_SUMMA()
+void summa(int argc, char ** argv)
 {
-
+  MPI_Init(&argc, &argv);
   int mpi_rank, mpi_size;
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+  
+  int N = sqrt(mpi_size), NROWS = 100, NCOLS = 100;
+  double *a; double *b; double *c;
+  int row_rank = mpi_rank / N;
+  int col_rank = mpi_rank % N;
+  int nrows = NROWS/N;
+  int ncols = NCOLS/N;
+  MPI_Request req[2];
 
-  if (mpi_rank == MASTER) {
-    double start, end, total;
-    double a[16] = {
-      1,2,3,4,
-      1,2,3,4,
-      1,2,3,4,
-      1,2,3,4
-    };
-    int nrows_a = 4, ncols_a = 4;
+  double x[NROWS];
+  generate_rand_array(x, NROWS);
 
-    double b[16] = {
-      1,1,1,1,
-      1,1,1,1,
-      1,1,1,1,
-      1,1,1,1
-    };
-    int nrows_b = 4, ncols_b = 4;
-
-    double *c = (double*)calloc(16, sizeof(double));
-
-    start = get_time();
-    setup_processes(a, b, c, nrows_a, ncols_a, nrows_b, ncols_b);
-    end = get_time();
-    cout << "setup processes time: " << end - start << endl;
-    // create a 4 x 4 processor grid and send one element to each.
-  }
-  else {
-    summa_matmul();
-  }
-
-
-  for (int k = 0; k < 4; ++k) {
-    for (int i = 0; i < 4; ++i) {
-      for (int j = 0; j < 4; ++j) {
-        c[i*4 + j] += a[i*4 + k]*b[k + j*4];
-      }
+  a = (double*)malloc(nrows*ncols*sizeof(double));
+  b = (double*)malloc(nrows*ncols*sizeof(double));
+  c = (double*)calloc(nrows*ncols, sizeof(double));
+  
+  for (int i = 0; i < nrows; ++i) {
+    for (int j = 0; j < ncols; ++j) {
+      a[i*nrows + j] = 1 / abs(x[i + col_rank*ncols] - x[j + col_rank*ncols] - ncols);
+      b[i*nrows + j] = 1;
     }
   }
 
-  for (int i = 0; i < 4; ++i) {
-    for (int j = 0; j < 4; ++j) {
-      cout << c[i*4 + j] << " ";
-    }
-    cout << std::endl;
+  // send a to all cols in a given row.
+  for (int c = 0; c < N; ++c) {
+    int proc_number = row_rank*N + c;
+    MPI_Isend(a, nrows*ncols, MPI_DOUBLE, proc_number, 0, MPI_COMM_WORLD, &req[0]);
   }
 
-  //SUMMA();
+  // send b to all rows in a given col.
+  for (int r = 0; r < N; ++r) {
+    int proc_number = r*N + col_rank;
+    MPI_Isend(b, nrows*ncols, MPI_DOUBLE, proc_number, 1, MPI_COMM_WORLD, &req[1]);
+  }
+
+  MPI_Status s;
+
+  // get numbers from both rows and columns and add them to the product.
+  for (int i = 0; i < N; ++i) {
+    int proc_number_r = row_rank*N + i;
+    int proc_number_c = i*N + col_rank;
+    MPI_Recv(a, nrows*ncols, MPI_DOUBLE, proc_number_r, 0, MPI_COMM_WORLD, &s);
+    MPI_Recv(b, nrows*ncols, MPI_DOUBLE, proc_number_c, 1, MPI_COMM_WORLD, &s);
+    matmul(a, b, c, nrows, ncols, nrows, ncols);
+  }
+
+  cout << "r: " << row_rank << " c: " << col_rank << " rank: " << mpi_rank << " norm of c: " << frob_norm(c, nrows, ncols) << endl;
+
+  MPI_Barrier();
+  
+  reconstruct_matrix(c, NROWS, NCOLS, row_rank, col_rank, N);
+  
+  MPI_Finalize();
 }
 
 int main(int c, char ** v)
 {
   argc = c; argv = v;
-  MPI_Init(&argc, &argv);
+  //MPI_Init(&argc, &argv);
   //test_simple_mult();
   //test_row_partition();
-  test_SUMMA();
-  MPI_Finalize();
+  //test_SUMMA();
+  //MPI_Finalize();
+  summa(argc, argv);
 }
