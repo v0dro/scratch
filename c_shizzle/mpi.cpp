@@ -364,6 +364,24 @@ void summa(int argc, char ** argv)
   MPI_Finalize();
 }
 
+void files(int argc, char ** argv)
+{
+  MPI_Init(&argc, &argv);
+  int mpi_rank, mpi_size;
+  MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+  MPI_File fh;
+  int buf[100];
+
+  for (int i = 0; i < 100; ++i) {
+    buf[i] = mpi_rank * i;
+  }
+
+  MPI_File_open()
+  
+  MPI_Finalize();
+}
+
 int main(int argc, char**argv)
 {
 
@@ -379,5 +397,6 @@ int main(int argc, char**argv)
   //dynamic_array(argc, argv);
   //std_vec(argc, argv);
   // vector_pointers();
-  summa(argc, argv);
+  //summa(argc, argv);
+  files(argc, argv);
 }
