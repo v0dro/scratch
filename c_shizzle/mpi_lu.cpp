@@ -87,15 +87,13 @@ void lu()
       break;
     }
   }
-  
+
+  // begin actual LU factorization procedure now.
   for (int i = 0; i < nblocks; ++i) {
     cout << "process row_rank:" << row_rank << " col_rank: " << col_rank << " blocks: " << nblocks << " data: " << data[i] << endl;
   }
+
   
-  // generate and store the matrix in each process in an acessible manner.
-  // access these parts given the absolute row/col number and process row/col number.
-  // the absolute position of a matrix block can be stored when the matrix for that block
-  //   is generated in any given process.
   
   MPI_Finalize();
 }
