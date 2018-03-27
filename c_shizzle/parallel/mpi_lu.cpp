@@ -89,12 +89,22 @@ void lu()
   }
 
   // begin actual LU factorization procedure now.
-  for (int i = 0; i < nblocks; ++i) {
-    cout << "process row_rank:" << row_rank << " col_rank: " << col_rank << " blocks: " << nblocks << " data: " << data[i] << endl;
+  for (int i = 0; i < nblocks; ++i) { // print data and process row/col rank.
+    cout << "process row_rank:" << row_rank <<
+      " col_rank: " << col_rank <<
+      " blocks: " << nblocks <<
+      " data: " << data[i] << endl;
   }
 
-  
-  
+  // how to co-ordinate the currently under process block across processes?
+  // each process has the absolute row and col numbers of the blocks present in the process.
+  // these absolute numbers can be representative of which block has been processed at what time.
+  // this can be achieved for keeping a 'processed' counter for each process and incrementing the counter
+  //   each time a full row and column is reduced.
+  // the counter can be updated each time a row and column is done with reduction. this can be known by a process
+  //   listening for a transmission of data.
+  // 
+    
   MPI_Finalize();
 }
 

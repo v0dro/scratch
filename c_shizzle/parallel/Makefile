@@ -1,4 +1,4 @@
-CXX = mpicxx -ggdb3 -Wall -O3 -fopenmp -I.
+CXX = mpicxx -ggdb3 -Wall -O3 -fopenmp -lm -I.
 CFLAGS=-I.
 SOURCES = libscalapack.a
 
@@ -7,6 +7,6 @@ SOURCES = libscalapack.a
 
 blacs: blacs_example.o $(SOURCES)
 	$(CXX) $?
-	./a.out
+	mpirun -n 9 ./a.out
 clean:
 	rm -f *.o *.out
