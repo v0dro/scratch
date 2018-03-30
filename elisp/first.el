@@ -9,3 +9,7 @@
   (switch-to-buffer-other-window "*scratch*")
   (erase-buffer)
   (hello "you"))
+
+(defconst fl 23)
+(insert fl)
+%s
