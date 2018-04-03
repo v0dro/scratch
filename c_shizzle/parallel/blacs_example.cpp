@@ -234,6 +234,10 @@ int main(int argc, char ** argv)
   //   from blocks that are further than the immediate row and column should be treated like
   //   the regular reduction operation and should not lead to firing of blocks.
 
+  // the counter approach looks like a good idea. and maybe the counter needs to be maintained
+  //   only for the diagonal blocks since these blocks are the ones are primarily responsible
+  //   for trigerring the rest of the communication.
+
   MPI_Finalize();  
 }
 

@@ -8,5 +8,10 @@ SOURCES = libscalapack.a
 blacs: blacs_example.o $(SOURCES)
 	$(CXX) $?
 	mpirun -n 9 ./a.out
+
+pblas: pblas_matmul.o $(SOURCES)
+	$(CXX) $?
+	mpirun -n 4 ./a.out
+
 clean:
 	rm -f *.o *.out

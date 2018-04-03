@@ -241,6 +241,7 @@
 *
 *     Loop over the remaining blocks of columns.
 *
+      ! DESCA(4) blocking factor for distributing columns of the matrix.
       DO 10 J = JN+1, JA+MN-1, DESCA( 4 )
          JB = MIN( MN-J+JA, DESCA( 4 ) )
          I = IA + J - JA
