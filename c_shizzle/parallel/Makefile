@@ -10,7 +10,15 @@ blacs: blacs_example.o $(SOURCES)
 	mpirun -n 9 ./a.out
 
 pblas: pblas_matmul.o $(SOURCES)
+	$(CXX) $? -lblas -lgfortran
+	mpirun -n 4 ./a.out
+
+pblas_d: pblas_matmul.o $(SOURCES)
 	$(CXX) $?
+	mpirun -n 4 xterm -e gdb ./a.out
+
+sync_lu: sync_lu_decomp.o $(SOURCES)
+	$(CXX) $? -lblas -lgfortran
 	mpirun -n 4 ./a.out
 
 clean:

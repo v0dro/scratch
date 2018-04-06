@@ -10,5 +10,5 @@ n = Numo::NArray[[56, 57, 58, 59, 60, 61, 62, 63],
                  [8, 9, 10, 11, 12, 13, 14, 15],
                  [0, 1, 2, 3, 4, 5, 6, 7]]
 
-str = n.to_a.flatten.pack("l*")
+str = n.to_a.flatten.pack("q*")
 File.open("data.dat", 'w') { |file| file.write(str) }
