@@ -1,0 +1,13 @@
+[0m[[0m[31merror[0m] [0m[0m/home/sameer/gitrepos/scratch/scala/session01/src/main/scala/session01/c_fifo/Application.scala:45:29: overriding value id in class MulticastMessage of type neko.MessageID;[0m
+[0m[[0m[31merror[0m] [0m[0m value id needs `override' modifier[0m
+[0m[[0m[31merror[0m] [0m[0m                            id: MessageID = MessageID.auto())[0m
+[0m[[0m[31merror[0m] [0m[0m                            ^[0m
+[0m[[0m[31merror[0m] [0m[0m/home/sameer/gitrepos/scratch/scala/session01/src/main/scala/session01/c_fifo/FIFOChannel.scala:47:29: overriding value id in class UnicastMessage of type neko.MessageID;[0m
+[0m[[0m[31merror[0m] [0m[0m value id needs `override' modifier[0m
+[0m[[0m[31merror[0m] [0m[0m                            id: MessageID = MessageID.auto()[0m
+[0m[[0m[31merror[0m] [0m[0m                            ^[0m
+[0m[[0m[31merror[0m] [0m[0m/home/sameer/gitrepos/scratch/scala/session01/src/main/scala/session01/d_traversal/Tarry.scala:47:40: overriding value id in class UnicastMessage of type neko.MessageID;[0m
+[0m[[0m[31merror[0m] [0m[0m value id needs `override' modifier[0m
+[0m[[0m[31merror[0m] [0m[0m  case class Token(from: PID, to: PID, id: MessageID = MessageID.auto())[0m
+[0m[[0m[31merror[0m] [0m[0m                                       ^[0m
+[0m[[0m[31merror[0m] [0m[0mthree errors found[0m

@@ -1,3 +1,7 @@
+// Author: @v0dro
+// Desc: Store a distributed matrix in contiguos blocks in an array on each
+// process and perform a synchronous LU decomposition.
+
 #include "mpi.h"
 #include <cstdlib>
 #include <iostream>
@@ -26,9 +30,18 @@ extern "C" {
                 double * B, int * IB, int * JB, int * DESCB,
                 double * BETA,
                 double * C, int * IC, int * JC, int * DESCC );
+  
 }
 
-
+void print_block(double *a, int nrows, int ncols, int proc_id)
+{
+  for (int i = 0; i < nrows; ++i) {
+    for (int j = 0; j < ncols; ++j) {
+      cout << "(" << proc_id << "," << i << "," << j << "," << a[i*nrows + j] << ") ";
+    }
+    cout << endl;
+  }
+}
 // assume square block decomposition
 int main(int argc, char ** argv)
 {
@@ -48,7 +61,6 @@ int main(int argc, char ** argv)
   cout << "procid " << proc_id << " num_procs " << num_procs << endl;
   // end BLACS init
 
-  
   // matrix properties
   // mat size, blk size, portion of block per process
   int N = 8, nb = 4, process_block_size = 2;
@@ -58,14 +70,19 @@ int main(int argc, char ** argv)
   double* a = (double*)malloc(sizeof(double)*nb*nb);
 
   // generate matrix data
-
   for (int bcounter_i = 0; bcounter_i < block_size_per_process_r; ++bcounter_i) {
-    for (int bcounter_j = 0; bcounter_j < block_size_per_process_c; ++bcounter_j) {        
+    for (int bcounter_j = 0; bcounter_j < block_size_per_process_c; ++bcounter_j) {
       for (int i = 0; i < process_block_size; ++i) {
         for (int j = 0; j < process_block_size; ++j) {
-          cout << "proc " << proc_id <<  " generating (" << " (" <<
-            bcounter_i*num_blocks_per_process + myrow*block_size_per_process_r + i << "," <<
-            bcounter_j*num_blocks_per_process + mycol*block_size_per_process_c + j << ") " << endl;
+          int row_i = bcounter_i*num_blocks_per_process +
+            myrow*block_size_per_process_r + i;
+          int col_j = bcounter_j*num_blocks_per_process +
+            mycol*block_size_per_process_c + j;
+          int index = (bcounter_i*block_size_per_process_r + bcounter_j)*
+            num_blocks_per_process +  i*process_block_size + j;
+          // cout << "proc " << proc_id <<  " (" << row_i << "," <<
+          //   col_j << "," << index << "," << row_i*N + col_j << ")" <<  endl;
+          a[index] = row_i*N + col_j;
         }
       }
     }
@@ -74,16 +91,22 @@ int main(int argc, char ** argv)
 
   // create array descriptor
   int desca[9];
-  int descb[9];
-  int descc[9];
   int rsrc = 0, csrc = 0, info;
   descinit_(desca, &N, &N, &nb, &nb, &rsrc, &csrc, &BLACS_CONTEXT, &nb, &info);
-  descinit_(descb, &N, &N, &nb, &nb, &rsrc, &csrc, &BLACS_CONTEXT, &nb, &info);
-  descinit_(descc, &N, &N, &nb, &nb, &rsrc, &csrc, &BLACS_CONTEXT, &nb, &info);
-  cout << proc_id << " info: " << info << endl;
   // end create array descriptor
+
+  // print matrix blocks
   
   Cblacs_barrier(BLACS_CONTEXT, "All");
+
+  // synchronous LU decomposition
+  //   loop over blocks in each process.
+  //   
+  for (int i = 0; i < nb; ++i) {
+    print_block(&a[i*process_block_size*process_block_size],
+                 process_block_size, process_block_size, proc_id);
+  }
+  // end synchronous LU decomposition
   
   MPI_Finalize();
 }

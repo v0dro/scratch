@@ -1,0 +1,15 @@
+[0m[[0m[0minfo[0m] [0m[0mPackaging /home/sameer/gitrepos/scratch/scala/hello/target/scala-2.12/distribalgo_2.12-0.1.jar ...[0m
+[0m[[0m[0mdebug[0m] [0m[0mInput file mappings:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	session01/a_hello/HelloNeko$.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /home/sameer/gitrepos/scratch/scala/hello/target/scala-2.12/classes/session01/a_hello/HelloNeko$.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	session01/a_hello/HelloNeko.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /home/sameer/gitrepos/scratch/scala/hello/target/scala-2.12/classes/session01/a_hello/HelloNeko.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	session01/a_hello/HelloNeko$$anonfun$$lessinit$greater$1.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /home/sameer/gitrepos/scratch/scala/hello/target/scala-2.12/classes/session01/a_hello/HelloNeko$$anonfun$$lessinit$greater$1.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	session01/a_hello/Hello.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /home/sameer/gitrepos/scratch/scala/hello/target/scala-2.12/classes/session01/a_hello/Hello.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	session01/a_hello[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /home/sameer/gitrepos/scratch/scala/hello/target/scala-2.12/classes/session01/a_hello[0m
+[0m[[0m[0mdebug[0m] [0m[0m	session01[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /home/sameer/gitrepos/scratch/scala/hello/target/scala-2.12/classes/session01[0m
+[0m[[0m[0minfo[0m] [0m[0mDone packaging.[0m

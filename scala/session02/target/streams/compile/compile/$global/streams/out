@@ -1,0 +1,16 @@
+[0m[[0m[31merror[0m] [0m[0m/home/sameer/gitrepos/scratch/scala/session02/src/main/scala/session02/a_leader_ring/ChangRoberts.scala:61:14: class Election needs to be abstract, since method id in trait Message of type => neko.MessageID is not defined[0m
+[0m[[0m[31merror[0m] [0m[0m  case class Election(from: PID, to: PID, candidate: PID) extends UnicastMessage[0m
+[0m[[0m[31merror[0m] [0m[0m             ^[0m
+[0m[[0m[31merror[0m] [0m[0m/home/sameer/gitrepos/scratch/scala/session02/src/main/scala/session02/a_leader_ring/ChangRoberts.scala:62:14: class AnnounceLeader needs to be abstract, since method id in trait Message of type => neko.MessageID is not defined[0m
+[0m[[0m[31merror[0m] [0m[0m  case class AnnounceLeader(from: PID, to: Set[PID], leader: PID) extends MulticastMessage[0m
+[0m[[0m[31merror[0m] [0m[0m             ^[0m
+[0m[[0m[31merror[0m] [0m[0m/home/sameer/gitrepos/scratch/scala/session02/src/main/scala/session02/b_leader_graph/ArbitraryTopologyElection.scala:62:14: class Token needs to be abstract, since method id in trait Message of type => neko.MessageID is not defined[0m
+[0m[[0m[31merror[0m] [0m[0m  case class Token(from: PID, to: PID, candidate: PID) extends UnicastMessage[0m
+[0m[[0m[31merror[0m] [0m[0m             ^[0m
+[0m[[0m[31merror[0m] [0m[0m/home/sameer/gitrepos/scratch/scala/session02/src/main/scala/session02/b_leader_graph/ArbitraryTopologyElection.scala:63:14: class AnnounceLeader needs to be abstract, since method id in trait Message of type => neko.MessageID is not defined[0m
+[0m[[0m[31merror[0m] [0m[0m  case class AnnounceLeader(from: PID, to: Set[PID], leader: PID) extends MulticastMessage[0m
+[0m[[0m[31merror[0m] [0m[0m             ^[0m
+[0m[[0m[31merror[0m] [0m[0m/home/sameer/gitrepos/scratch/scala/session02/src/main/scala/session02/d_cut_vertices/CutVerticesDetection.scala:25:14: class Msg needs to be abstract, since method id in trait Message of type => neko.MessageID is not defined[0m
+[0m[[0m[31merror[0m] [0m[0m  case class Msg(from: PID, to: PID, round: Int, new_i: Set[PID])[0m
+[0m[[0m[31merror[0m] [0m[0m             ^[0m
+[0m[[0m[31merror[0m] [0m[0m5 errors found[0m

@@ -1,4 +1,6 @@
-      SUBROUTINE PDGETRF( M, N, A, IA, JA, DESCA, IPIV, INFO )
+      SUBROUTINE PDGETRF( nrows_of_sub_A, ncols_of_sub_A, A,
+     $     row_matrix_block, col_matrix_block,
+     $     DESCA, IPIV, INFO )
 *
 *  -- ScaLAPACK routine (version 1.0) --
 *     University of Tennessee, Knoxville, Oak Ridge National Laboratory,
@@ -6,7 +8,7 @@
 *     February 28, 1995
 *
 *     .. Scalar Arguments ..
-      INTEGER            IA, INFO, JA, M, N
+      INTEGER            IA, INFO, row_matrix_block, nrows_of_sub_A, ncols_of_sub_A
 *     ..
 *     .. Array Arguments ..
       INTEGER            DESCA( * ), IPIV( * )
@@ -17,7 +19,7 @@
 *  =======
 *
 *  PDGETRF computes an LU factorization of a general M-by-N distributed
-*  matrix sub( A ) = (IA:IA+M-1,JA:JA+N-1) using partial pivoting with
+*  matrix sub( A ) = (IA:IA+M-1,col_matrix_block:col_matrix_block+N-1) using partial pivoting with
 *  row interchanges.
 *
 *  The factorization has the form sub( A ) = P * L * U, where P is a
@@ -89,7 +91,7 @@
 *          columns of the distributed submatrix sub( A ). N >= 0.
 *
 *  A       (local input/local output) DOUBLE PRECISION pointer into the
-*          local memory to an array of dimension (LLD_A, LOCq(JA+N-1)).
+*          local memory to an array of dimension (LLD_A, LOCq(col_matrix_block+N-1)).
 *          On entry, this array contains the local pieces of the M-by-N
 *          distributed matrix sub( A ) to be factored. On exit, this
 *          array contains the local pieces of the factors L and U from
@@ -100,7 +102,7 @@
 *          A's global row index, which points to the beginning of the
 *          submatrix which is to be operated on.
 *
-*  JA      (global input) INTEGER
+*  col_matrix_block      (global input) INTEGER
 *          A's global column index, which points to the beginning of
 *          the submatrix which is to be operated on.
 *
@@ -120,7 +122,7 @@
 *                INFO = -i.
 *
 *  =====================================================================
-*          > 0:  If INFO = K, U(IA+K-1,JA+K-1) is exactly zero.
+*          > 0:  If INFO = K, U(IA+K-1,col_matrix_block+K-1) is exactly zero.
 *                The factorization has been completed, but the factor U
 *                is exactly singular, and division by zero will occur if
 *                it is used to solve a system of equations.
@@ -164,10 +166,11 @@
       IF( NPROW.EQ.-1 ) THEN
          INFO = -607
       ELSE
-         CALL CHK1MAT( M, 1, N, 2, IA, JA, DESCA, 6, INFO )
+         CALL CHK1MAT( nrows_of_sub_A, 1, ncols_of_sub_A, 2,
+     $        row_matrix_block, col_matrix_block, DESCA, 6, INFO )
          IF( INFO.EQ.0 ) THEN
-            IROFF = MOD( IA-1, DESCA( 3 ) )
-            ICOFF = MOD( JA-1, DESCA( 4 ) )
+            IROFF = MOD( row_matrix_block-1, DESCA( 3 ) )
+            ICOFF = MOD( col_matrix_block-1, DESCA( 4 ) )
             IF( IROFF.NE.0 ) THEN
                INFO = -4
             ELSE IF( ICOFF.NE.0 ) THEN
@@ -176,8 +179,8 @@
                INFO = -604
             END IF
          END IF
-         CALL PCHK1MAT( M, 1, N, 2, IA, JA, DESCA, 6, 0, IDUM1,
-     $                  IDUM2, INFO )
+         CALL PCHK1MAT( nrows_of_sub_A, 1, ncols_of_sub_A, 2, row_matrix_block, col_matrix_block,
+     $        DESCA, 6, 0, IDUM1, IDUM2, INFO )
       END IF
 *
       IF( INFO.NE.0 ) THEN
@@ -192,7 +195,7 @@
       IF( DESCA( 1 ).EQ.1 ) THEN ! if elements in block is 1
          IPIV( 1 ) = 1
          RETURN
-      ELSE IF( M.EQ.0 .OR. N.EQ.0 ) THEN
+      ELSE IF( nrows_of_sub_A.EQ.0 .OR. ncols_of_sub_A.EQ.0 ) THEN
          RETURN
       END IF
 *
@@ -207,78 +210,114 @@
 *
 *     Handle the first block of columns separately
 *
-      MN = MIN( M, N )
-      JN = MIN( ICEIL( JA, DESCA( 4 ) )*DESCA( 4 ), JA+MN-1 )
-      JB = JN - JA + 1
+      MN = MIN( nrows_of_sub_A, ncols_of_sub_A )
+      ! ICEIL - compute the ceiling of the division of two integers.
+      JN = MIN( ICEIL( col_matrix_block, DESCA( 4 ) )*DESCA( 4 ),
+     $     col_matrix_block+MN-1 )
+      
+      nrows_matrix_sub_block = JN - col_matrix_block + 1 ! first run: col_matrix_block = 1. JN = 
 *
 *     Factor diagonal and subdiagonal blocks and test for exact
 *     singularity.
 *
-      CALL PDGETF2( M, JB, A, IA, JA, DESCA, IPIV, INFO )
+*     Calculate LU decomposition of the L00, L01 and U00 step.
+*     Reduction is done later.   
 *
-      IF( JB+1.LE.N ) THEN
+      CALL PDGETF2( nrows_of_sub_A, nrows_matrix_sub_block, A, row_matrix_block,
+     $     col_matrix_block, DESCA, IPIV, INFO )
 *
-*        Apply interchanges to columns JA+JB:JA+N-1.
+      IF( nrows_matrix_sub_block+1.LE.ncols_of_sub_A ) THEN
 *
-         CALL PDLASWP( 'Forward', 'Rows', N-JB, A, IA, JA+JB, DESCA,
-     $                 IA, IA+JB-1, IPIV )
+*        Apply interchanges to columns col_matrix_block+nrows_matrix_sub_block:col_matrix_block+N-1.
+*
+         CALL PDLASWP( 'Forward', 'Rows', ncols_of_sub_A-nrows_matrix_sub_block, A,
+     $        row_matrix_block, col_matrix_block+nrows_matrix_sub_block, DESCA,
+     $        row_matrix_block, row_matrix_block+nrows_matrix_sub_block-1, IPIV )
 *
 *        Compute block row of U.
 *
-         CALL PDTRSM( 'Left', 'Lower', 'No transpose', 'Unit', JB,
-     $                N-JB, ONE, A, IA, JA, DESCA, A, IA, JA+JB, DESCA )
+         CALL PDTRSM( 'Left', 'Lower', 'No transpose', 'Unit',
+     $        nrows_matrix_sub_block,
+     $        ncols_of_sub_A-nrows_matrix_sub_block, ONE, A,
+     $        row_matrix_block, col_matrix_block, DESCA, A,
+     $        row_matrix_block, col_matrix_block + nrows_matrix_sub_block,
+     $        DESCA )
 *
-         IF( JB+1.LE.M ) THEN
+         IF( nrows_matrix_sub_block+1.LE.nrows_of_sub_A ) THEN
 *
 *           Update trailing submatrix.
 *
-            CALL PDGEMM( 'No transpose', 'No transpose', M-JB, N-JB, JB,
-     $                   -ONE, A, IA+JB, JA, DESCA, A, IA, JA+JB, DESCA,
-     $                   ONE, A, IA+JB, JA+JB, DESCA )
+            CALL PDGEMM( 'No transpose', 'No transpose',
+     $           nrows_of_sub_A - nrows_matrix_sub_block,
+     $           ncols_of_sub_A - nrows_matrix_sub_block,
+     $           nrows_matrix_sub_block, -ONE, A,
+     $           row_matrix_block + nrows_matrix_sub_block,
+     $           col_matrix_block, DESCA, A, row_matrix_block,
+     $           col_matrix_block+nrows_matrix_sub_block, DESCA,
+     $           ONE, A, row_matrix_block+nrows_matrix_sub_block,
+     $           col_matrix_block+nrows_matrix_sub_block, DESCA )
 *
          END IF
       END IF
 *
 *     Loop over the remaining blocks of columns.
 *
-      ! DESCA(4) blocking factor for distributing columns of the matrix.
-      DO 10 J = JN+1, JA+MN-1, DESCA( 4 )
-         JB = MIN( MN-J+JA, DESCA( 4 ) )
-         I = IA + J - JA
+! DESCA(4) blocking factor for distributing columns of the matrix.
+! This allows the matrix blocks to be iterated over in a digonal block-by-diagonal block
+! manner. All the processes iterate in this manner.
+      DO 10 J = JN+1, col_matrix_block+MN-1, DESCA( 4 )
+         ! This MIN prolly exists cuz the last process might have lesser columns of data.
+         nrows_matrix_sub_blocks = MIN( MN-J+col_matrix_block, DESCA( 4 ) ) ! nrows_matrix_sub_block
+         I = row_matrix_block + J - col_matrix_block
 *
 *        Factor diagonal and subdiagonal blocks and test for exact
 *        singularity.
 *
-         CALL PDGETF2( M-J+JA, JB, A, I, J, DESCA, IPIV, IINFO )
+*        This is applying pivoting factorization again to the matrix.
+         CALL PDGETF2( nrows_of_sub_A - J + col_matrix_block,
+     $        nrows_matrix_sub_blocks, A, I, J, DESCA, IPIV, IINFO )
 *
          IF( INFO.EQ.0 .AND. IINFO.GT.0 )
-     $      INFO = IINFO + J - JA
+     $      INFO = IINFO + J - col_matrix_block
 *
-*        Apply interchanges to columns JA:J-JA.
+
+*        Apply interchanges to columns col_matrix_block:J-col_matrix_block.
 *
-         CALL PDLASWP( 'Forward', 'Rowwise', J-JA, A, IA, JA, DESCA,
-     $                 I, I+JB-1, IPIV )
+         CALL PDLASWP( 'Forward', 'Rowwise', J-col_matrix_block, A,
+     $        row_matrix_block, col_matrix_block, DESCA, I,
+     $        I+nrows_matrix_sub_block-1, IPIV )
 *
-         IF( J-JA+JB+1.LE.N ) THEN
+         IF( J-col_matrix_block+nrows_matrix_sub_blocks + 1.LE.N ) THEN
 *
-*           Apply interchanges to columns J+JB:JA+N-1.
+*           Apply interchanges to columns J+nrows_matrix_sub_block:col_matrix_block+N-1.
 *
-            CALL PDLASWP( 'Forward', 'Rowwise', N-J-JB+JA, A, IA, J+JB,
-     $                    DESCA, I, I+JB-1, IPIV )
+         CALL PDLASWP( 'Forward', 'Rowwise',
+     $        ncols_of_sub_A - J - nrows_matrix_sub_block + col_matrix_block,
+     $        A, row_matrix_block, J+nrows_matrix_sub_blocks,
+     $        DESCA, I, I+nrows_matrix_sub_block-1, IPIV )
 *
 *           Compute block row of U.
 *
-            CALL PDTRSM( 'Left', 'Lower', 'No transpose', 'Unit', JB,
-     $                   N-J-JB+JA, ONE, A, I, J, DESCA, A, I, J+JB,
-     $                   DESCA )
+         CALL PDTRSM( 'Left', 'Lower', 'No transpose', 'Unit',
+     $        nrows_matrix_sub_block,
+     $        ncols_of_sub_A - J - nrows_matrix_sub_block + col_matrix_block,
+     $        ONE, A, I, J, DESCA, A, I,
+     $        J + nrows_matrix_sub_blocks, DESCA )
 *
-            IF( J-JA+JB+1.LE.M ) THEN
+            IF( J-col_matrix_block+nrows_matrix_sub_blocks+1.LE.nrows_of_sub_A ) THEN
 *
 *              Update trailing submatrix.
 *
-               CALL PDGEMM( 'No transpose', 'No transpose', M-J-JB+JA,
-     $                      N-J-JB+JA, JB, -ONE, A, I+JB, J, DESCA, A,
-     $                      I, J+JB, DESCA, ONE, A, I+JB, J+JB, DESCA )
+*     multiplication to update the trailing matrix.
+*     
+               CALL PDGEMM( 'No transpose', 'No transpose',
+     $              nrows_of_sub_A - J - nrows_matrix_sub_blocks + col_matrix_block,
+     $              ncols_of_sub_A - J - nrows_matrix_sub_blocks + col_matrix_block,
+     $              nrows_matrix_sub_blocks,
+     $              -ONE, A, I + nrows_matrix_sub_blocks, J, DESCA,
+     $              A, I, J + nrows_matrix_sub_blocks, DESCA, ONE, A,
+     $              I + nrows_matrix_sub_blocks, J+nrows_matrix_sub_blocks,
+     $              DESCA )
 *
             END IF
          END IF
