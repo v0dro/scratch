@@ -84,7 +84,7 @@ object AnonLeader
 
 
 object AnonLeaderMain
-  extends Main(topology.Clique(2000))(
+  extends Main(topology.Clique(20))(
     ProcessInitializer { p =>
       val leader = new AnonLeader(p)
       val anon   = new protocol.FastAnonymousRounds(p)
