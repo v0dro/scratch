@@ -19,7 +19,7 @@ class Application (p: ProcessConfig, numIter: Int)
     for (i <- 1 to numIter) {
       for (j <- neighbors) {
         Receive {
-          case m @ Application.GenericMessage(from,_,sn,_) =>
+          case m @ Application.GenericMessage(from,_,sn) =>
             receivedFrom = receivedFrom.updated(from, sn :: receivedFrom(from))
             if (me == PID(0)) {
               println(s"[${me.name}] message received: $m")
@@ -41,8 +41,7 @@ class Application (p: ProcessConfig, numIter: Int)
 
 object Application
 {
-  case class GenericMessage(from: PID, to: Set[PID], sn: Long,
-                            id: MessageID = MessageID.auto())
+  case class GenericMessage(from: PID, to: Set[PID], sn: Long)
     extends MulticastMessage
 }
 

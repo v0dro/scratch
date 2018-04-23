@@ -8,3 +8,6 @@ exit
 run
 run BounceMain
 exit
+run
+quit
+exit

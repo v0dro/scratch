@@ -32,19 +32,19 @@ class Tarry (p:ProcessConfig)
 
   listenTo(classOf[Token])
   def onReceive = {
-    case Token(from, _, _) if parent.isEmpty =>
+    case Token(from, _) if parent.isEmpty =>
       parent   = Some(from)
       children = (neighbors-from).toList
       DELIVER (Visit)
       visitNextChild()
-    case Token(_, _, _) => visitNextChild()
+    case Token(_, _) => visitNextChild()
   }
 }
 
 
 object Tarry
 {
-  case class Token(from: PID, to: PID, id: MessageID = MessageID.auto())
+  case class Token(from: PID, to: PID)
     extends UnicastMessage
 }
 

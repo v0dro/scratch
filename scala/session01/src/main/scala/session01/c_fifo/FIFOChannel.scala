@@ -30,7 +30,7 @@ class FIFOChannel (p: ProcessConfig)
   listenTo(classOf[FIFOSequenced])
 
   def onReceive = {
-    case FIFOSequenced(from, to, m, sn, _) =>
+    case FIFOSequenced(from, to, m, sn) =>
       // TODO: implement the correct reception of a message
       DELIVER(m)
 
@@ -43,8 +43,7 @@ object FIFOChannel
 {
   case class FIFOSequenced(
                             from: PID, to: PID,
-                            payload: Message, seqNum: Long,
-                            id: MessageID = MessageID.auto()
+                            payload: Message, seqNum: Long
                           ) extends UnicastMessage
 
   case class FIFOInfo (from: PID, seqNum: Long, msg: Message)
