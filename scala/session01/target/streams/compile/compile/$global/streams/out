@@ -1,4 +1,4 @@
-[0m[[0m[31merror[0m] [0m[0m/home/sameer/gitrepos/scratch/scala/session01/src/main/scala/session01/c_fifo/FIFOChannel.scala:33:23: wrong number of arguments for pattern session01.c_fifo.FIFOChannel.FIFOSequenced(from: neko.PID,to: neko.PID,payload: neko.Message,seqNum: Long)[0m
-[0m[[0m[31merror[0m] [0m[0m    case FIFOSequenced(from, to, m, sn, _) =>[0m
-[0m[[0m[31merror[0m] [0m[0m                      ^[0m
+[0m[[0m[31merror[0m] [0m[0m/home/sameer/gitrepos/scratch/scala/session01/src/main/scala/session01/d_traversal/Tarry.scala:19:69: too many arguments (2) for method SEND: (m: neko.Event)Unit[0m
+[0m[[0m[31merror[0m] [0m[0m      case next :: tail    => SEND(Token(parent.getOrElse(PID(0))), next)[0m
+[0m[[0m[31merror[0m] [0m[0m                                                                    ^[0m
 [0m[[0m[31merror[0m] [0m[0mone error found[0m

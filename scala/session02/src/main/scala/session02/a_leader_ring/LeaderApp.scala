@@ -32,7 +32,7 @@ class LeaderApp(p: ProcessConfig)
   import neko.util.LeaderElectionClient._
 
   def run() {
-    candidate()
+    candidate() // this process is a leader candidate
     Receive {
       case Elected(Some(leader)) if leader == me =>
         println(s"${me.name} :> I AM THE LEADER (${me.name}) !!!!")

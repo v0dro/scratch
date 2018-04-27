@@ -10,15 +10,17 @@ class Tarry (p:ProcessConfig)
   import Tarry._
   import TraversalClient._
 
-  private def isRoot = parent.contains(me)
+  private def isRoot = parent == me
   private var parent : Option[PID] = None
   private var children = List.empty[PID]
 
   private def visitNextChild() {
     children match {
-      case next :: tail    =>   // TODO: Rule 1
-      case Nil if ! isRoot =>   // TODO: Rule 2
-      case Nil if isRoot   => DELIVER (Done)                            // End
+      case next :: tail    => { // rule 1
+        SEND(Token(me, next))
+      }
+      case Nil if ! isRoot => SEND(Token(me, parent.getOrElse(PID(0)))) // rule 2
+      case Nil if isRoot   => DELIVER (Done)       // End
     }
   }
 
@@ -50,7 +52,7 @@ object Tarry
 
 
 object TarryMain
-  extends Main(topology.Grid(4, 4), withTrace = true)(
+  extends Main(topology.Grid(4, 4))(
     ProcessInitializer { p =>
       val app   = new AppTraversal(p)
       val tarry = new Tarry(p)

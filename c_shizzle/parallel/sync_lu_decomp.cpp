@@ -101,7 +101,7 @@ int main(int argc, char ** argv)
 
   // synchronous LU decomposition
   //   loop over blocks in each process.
-  //   
+  // This loop iterates over each block in each process.
   for (int i = 0; i < nb; ++i) {
     print_block(&a[i*process_block_size*process_block_size],
                  process_block_size, process_block_size, proc_id);

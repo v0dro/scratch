@@ -34,8 +34,8 @@ class ArbitraryTopologyElection (p: ProcessConfig)
   private def isRoot = parent == me
   private var parent = me
   private var children = neighbors.toList
-  // TODO: declare necessary state variables
-
+  private var elected = false
+  private var done = false
 
   private def visitNextChild() {
     children match {

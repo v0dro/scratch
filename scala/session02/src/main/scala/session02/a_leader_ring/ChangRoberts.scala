@@ -66,9 +66,8 @@ object ChangRoberts
   case object Black extends StateColor
 }
 
-
 object ChangRobertsMain
-  extends Main(topology.Clique(2000))(
+  extends Main(topology.Clique(20))(
     ProcessInitializer { p=>
       val app    = new LeaderApp(p)
       val leader = new ChangRoberts(p)
