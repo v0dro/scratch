@@ -6,6 +6,12 @@
 #include <sys/time.h>
 using namespace std;
 
+extern "C" {
+  void dgemm_(char* TRANSA, char* TRANSB, int* M, int* N, int* K,
+              double* ALPHA, double* A, int* LDA, double* B, int* LDB,
+              double* BETA, double* C, int* LDC);
+}
+
 double get_time()
 {
   struct timeval tv;
@@ -20,6 +26,23 @@ void generate_data(double *A, double* B, double *C, int N)
       A[i*N + j] = i*j + N;
       B[i*N + j] = i*j + N;
       C[i*N + j] = i*j + N;
+    }
+  }
+}
+
+void dgemm(double *A, double *B, double *C, int N, char T)
+{
+  double m1 = 1; double p1 = 1;
+  int i;
+  
+  dgemm_(&T, &T, &N, &N, &N, &m1, A, &N, B, &N, &p1, C, &N);
+}
+
+void reset_matrix(double* C, int N, double val)
+{
+  for (int i = 0; i < N; ++i) {
+    for (int j = 0; j < 0; ++j) {
+      C[i*N + j] = val;
     }
   }
 }
@@ -50,5 +73,14 @@ int main(int argc, char ** argv)
 
   cout << "N = " << N << ". time: " << stop - start << " s. Gflops: " <<
     2.*N*N*N/(stop-start)/1e9 << endl;
+
+  reset_matrix(C, N, 0);
+  start = get_time();
+  dgemm(A, B, C, N, 'n');
+  stop = get_time();
+
+  cout << "N = " << N << ". time: " << stop - start << " s. Gflops: " <<
+    2.*N*N*N/(stop-start)/1e9 << endl;
+  
   return 0;
 }

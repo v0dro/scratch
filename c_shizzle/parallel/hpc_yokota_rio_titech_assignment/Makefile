@@ -6,7 +6,7 @@ CFLAGS=-I.
 	$(CXX) -c $? -o $@
 
 main: main.o $(SOURCES)
-	$(CXX) $?
+	$(CXX) $? -lblas
 	./a.out 1000
 
 clean:
