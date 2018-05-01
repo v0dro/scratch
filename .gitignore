@@ -10,3 +10,8 @@ scala/*/project/plugins/project/
 scala/*/.history
 scala/*/.cache
 scala/*/.lib/
+
+# custom
+*.o
+*.so
+*.out
