@@ -23,8 +23,8 @@ void generate_data(double *A, double* B, double *C, int N)
 {
   for (int i=0; i < N; ++i) {
     for (int j=0; j < N; ++j) {
-      A[i*N + j] = i*j + N;
-      B[i*N + j] = i*j + N;
+      A[i*N + j] = i*j + N + i*3;
+      B[i*N + j] = i*j + N + j*4;
       C[i*N + j] = 0;
     }
   }
@@ -41,7 +41,7 @@ void dgemm(double *A, double *B, double *C, int N, char T)
 void reset_matrix(double* C, int N, double val)
 {
   for (int i = 0; i < N; ++i) {
-    for (int j = 0; j < 0; ++j) {
+    for (int j = 0; j < N; ++j) {
       C[i*N + j] = val;
     }
   }
@@ -62,9 +62,10 @@ int main(int argc, char ** argv)
   generate_data(A, B, C, N);
   
   double start = get_time();
+  #pragma omp parallel for
   for (int i=0; i<N; i++) {
-    for (int k=0; k<N; k++) {
-      for (int j=0; j<N; j++) {
+    for (int j=0; j<N; j++) {
+      for (int k=0; k<N; k++) {
         C[i*N + j] += A[i*N + k] * B[k*N + j];
       }
     }
@@ -74,10 +75,10 @@ int main(int argc, char ** argv)
   cout << "N = " << N << ". time: " << stop - start << " s. Gflops: " <<
     2.*N*N*N/(stop-start)/1e9 << endl;
 
-  //reset_matrix(C, N, 0);
   double *D = (double*)calloc(sizeof(double), N*N);
+  reset_matrix(D, N, 0);
   start = get_time();
-  dgemm(A, B, D, N, 'n');
+  dgemm(A, B, D, N, 'T');
   stop = get_time();
 
   cout << "N = " << N << ". time: " << stop - start << " s. Gflops: " <<
@@ -91,6 +92,6 @@ int main(int argc, char ** argv)
     }
   }
 
-  cout << "error: " << error << endl;
+  cout << "error: " << error/N/N << endl;
   return 0;
 }
