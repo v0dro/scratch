@@ -25,7 +25,7 @@ void generate_data(double *A, double* B, double *C, int N)
     for (int j=0; j < N; ++j) {
       A[i*N + j] = i*j + N;
       B[i*N + j] = i*j + N;
-      C[i*N + j] = i*j + N;
+      C[i*N + j] = 0;
     }
   }
 }
@@ -63,8 +63,8 @@ int main(int argc, char ** argv)
   
   double start = get_time();
   for (int i=0; i<N; i++) {
-    for (int j=0; j<N; j++) {
-      for (int k=0; k<N; k++) {
+    for (int k=0; k<N; k++) {
+      for (int j=0; j<N; j++) {
         C[i*N + j] += A[i*N + k] * B[k*N + j];
       }
     }
@@ -74,13 +74,23 @@ int main(int argc, char ** argv)
   cout << "N = " << N << ". time: " << stop - start << " s. Gflops: " <<
     2.*N*N*N/(stop-start)/1e9 << endl;
 
-  reset_matrix(C, N, 0);
+  //reset_matrix(C, N, 0);
+  double *D = (double*)calloc(sizeof(double), N*N);
   start = get_time();
-  dgemm(A, B, C, N, 'n');
+  dgemm(A, B, D, N, 'n');
   stop = get_time();
 
   cout << "N = " << N << ". time: " << stop - start << " s. Gflops: " <<
     2.*N*N*N/(stop-start)/1e9 << endl;
-  
+
+  double error = 0;
+
+  for (int i = 0; i < N; ++i) {
+    for (int j = 0; j < N; ++j) {
+      error += C[i*N + j] - D[i*N + j];
+    }
+  }
+
+  cout << "error: " << error << endl;
   return 0;
 }
