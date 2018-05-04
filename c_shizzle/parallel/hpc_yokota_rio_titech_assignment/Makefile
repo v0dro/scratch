@@ -6,12 +6,12 @@ CFLAGS=-I.
 	$(CXX) -c $? -o $@
 
 main: main.o $(SOURCES)
-	$(CXX) $? -lblas
+	$(CXX) $?
 	./a.out 1000
 
 perf: main.o $(SOURCES)
 	$(CXX) $? -lblas
-	perf stat -B ./a.out 500
+	perf stat -B ./a.out 1000
 
 clean:
 	rm -f *.o *.out

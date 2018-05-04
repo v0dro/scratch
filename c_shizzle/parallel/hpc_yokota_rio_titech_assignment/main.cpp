@@ -17,6 +17,9 @@ using namespace std;
 // nrows and ncols
 int M, N;
 
+// memalign parameter
+#define GEMM_SIMD_ALIGN_SIZE 32
+
 extern "C" {
   void dgemm_(char* TRANSA, char* TRANSB, int* M, int* N, int* K,
               double* ALPHA, double* A, int* LDA, double* B, int* LDB,
@@ -41,19 +44,37 @@ void generate_data(double *A, double* B, double *C, int N)
   }
 }
 
-void dgemm(double *A, double *B, double *C, int N, char T)
+double *malloc_aligned(int m, int n, int size)
 {
-  double m1 = 1; double p1 = 1;
-  int i;
-  
-  dgemm_(&T, &T, &N, &N, &N, &m1, A, &N, B, &N, &p1, C, &N);
+  double *ptr;
+  int    err;
+  err = posix_memalign( (void**)&ptr, (size_t)GEMM_SIMD_ALIGN_SIZE, size * m * n );
+
+  if ( err ) {
+    cout << "bl_malloc_aligned(): posix_memalign() failures";
+    exit( 1 );    
+  }
+    
+  return ptr;
 }
+
 
 void reset_matrix(double* C, int N, double val)
 {
   for (int i = 0; i < N; ++i) {
     for (int j = 0; j < N; ++j) {
       C[i*N + j] = val;
+    }
+  }
+}
+
+void superfast_matmul(double *A, double *B, double *C)
+{
+  for (int i=0; i<N; i++) {
+    for (int k=0; k<N; k++) {
+      for (int j=0; j<N; j++) {
+        C[i*N + j] += A[i*N + k] * B[k*N + j];
+      }
     }
   }
 }
@@ -73,16 +94,9 @@ int main(int argc, char ** argv)
   C = (double*)calloc(sizeof(double), N*N);
   generate_data(A, B, C, N);
   
-  double start = get_time();
-  //#pragma omp parallel for
-  for (int i=0; i<N; i++) {
-    for (int j=0; j<N; j++) {
-      for (int k=0; k<N; k++) {
-        C[i*N + j] += A[i*N + k] * B[k*N + j];
-      }
-    }
-  }
-  double stop = get_time();
+  start = get_time();
+  superfast_matmul(A, B, C);
+  stop = get_time();
 
   cout << "N = " << N << ". time: " << stop - start << " s. Gflops: " <<
     2.*N*N*N/(stop-start)/1e9 << endl;
@@ -90,11 +104,18 @@ int main(int argc, char ** argv)
   double *D = (double*)calloc(sizeof(double), N*N);
   reset_matrix(D, N, 0);
   start = get_time();
-  dgemm(A, B, D, N, 'T');
+  for (int i=0; i<N; i++) {
+    for (int j=0; j<N; j++) {
+      for (int k=0; k<N; k++) {
+        D[i*N + j] += A[i*N + k] * B[k*N + j];
+      }
+    }
+  }
   stop = get_time();
 
   cout << "N = " << N << ". time: " << stop - start << " s. Gflops: " <<
     2.*N*N*N/(stop-start)/1e9 << endl;
+
 
   double error = 0;
 
