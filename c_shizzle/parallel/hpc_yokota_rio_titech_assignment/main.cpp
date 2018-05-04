@@ -6,6 +6,17 @@
 #include <sys/time.h>
 using namespace std;
 
+// individual register block sizes
+#define MR
+#define NR
+
+// cache block sizes
+#define MC
+#define KC
+
+// nrows and ncols
+int M, N;
+
 extern "C" {
   void dgemm_(char* TRANSA, char* TRANSB, int* M, int* N, int* K,
               double* ALPHA, double* A, int* LDA, double* B, int* LDB,
@@ -54,15 +65,16 @@ int main(int argc, char ** argv)
     exit(1);
   }
   
-  int N = atoi(argv[1]);
+  N = atoi(argv[1]); M = N;
   double *A, *B, *C;
+  double start, stop;
   A = (double*)calloc(sizeof(double), N*N);
   B = (double*)calloc(sizeof(double), N*N);
   C = (double*)calloc(sizeof(double), N*N);
   generate_data(A, B, C, N);
   
   double start = get_time();
-  #pragma omp parallel for
+  //#pragma omp parallel for
   for (int i=0; i<N; i++) {
     for (int j=0; j<N; j++) {
       for (int k=0; k<N; k++) {

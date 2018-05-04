@@ -9,5 +9,9 @@ main: main.o $(SOURCES)
 	$(CXX) $? -lblas
 	./a.out 1000
 
+perf: main.o $(SOURCES)
+	$(CXX) $? -lblas
+	perf stat -B ./a.out 500
+
 clean:
 	rm -f *.o *.out
