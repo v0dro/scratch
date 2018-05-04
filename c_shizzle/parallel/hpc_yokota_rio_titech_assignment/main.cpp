@@ -1,37 +1,7 @@
 // Program for achieving highest flops/sec for matrix multiplication.
 // Use SIMD, multi-threading, cache blocking, etc.
 
-#include <iostream>
-#include <cstdlib>
-#include <sys/time.h>
-using namespace std;
-
-// individual register block sizes
-#define MR
-#define NR
-
-// cache block sizes
-#define MC
-#define KC
-
-// nrows and ncols
-int M, N;
-
-// memalign parameter
-#define GEMM_SIMD_ALIGN_SIZE 32
-
-extern "C" {
-  void dgemm_(char* TRANSA, char* TRANSB, int* M, int* N, int* K,
-              double* ALPHA, double* A, int* LDA, double* B, int* LDB,
-              double* BETA, double* C, int* LDC);
-}
-
-double get_time()
-{
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  return double(tv.tv_sec)+double(tv.tv_usec)*1e-6;
-}
+#include "config.hpp"
 
 void generate_data(double *A, double* B, double *C, int N)
 {
@@ -44,35 +14,11 @@ void generate_data(double *A, double* B, double *C, int N)
   }
 }
 
-double *malloc_aligned(int m, int n, int size)
-{
-  double *ptr;
-  int    err;
-  err = posix_memalign( (void**)&ptr, (size_t)GEMM_SIMD_ALIGN_SIZE, size * m * n );
-
-  if ( err ) {
-    cout << "bl_malloc_aligned(): posix_memalign() failures";
-    exit( 1 );    
-  }
-    
-  return ptr;
-}
-
-
-void reset_matrix(double* C, int N, double val)
-{
-  for (int i = 0; i < N; ++i) {
-    for (int j = 0; j < N; ++j) {
-      C[i*N + j] = val;
-    }
-  }
-}
-
 void superfast_matmul(double *A, double *B, double *C)
 {
-  for (int i=0; i<N; i++) {
-    for (int k=0; k<N; k++) {
-      for (int j=0; j<N; j++) {
+  for (int i = 0; i < N; i += NR) {
+    for (int k = 0; k < N; k += KC) {
+      for (int j = 0; j < N; j += MC) {
         C[i*N + j] += A[i*N + k] * B[k*N + j];
       }
     }
