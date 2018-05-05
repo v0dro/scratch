@@ -3,13 +3,16 @@
 #include <sys/time.h>
 using namespace std;
 
+// width of the matrix block ()
+#define NC 1
+
 // individual register block sizes
 #define MR 1
 #define NR 1
 
 // cache block sizes
-#define MC 1
-#define KC 1
+#define MC 5
+#define KC 5
 
 // nrows and ncols
 int M, N;

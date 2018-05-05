@@ -14,12 +14,39 @@ void generate_data(double *A, double* B, double *C, int N)
   }
 }
 
-void superfast_matmul(double *A, double *B, double *C)
+// performs element-wise multiplication
+inline void macro_kernel(double *A, double *B, double *C, int i, int j, int k)
 {
-  for (int i = 0; i < N; i += NR) {
-    for (int k = 0; k < N; k += KC) {
-      for (int j = 0; j < N; j += MC) {
-        C[i*N + j] += A[i*N + k] * B[k*N + j];
+  for (int a = k; a < KC + k; a++) {
+    for (int b = j; b < MC + j; b++) {
+      C[i*N + b] += A[i*N + a] * B[a*N + b];
+    }
+  }
+  // double *A_ptr, *B_ptr, *C_ptr;
+
+  // A_ptr = &A[i*N + k];
+  // B_ptr = &B[k*N + j];
+  // C_ptr = &C[i*N + j];
+        
+  // *C_ptr += (*A_ptr) * (*B_ptr);
+  // *(C_ptr+1) += (*A_ptr) * (*(B_ptr+1));
+  // *(C_ptr+2) += (*A_ptr) * (*(B_ptr+2));
+  // *(C_ptr+3) += (*A_ptr) * (*(B_ptr+3));
+  // *(C_ptr+4) += (*A_ptr) * (*(B_ptr+4));  
+}
+
+void  superfast_matmul(double *A, double *B, double *C)
+{ 
+  for (int i = 0; i < N; i += NC) {
+    for (int k = 0; k < N; k += KC) { // advance by cache block size for col
+      // pack B into an array of size Mc X N.
+      // each subarray of size Mc X Nr is packed separately.
+      // pack into an array Bc.
+      for (int j = 0; j < N; j += MC) { // advance by cache block size for row
+        // pack A into an array of size MC X KC
+        // each horizontal subarray is of size MR X KC.
+        // each MR X KC is packed separately.
+        macro_kernel(A, B, C, i, j, k);
       }
     }
   }
