@@ -3,19 +3,19 @@
 #include <sys/time.h>
 using namespace std;
 
-// width of the matrix block ()
-#define NC 1
+// nrows and ncols
+int M, N;
+
+// width of the matrix block (only considered)
+#define NC N
 
 // individual register block sizes
 #define MR 1
-#define NR 1
+#define NR 3
 
 // cache block sizes
 #define MC 5
 #define KC 5
-
-// nrows and ncols
-int M, N;
 
 // memalign parameter
 #define GEMM_SIMD_ALIGN_SIZE 32

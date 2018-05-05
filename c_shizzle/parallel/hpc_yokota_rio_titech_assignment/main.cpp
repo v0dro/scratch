@@ -35,13 +35,31 @@ inline void macro_kernel(double *A, double *B, double *C, int i, int j, int k)
   // *(C_ptr+4) += (*A_ptr) * (*(B_ptr+4));  
 }
 
-void  superfast_matmul(double *A, double *B, double *C)
-{ 
+void packB_KCxNC(double *packB, int offsetb, double *B)
+{
+  double *b_ptr[NR];
+
+  for (int r = 0; r < NC; r++) {
+    
+  }
+}
+
+inline void superfast_matmul(double *A, double *B, double *C)
+{
+  double *packB, *packA;
+
+  packB = malloc_aligned(KC, NC, sizeof(double));
+  packA = malloc_aligned(MC, KC, sizeof(double));
+  
   for (int i = 0; i < N; i += NC) {
     for (int k = 0; k < N; k += KC) { // advance by cache block size for col
-      // pack B into an array of size Mc X N.
-      // each subarray of size Mc X Nr is packed separately.
+      // pack B into an array of size KC X N.
+      // each subarray of size KC X Nr is packed separately.
       // pack into an array Bc.
+      for (int kp = 0; kp < N; kp += NR) {
+        packB_KCxNC(packB, k, B);
+      }
+
       for (int j = 0; j < N; j += MC) { // advance by cache block size for row
         // pack A into an array of size MC X KC
         // each horizontal subarray is of size MR X KC.
@@ -60,6 +78,12 @@ int main(int argc, char ** argv)
   }
   
   N = atoi(argv[1]); M = N;
+
+  if (N % NC != 0) {
+    cout << "N is not a multiple of NC.";
+    exit(1);
+  }
+  
   double *A, *B, *C;
   double start, stop;
   A = (double*)calloc(sizeof(double), N*N);
