@@ -11,7 +11,7 @@ main: main.o $(SOURCES)
 
 perf: main.o $(SOURCES)
 	$(CXX) $? -lblas
-	perf stat -B ./a.out 1000
+	perf stat -B ./a.out 2000
 
 clean:
 	rm -f *.o *.out

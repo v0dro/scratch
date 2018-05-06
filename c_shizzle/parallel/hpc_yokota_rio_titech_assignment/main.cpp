@@ -3,6 +3,11 @@
 
 #include "config.hpp"
 
+#define A(i,j) A[(i)*N + j]
+#define B(i,j) B[(i)*N + j]
+#define C(i,j) C[(i)*N + j]
+#define BLOCK 4
+
 void generate_data(double *A, double* B, double *C, int N)
 {
   for (int i=0; i < N; ++i) {
@@ -24,23 +29,61 @@ void macro_kernel(double *A, double *B, double *C, int i, int k)
 
 void macro_kernel_1x4(double *A, double *B, double *C, int i, int k)
 {
-  macro_kernel(A, B, C, i, k);
-  macro_kernel(A, B, C, i+1, k);
-  macro_kernel(A, B, C, i+2, k);
-  macro_kernel(A, B, C, i+3, k);
+  register double a0 = A(0,k), a1 = A(1,k), a2 = A(2,k), a3 = A(3,k);
+  double *b_ptr = &B(k,0);
+  
+  for (int j = 0; j < N; j += 1) {
+    C(0,j) += a0*(*b_ptr);
+    C(1,j) += a1*(*b_ptr);
+    C(2,j) += a2*(*b_ptr);
+    C(3,j) += a3*(*b_ptr++);
+  }
 }
 
-// FIXME: implement proper packing logic
-void packB_KCxNC(double *packB, int offsetb, double *B)
+void macro_kernel_4x4(double *A, double *B, double *C, int i, int k)
 {
+  // register double a0 = A(0,k), a1 = A(1,k), a2 = A(2,k), a3 = A(3,k);
+  // double *b_ptr = &B(k,0);
   
+  for (int j = 0; j < N; j += BLOCK) {
+
+// -    for (int ii = i; ii < BLOCK+i; ++ii) {
+//       for (int kk = k; kk < BLOCK+k; ++kk) {
+//         for (int jj = j; jj < BLOCK+j; ++jj) {
+//           C(ii,jj) += A(ii,kk)*B(kk,jj);
+//         }
+//       }
+//     }
+    for (int ii=i; ii < BLOCK+i; ++ii) {
+      C(ii,j)   += A(ii,k)*B(k,j);
+      C(ii,j+1) += A(ii,k)*B(k,j+1);
+      C(ii,j+2) += A(ii,k)*B(k,j+2);
+      C(ii,j+3) += A(ii,k)*B(k,j+3);
+
+      C(ii,j)   += A(ii,k+1)*B(k+1,j);
+      C(ii,j+1) += A(ii,k+1)*B(k+1,j+1);
+      C(ii,j+2) += A(ii,k+1)*B(k+1,j+2);
+      C(ii,j+3) += A(ii,k+1)*B(k+1,j+3);
+
+      C(ii,j)   += A(ii,k+2)*B(k+2,j);
+      C(ii,j+1) += A(ii,k+2)*B(k+2,j+1);
+      C(ii,j+2) += A(ii,k+2)*B(k+2,j+2);
+      C(ii,j+3) += A(ii,k+2)*B(k+2,j+3);
+
+      C(ii,j)   += A(ii,k+3)*B(k+3,j);
+      C(ii,j+1) += A(ii,k+3)*B(k+3,j+1);
+      C(ii,j+2) += A(ii,k+3)*B(k+3,j+2);
+      C(ii,j+3) += A(ii,k+3)*B(k+3,j+3);
+    }
+  }
 }
 
 void superfast_matmul(double *A, double *B, double *C)
 {  
-  for (int i = 0; i < N; i += 4) {
-    for (int k = 0; k < N; k += 1) { // advance rows of B.
-      macro_kernel_1x4(A,B,C,i,k);
+  for (int i = 0; i < N; i += BLOCK) {  // advance rows of C.
+    for (int k = 0; k < N; k += BLOCK) { // advance rows of B.
+      //macro_kernel_1x4(&A[i*N], B, &C[i*N], i, k);
+      macro_kernel_4x4(A, B, C, i, k);
     }
   }
 }
