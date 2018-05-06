@@ -15,27 +15,32 @@ void generate_data(double *A, double* B, double *C, int N)
 }
 
 // performs element-wise multiplication
-inline void macro_kernel(double *A, double *B, double *C, int i, int k)
+void macro_kernel(double *A, double *B, double *C, int i, int k)
 {
   for (int j = 0; j < N; j += 1) {
     C[i*N + j] += A[i*N + k]*B[k*N + j];
   }
 }
 
+void macro_kernel_1x4(double *A, double *B, double *C, int i, int k)
+{
+  macro_kernel(A, B, C, i, k);
+  macro_kernel(A, B, C, i+1, k);
+  macro_kernel(A, B, C, i+2, k);
+  macro_kernel(A, B, C, i+3, k);
+}
+
 // FIXME: implement proper packing logic
 void packB_KCxNC(double *packB, int offsetb, double *B)
 {
-
+  
 }
 
-inline void superfast_matmul(double *A, double *B, double *C)
+void superfast_matmul(double *A, double *B, double *C)
 {  
   for (int i = 0; i < N; i += 4) {
     for (int k = 0; k < N; k += 1) { // advance rows of B.
-      macro_kernel(A, B, C, i, k);
-      macro_kernel(A, B, C, i+1, k);
-      macro_kernel(A, B, C, i+2, k);
-      macro_kernel(A, B, C, i+3, k);
+      macro_kernel_1x4(A,B,C,i,k);
     }
   }
 }
