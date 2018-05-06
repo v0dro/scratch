@@ -45,7 +45,7 @@ void macro_kernel_4x4(double *A, double *B, double *C, int i, int k)
   // register double a0 = A(0,k), a1 = A(1,k), a2 = A(2,k), a3 = A(3,k);
   // double *b_ptr = &B(k,0);
   
-  for (int j = 0; j < N; j += BLOCK) {
+  for (int j = 0; j < N; j += 1) {
 
 // -    for (int ii = i; ii < BLOCK+i; ++ii) {
 //       for (int kk = k; kk < BLOCK+k; ++kk) {
@@ -54,27 +54,27 @@ void macro_kernel_4x4(double *A, double *B, double *C, int i, int k)
 //         }
 //       }
 //     }
-    for (int ii=i; ii < BLOCK+i; ++ii) {
-      C(ii,j)   += A(ii,k)*B(k,j);
-      C(ii,j+1) += A(ii,k)*B(k,j+1);
-      C(ii,j+2) += A(ii,k)*B(k,j+2);
-      C(ii,j+3) += A(ii,k)*B(k,j+3);
+//    for (int ii=i; ii < BLOCK+i; ++ii) {
+      C(i,j) += A(i,k)*B(k,j);
+      C(i,j) += A(i,k+1)*B(k+1,j);
+      C(i,j) += A(i,k+2)*B(k+2,j);
+      C(i,j) += A(i,k+3)*B(k+3,j);
 
-      C(ii,j)   += A(ii,k+1)*B(k+1,j);
-      C(ii,j+1) += A(ii,k+1)*B(k+1,j+1);
-      C(ii,j+2) += A(ii,k+1)*B(k+1,j+2);
-      C(ii,j+3) += A(ii,k+1)*B(k+1,j+3);
+      C(i+1,j)   += A(i+1,k)*B(k,j);
+      C(i+1,j) += A(i+2,k+1)*B(k+1,j);
+      C(i+1,j) += A(i+2,k+2)*B(k+2,j);
+      C(i+1,j) += A(i+2,k+3)*B(k+3,j);
 
-      C(ii,j)   += A(ii,k+2)*B(k+2,j);
-      C(ii,j+1) += A(ii,k+2)*B(k+2,j+1);
-      C(ii,j+2) += A(ii,k+2)*B(k+2,j+2);
-      C(ii,j+3) += A(ii,k+2)*B(k+2,j+3);
+      C(i+2,j)   += A(i+2,k)*B(k,j);
+      C(i+2,j) += A(i+2,k+1)*B(k+1,j);
+      C(i+2,j) += A(i+2,k+2)*B(k+2,j);
+      C(i+2,j) += A(i+2,k+3)*B(k+3,j);
 
-      C(ii,j)   += A(ii,k+3)*B(k+3,j);
-      C(ii,j+1) += A(ii,k+3)*B(k+3,j+1);
-      C(ii,j+2) += A(ii,k+3)*B(k+3,j+2);
-      C(ii,j+3) += A(ii,k+3)*B(k+3,j+3);
-    }
+      C(i+3,j) += A(i+3,k)*B(k,j);
+      C(i+3,j) += A(i+3,k+1)*B(k+1,j);
+      C(i+3,j) += A(i+3,k+2)*B(k+2,j);
+      C(i+3,j) += A(i+3,k+3)*B(k+3,j);
+      //    }
   }
 }
 
