@@ -1,21 +1,22 @@
 #include <iostream>
 #include <cstdlib>
 #include <sys/time.h>
+#include <xmmintrin.h>
 using namespace std;
 
 // nrows and ncols
 int M, N;
 
-// width of the matrix block (only considered)
-#define NC N
+// numrows of the matrix block
+#define NC 250
 
 // individual register block sizes
-#define MR 1
-#define NR 3
+#define MR 5
+#define NR 5
 
 // cache block sizes
-#define MC 5
-#define KC 5
+#define MC 10
+#define KC 10
 
 // memalign parameter
 #define GEMM_SIMD_ALIGN_SIZE 32
