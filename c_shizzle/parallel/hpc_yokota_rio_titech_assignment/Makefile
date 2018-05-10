@@ -1,13 +1,15 @@
-CXX = g++ -ggdb3 -Wall -fopenmp -lm -I.
+CXX = g++ -ggdb3 -Wall -lm -I.
 CFLAGS=-I.
 #SOURCES = libscalapack.a	
+
+.PHONY : clean
 
 .cpp.o:
 	$(CXX) -c $? -o $@
 
 main: main.o $(SOURCES)
 	$(CXX) $?
-	./a.out 1000
+	./a.out 1024
 
 perf: main.o $(SOURCES)
 	$(CXX) $? -lblas

@@ -1,32 +1,40 @@
 #include <iostream>
+#include <algorithm>
 #include <cstdlib>
 #include <cstdio>
 #include <sys/time.h>
-#include <xmmintrin.h>
-using namespace std;
 
+// caches for Xeon E5-2637 v4 - Intel. TSUBAME login node.
+#define L1 128*1024/4/8 //= 4096 doubles => size * bits / cores / sizeof(double)
+#define L2 1024*1024/4/8 // = 32,768
+#define L3 10*1024*1024/4/8 // = 3,27,680
 // nrows and ncols
 int M, N;
 int lda, ldb, ldc;
 
-// numrows of the matrix block
-#define NC 250 // 10
-
 // individual register block sizes
-#define MR 25 // 5
-#define NR 5 // 5
+#define NR 8 // ncols of B micro-panel
+#define MR 8 // nrows of A micro-panel
 
+#define KC L1/NR // nrows of B panel / ncols of A panel
+// numrows of the matrix block
+#define NC L3/KC // 10
 // cache block sizes
-#define MC 250 // 10
-#define KC 250 // 10
+#define MC 8*NR // width of B panel. resides in L2.
+
+// NR * KC -> L1
+// MC * KC -> L2
+// KC * NC -> L3
 
 // memalign parameter
 #define GEMM_SIMD_ALIGN_SIZE 32
 
 typedef struct aux_t {
-  int nc, mc, kc, nr, mr;
+  int nc, mc, kc, nr, mr, kc_min, mc_min;
 } aux_t;
 
+void superfast_matmul(double *A, double *B, double *C, aux_t *aux);
+  
 double get_time()
 {
   struct timeval tv;
@@ -41,7 +49,7 @@ double *malloc_aligned(int m, int n, int size)
   err = posix_memalign( (void**)&ptr, (size_t)GEMM_SIMD_ALIGN_SIZE, size * m * n );
 
   if ( err ) {
-    cout << "bl_malloc_aligned(): posix_memalign() failures";
+    std::cout << "bl_malloc_aligned(): posix_memalign() failures";
     exit( 1 );    
   }
     
@@ -62,9 +70,9 @@ void print_mat(double *a, int nrows, int ncols, char* desc)
   printf("%s\n", desc);
   for (int i = 0; i < nrows; ++i) {
     for (int j = 0; j < ncols; ++j) {
-      cout << a[i*ncols + j] << " ";
+      std::cout << a[i*ncols + j] << " ";
     }
-    cout << endl;
+    std::cout << std::endl;
   }
 }
 
@@ -72,7 +80,18 @@ void print_arr(double *a, int size, char *desc)
 {
   printf("%s\n", desc);
   for (int i = 0; i < size; ++i) {
-    cout << a[i] << " ";
+    std::cout << a[i] << " ";
   }
-  cout << endl;
+  std::cout << std::endl;
+}
+
+void generate_data(double *A, double* B, double *C, int N)
+{
+  for (int i=0; i < N; ++i) {
+    for (int j=0; j < N; ++j) {
+      A[i*N + j] = i + j;
+      B[i*N + j] = i + j;
+      C[i*N + j] = 0;
+    }
+  }
 }

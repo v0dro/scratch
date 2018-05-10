@@ -8,20 +8,9 @@
 #define C(i,j) C[(i)*N + j]
 #define BLOCK 4
 
-void packB_KCxMC(double *packB, double *B, int kc, int mc);
-void packA_NCxKC(double *packA, double *A, int nc, int kc);
-void micro_kernel(double *A, double *B, double *C, int mr, int kc, int nr, aux_t *);
-
-void generate_data(double *A, double* B, double *C, int N)
-{
-  for (int i=0; i < N; ++i) {
-    for (int j=0; j < N; ++j) {
-      A[i*N + j] = i*N + j;
-      B[i*N + j] = i*N + j;
-      C[i*N + j] = 0;
-    }
-  }
-}
+void packB_KCxMC(double *packB, double *B, int , int , aux_t *);
+void packA_NCxKC(double *packA, double *A, int , int , aux_t *);
+void micro_kernel(double *A, double *B, double *C, aux_t *);
 
 // performs element-wise multiplication
 void macro_kernel(double *A, double *B, double *C, int i, int k)
@@ -49,10 +38,6 @@ void macro_kernel_4x4(double *A, double *B, double *C, int i, int k)
   // register double a0 = A(0,k), a1 = A(1,k), a2 = A(2,k), a3 = A(3,k);
   // double *b_ptr = &B(k,0);
   for (int j = 0; j < N; j += 1) {
-
-
-    
-
 // -    for (int ii = i; ii < BLOCK+i; ++ii) {
 //       for (int kk = k; kk < BLOCK+k; ++kk) {
 //         for (int jj = j; jj < BLOCK+j; ++jj) {
@@ -88,7 +73,7 @@ void macro_kernel_4x4(double *A, double *B, double *C, int i, int k)
 
 // XA - array of size NCxKC.
 // XB - array of size KCxMC.
-void macro_kernel(double *XA, double *XB, double *C, int nc, int kc, int mc, aux_t *aux)
+void macro_kernel(double *XA, double *XB, double *C, int nc_min, int kc_min, int mc_min, aux_t *aux)
 {
   // inside this loop is a block of A of dim MC x KC and B of dim KC x NC.
   // now we need to iterate over the elements of these make it run.
@@ -120,119 +105,126 @@ void macro_kernel(double *XA, double *XB, double *C, int nc, int kc, int mc, aux
 
   // Note that the entire configuration changes when row-major is being done. Algorithms
   // must be entirely reworked for that purpose when changing
-  for (int mr = 0; mr < NC; mr += MR) {
-    for (int nr = 0; nr < MC; nr += NR) {
+  for (int mr = 0; mr < nc_min; mr += MR) {
+    for (int nr = 0; nr < mc_min; nr += NR) {
       aux->nr = nr;
       aux->mr = mr;
-      // micro_kernel(&XA[mr*lda], &XB[nr], C, mr, kc, nr, aux);
-      micro_kernel(&XA[mr*KC], &XB[nr], C, mr, kc, nr, aux);
+      micro_kernel(&XA[mr*aux->kc_min], &XB[nr], C, aux);
     }
   }
 }
 
 // multiply micro-panels of size MR x KC and KC x NR.
-void micro_kernel(double *A, double *B, double *C, int mr, int kc, int nr, aux_t *aux)
+void micro_kernel(double *A, double *B, double *C, aux_t *aux)
 {
-  //print_arr(A, MR*KC, "micro A:");
-  //print_arr(B, KC*NR, "micro B:");
   int r = aux->nc + aux->mr;
-  int c = aux->kc + aux->nr;
+  // int c = aux->kc + aux->nr;
+  
   for (int i = 0; i < MR; ++i) {
-    for (int k = 0; k < KC; ++k) {
+    for (int k = 0; k < aux->kc_min; ++k) {
       for (int j = 0; j < NR; ++j) {
-        C[(r+i)*ldc + j + nr + aux->mc] += A[(i)*KC + k]*B[(k)*MC + j]; // k,j
+        C[(r+i)*ldc + j + aux->nr + aux->mc] += A[(i)*aux->kc_min + k]*B[(k)*aux->mc_min + j]; // k,j
       }
     }
   }
 }
 
-void superfast_matmul(double *A, double *B, double *C, aux_t *aux)
+void matmul(double *A, double *B, double *C, aux_t *aux)
 {
-  double packA[NC*KC], packB[KC*MC];
+  double *packA, *packB;
+  packA = (double*)malloc(sizeof(double)*NC*KC);
+  packB = (double*)malloc(sizeof(double)*KC*MC);
   // each iteration of this loop advances the rows of A and C.
   for (int nc = 0; nc < N; nc += NC) {  // like i.
+    aux->nc = nc;
+    int nc_min = std::min((N-nc), NC);
+    
     // each iteration of this advances the cols of A and rows of B.
     for (int kc = 0; kc < N; kc += KC) { // like k.
-      packA_NCxKC(packA, A, nc, kc);
-      //print_mat(packA, NC, KC, "packA:");
-      //print_arr(packA, NC*KC, "packA:");
+      int kc_min = std::min((N-kc), KC);
+      aux->kc = kc;
+      aux->kc_min = kc_min;
+      packA_NCxKC(packA, A, nc_min, kc_min, aux);
+
       // each iteration advances the cols of B and C.
       for (int mc = 0; mc < N; mc += MC) { // like j.
-        packB_KCxMC(packB, B, kc, mc);
-        //print_mat(packB, KC, MC, "packB:");
-        //print_arr(packB, KC*MC, "packB:");
-        aux->nc = nc; aux->kc = kc; aux->mc = mc;
-        //macro_kernel(&A[nc*lda + kc], &B[kc*lda + mc], C, nc, kc, mc, aux);
-        macro_kernel(packA, packB, C, nc, kc, mc, aux);
+        aux->mc = mc;
+        int mc_min = std::min(N-mc, MC);
+        aux->mc_min = mc_min;
+        
+        packB_KCxMC(packB, B, kc_min, mc_min, aux);
+        macro_kernel(packA, packB, C, nc_min, kc_min, mc_min, aux);
       }
     }
   }
 }
 
-void packA_NCxKC(double *packA, double *A, int nc, int kc)
+void packA_NCxKC(double *packA, double *A, int nc_min, int kc_min, aux_t *aux)
 {
   double *packA_temp = packA;
   double *A_ptr;
   
-  for (int n = nc; n < nc + NC; ++n) {
-    A_ptr = &A(n,kc);
-    for (int k = 0; k < KC; ++k) {
+  for (int n = aux->nc; n < aux->nc + nc_min; ++n) {
+    A_ptr = &A(n,aux->kc);
+    for (int k = 0; k < kc_min; ++k) {
       *(packA_temp++) = *(A_ptr++);
     }
   }
 }
 
-void packB_KCxMC(double *packB, double *B, int kc, int mc)
+void packB_KCxMC(double *packB, double *B, int kc_min, int mc_min, aux_t *aux)
 {
   double *packB_temp = packB, *temp;
   double *B_ptr;
 
-  for (int k = kc; k < kc + KC; k += 1) {
-    B_ptr = &B(k, mc);
-    for (int m = 0; m < MC; m += NR) {
+  for (int k = aux->kc; k < aux->kc + kc_min; k += 1) {
+    B_ptr = &B(k, aux->mc);
+    for (int m = 0; m < mc_min; m += NR) {
       temp = B_ptr + m;
       for (int i = 0; i < NR; i++) {
         *(packB_temp++) = *(temp++);
       }
-    }
+    }    
   }
 }
 
 int main(int argc, char ** argv)
 {
   if (argc != 2) {
-    cout << "provide nrows and ncols" << endl;
+    std::cout << "provide nrows and ncols" << std::endl;
     exit(1);
   }
 
   if (MC < MR) {
-    cout << "wrong config: MC should be greater than MR." << endl;
+    std::cout << "wrong config: MC should be greater than MR." << std::endl;
     exit(1);
   }
   
   N = atoi(argv[1]); M = N;
 
-  if (N % NC != 0){ 
-    cout << "N" << N << "is not a multiple of NC " << NC << endl;;
-    exit(1);
-  }
-
+  // if (N % NC != 0){ 
+  //   std::cout << "N" << N << "is not a multiple of NC " << NC << endl;;
+  //   exit(1);
+  // }
   lda = ldb = ldc = N;
+  // double A[N*N], B[N*N], C[N*N];
   double *A, *B, *C;
   double start, stop;
   aux_t aux;
-  A = (double*)calloc(sizeof(double), N*N);
-  B = (double*)calloc(sizeof(double), N*N);
-  C = (double*)calloc(sizeof(double), N*N);
+  A = (double*)malloc(sizeof(double)*N*N);
+  B = (double*)malloc(sizeof(double)*N*N);
+  C = (double*)malloc(sizeof(double)*N*N);
   generate_data(A, B, C, N);
   
   start = get_time();
-  //print_mat(A, N, N, "A:");
-  superfast_matmul(A, B, C, &aux);
+  // print_mat(A, N, N, "A:");
+  // print_mat(B, N, N, "A:");
+  // print_mat(C, N, N, "A:");
+  matmul(A, B, C, &aux);
   stop = get_time();
 
-  cout << "N = " << N << ". time: " << stop - start << " s. Gflops: " <<
-    2.*N*N*N/(stop-start)/1e9 << endl;
+  std::cout << "N = " << N << ". time: " << stop - start << " s. Gflops: " <<
+    2.*N*N*N/(stop-start)/1e9 << std::endl;
 
   double *D = (double*)calloc(sizeof(double), N*N);
   reset_matrix(D, N, 0);
@@ -246,8 +238,8 @@ int main(int argc, char ** argv)
   }
   stop = get_time();
 
-  cout << "N = " << N << ". time: " << stop - start << " s. Gflops: " <<
-    2.*N*N*N/(stop-start)/1e9 << endl;
+  std::cout << "N = " << N << ". time: " << stop - start << " s. Gflops: " <<
+    2.*N*N*N/(stop-start)/1e9 << std::endl;
 
 
   double error = 0;
@@ -258,6 +250,6 @@ int main(int argc, char ** argv)
     }
   }
 
-  cout << "error: " << error/N/N << endl;
+  std::cout << "error: " << error/N/N << std::endl;
   return 0;
 }
