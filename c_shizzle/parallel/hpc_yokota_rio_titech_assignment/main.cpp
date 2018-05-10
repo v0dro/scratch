@@ -133,14 +133,14 @@ void macro_kernel(double *XA, double *XB, double *C, int nc, int kc, int mc, aux
 // multiply micro-panels of size MR x KC and KC x NR.
 void micro_kernel(double *A, double *B, double *C, int mr, int kc, int nr, aux_t *aux)
 {
-  print_arr(A, MR*KC, "micro A:");
-  print_arr(B, KC*NR, "micro B:");
+  //print_arr(A, MR*KC, "micro A:");
+  //print_arr(B, KC*NR, "micro B:");
   int r = aux->nc + aux->mr;
   int c = aux->kc + aux->nr;
   for (int i = 0; i < MR; ++i) {
     for (int k = 0; k < KC; ++k) {
       for (int j = 0; j < NR; ++j) {
-        C[(r+i)*ldc + j + nr + aux->mc] += A[(i)*KC + k]*B[(k)*ldb + j]; // k,j
+        C[(r+i)*ldc + j + nr + aux->mc] += A[(i)*KC + k]*B[(k)*MC + j]; // k,j
       }
     }
   }
@@ -227,7 +227,7 @@ int main(int argc, char ** argv)
   generate_data(A, B, C, N);
   
   start = get_time();
-  print_mat(A, N, N, "A:");
+  //print_mat(A, N, N, "A:");
   superfast_matmul(A, B, C, &aux);
   stop = get_time();
 

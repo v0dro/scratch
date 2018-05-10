@@ -10,7 +10,7 @@ int M, N;
 int lda, ldb, ldc;
 
 // numrows of the matrix block
-#define NC 10 // 10
+#define NC 250 // 10
 
 // individual register block sizes
 #define MR 5 // 5

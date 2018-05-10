@@ -7,7 +7,7 @@ CFLAGS=-I.
 
 main: main.o $(SOURCES)
 	$(CXX) $?
-	./a.out 20
+	./a.out 1000
 
 perf: main.o $(SOURCES)
 	$(CXX) $? -lblas
