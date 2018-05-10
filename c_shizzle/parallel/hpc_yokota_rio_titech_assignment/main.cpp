@@ -109,7 +109,7 @@ void macro_kernel(double *XA, double *XB, double *C, int nc_min, int kc_min, int
     for (int nr = 0; nr < mc_min; nr += NR) {
       aux->nr = nr;
       aux->mr = mr;
-      micro_kernel(&XA[mr*aux->kc_min], &XB[nr], C, aux);
+      micro_kernel(&XA[mr*aux->kc_min], &XB[nr], &C[mr*MR + nr], aux);
     }
   }
 }
@@ -117,15 +117,19 @@ void macro_kernel(double *XA, double *XB, double *C, int nc_min, int kc_min, int
 // multiply micro-panels of size MR x KC and KC x NR.
 void micro_kernel(double *A, double *B, double *C, aux_t *aux)
 {
-  int r = aux->nc + aux->mr;
-  // int c = aux->kc + aux->nr;
+  double *A_ptr, * B_ptr, *C_ptr;
+  C_ptr = C;
   
   for (int i = 0; i < MR; ++i) {
+    A_ptr = &A[i*aux->kc_min];
     for (int k = 0; k < aux->kc_min; ++k) {
+      B_ptr = &B[k*aux->mc_min];
       for (int j = 0; j < NR; ++j) {
-        C[(r+i)*ldc + j + aux->nr + aux->mc] += A[(i)*aux->kc_min + k]*B[(k)*aux->mc_min + j]; // k,j
+        *(C_ptr++) += *(A_ptr)*(*B_ptr++);
       }
+      A_ptr++;
     }
+    C_ptr += ldc;
   }
 }
 
@@ -153,7 +157,7 @@ void matmul(double *A, double *B, double *C, aux_t *aux)
         aux->mc_min = mc_min;
         
         packB_KCxMC(packB, B, kc_min, mc_min, aux);
-        macro_kernel(packA, packB, C, nc_min, kc_min, mc_min, aux);
+        macro_kernel(packA, packB, &C[nc*nc_min], nc_min, kc_min, mc_min, aux);
       }
     }
   }
