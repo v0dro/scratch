@@ -10,15 +10,15 @@ int M, N;
 int lda, ldb, ldc;
 
 // numrows of the matrix block
-#define NC 20
+#define NC 10 // 10
 
 // individual register block sizes
-#define MR 20
-#define NR 20
+#define MR 5 // 5
+#define NR 5 // 5
 
 // cache block sizes
-#define MC 20
-#define KC 20
+#define MC 10 // 10
+#define KC 10 // 10
 
 // memalign parameter
 #define GEMM_SIMD_ALIGN_SIZE 32

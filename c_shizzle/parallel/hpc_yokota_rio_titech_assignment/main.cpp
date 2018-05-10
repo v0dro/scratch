@@ -124,7 +124,8 @@ void macro_kernel(double *XA, double *XB, double *C, int nc, int kc, int mc, aux
     for (int nr = 0; nr < MC; nr += NR) {
       aux->nr = nr;
       aux->mr = mr;
-      micro_kernel(XA, XB, C, mr, kc, nr, aux);
+      // micro_kernel(&XA[mr*lda], &XB[nr], C, mr, kc, nr, aux);
+      micro_kernel(&XA[mr*KC], &XB[nr], C, mr, kc, nr, aux);
     }
   }
 }
@@ -139,7 +140,7 @@ void micro_kernel(double *A, double *B, double *C, int mr, int kc, int nr, aux_t
   for (int i = 0; i < MR; ++i) {
     for (int k = 0; k < KC; ++k) {
       for (int j = 0; j < NR; ++j) {
-        C[(r+i)*ldc + j + c] += A[(i)*KC + k]*B[(k)*MC + j]; // k,j
+        C[(r+i)*ldc + j + nr + aux->mc] += A[(i)*KC + k]*B[(k)*ldb + j]; // k,j
       }
     }
   }
@@ -161,6 +162,7 @@ void superfast_matmul(double *A, double *B, double *C, aux_t *aux)
         //print_mat(packB, KC, MC, "packB:");
         //print_arr(packB, KC*MC, "packB:");
         aux->nc = nc; aux->kc = kc; aux->mc = mc;
+        //macro_kernel(&A[nc*lda + kc], &B[kc*lda + mc], C, nc, kc, mc, aux);
         macro_kernel(packA, packB, C, nc, kc, mc, aux);
       }
     }
