@@ -13,12 +13,12 @@ int lda, ldb, ldc;
 #define NC 250 // 10
 
 // individual register block sizes
-#define MR 5 // 5
+#define MR 25 // 5
 #define NR 5 // 5
 
 // cache block sizes
-#define MC 10 // 10
-#define KC 10 // 10
+#define MC 250 // 10
+#define KC 250 // 10
 
 // memalign parameter
 #define GEMM_SIMD_ALIGN_SIZE 32
