@@ -7,7 +7,11 @@ CFLAGS=-I.
 
 main: main.o $(SOURCES)
 	$(CXX) $?
-	./a.out 1000
+	./a.out 20
+
+perf: main.o $(SOURCES)
+	$(CXX) $? -lblas
+	perf stat -B ./a.out 2000
 
 clean:
 	rm -f *.o *.out
