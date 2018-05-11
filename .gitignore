@@ -15,3 +15,5 @@ scala/*/.lib/
 *.o
 *.so
 *.out
+*.class
+*.cache

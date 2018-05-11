@@ -4,3 +4,6 @@ run
 compile
 run
 exit
+run
+quit
+exit

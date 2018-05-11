@@ -1,4 +1,4 @@
-CXX = mpicxx -ggdb3 -Wall -O3 -fopenmp -lm -I.
+CXX = mpicxx -ggdb3 -Wall -fPIC -O3 -fopenmp -lm -I.
 CFLAGS=-I.
 SOURCES = libscalapack.a
 
