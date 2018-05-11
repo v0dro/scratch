@@ -1,9 +1,10 @@
 // Author: @v0dro
 // Desc: Store a distributed matrix in contiguos blocks in an array on each
-// process and perform a synchronous LU decomposition.
+// process and perform a synchronous LU decomposition. Assume square block
+// decomposition
+
 #include "sync_lu_decomp.hpp"
 
-// assume square block decomposition
 int main(int argc, char ** argv)
 {
   // MPI init
@@ -33,23 +34,28 @@ int main(int argc, char ** argv)
   // create array descriptor
   int desca[9];
   int rsrc = 0, csrc = 0, info;
-  descinit_(desca, &N, &N, &nb, &nb, &rsrc, &csrc, &BLACS_CONTEXT, &nb, &info);
+  int b_fac = 2;
+  int lld = numroc_(&N, &b_fac, &myrow, &rsrc, &num_procs);
+  lld = 4;
+  descinit_(desca, &N, &N, &b_fac, &b_fac, &rsrc, &csrc, &BLACS_CONTEXT, &lld, &info);
   // end create array descriptor
  
-  int iprc = 0; int src = 0;
-  cout << "num rows:" << numroc_(&N, &nb, &iprc, &src, &num_procs) << endl;
   // synchronous LU decomposition
   //   loop over blocks in each process.
   // This loop iterates over each block in each process.
+  int *ipiv;
+  ipiv = (int*)malloc(sizeof(int)*N);
 
   // loop over matrix blocks.
-  for (int j = 0; j < N; j += nb) {
-    // diagonal_block_lu();
+  for (int ia = 0; ia < nb; ia += nb) {
+    diagonal_block_lu(a, ia, nb, N, ipiv, &BLACS_CONTEXT, desca);
     // compute LU of diagonal block.
     // broadcast block along rows and cols.
     // broadcast row and col blocks along the lower right block of the matrix and multiply.
     // 
   }
+
+  print_files(a, nb, nb, myrow, mycol);
 
   
   // end synchronous LU decomposition

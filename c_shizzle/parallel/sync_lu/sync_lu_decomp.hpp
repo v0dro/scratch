@@ -1,8 +1,12 @@
+#ifndef SYNC_LU_DECOMP_H
+#define SYNC_LU_DECOMP_H
+
 #include "mpi.h"
 #include <cstdlib>
 #include <iostream>
 #include <cmath>
 #include "utils.hpp"
+#include "implementation.hpp"
 using namespace std;
 
 void print_block(double *a, int nrows, int ncols, int proc_id)
@@ -15,3 +19,4 @@ void print_block(double *a, int nrows, int ncols, int proc_id)
   }
 }
 
+#endif /* SYNC_LU_DECOMP_H */

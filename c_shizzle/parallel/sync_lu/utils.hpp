@@ -1,3 +1,12 @@
+#ifndef UTILS_H
+#define UTILS_H
+
+#include <iostream>
+#include <cstdlib>
+#include <fstream>
+#include <string>
+using namespace std;
+
 extern "C" {
   /* Cblacs declarations */
   void Cblacs_pinfo(int*, int*);
@@ -20,6 +29,14 @@ extern "C" {
                 double * B, int * IB, int * JB, int * DESCB,
                 double * BETA,
                 double * C, int * IC, int * JC, int * DESCC );
+
+  void pdgetrf_(int * M, int * N, double * A,
+                int * IA, int * JA, int * DESCA,
+                int * IPIV, int * INFO);
+
+  void pdgetf2_(int * M, int * N, double * A,
+                int * IA, int * JA, int * DESCA, int *IPIV,
+                int * INFO);
   
 }
 
@@ -29,3 +46,15 @@ void initialize_blacs(int *BLACS_CONTEXT, int *proc_nrows, int *proc_ncols,
 void generate_data(double *a, int block_size_per_process_r,
                    int block_size_per_process_c, int process_block_size,
                    int num_blocks_per_process, int myrow, int mycol, int N);
+
+void print_arr(double *A, int size, string desc, ostream &o);
+
+void print_mat(double *A, int nrows, int ncols, int myrow, int mycol,
+               string desc, ostream &o);
+  
+void print_all(double *A, int nrows, int ncols, int myrow, int mycol, char *desc);
+
+void print_block(double *A, int nb, int nc, int myrow, int mycol, char *desc);
+
+void print_files(double *A, int nrows, int ncols, int myrow, int mycol);
+#endif /* UTILS_H */
