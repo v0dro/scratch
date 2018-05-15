@@ -5,8 +5,8 @@ import neko._
 object ParallelBcast
 {
   // define case classes
-  case class Go(from: PID, to: PID, payload: Long) extends UnicastMessage
-  case class Back(from: PID, to: PID, payload: List[Long]) extends UnicastMessage
+  case class Go(from: PID, to: PID, payload: List[Double]) extends UnicastMessage
+  case class Back(from: PID, to: PID, payload: List[Double]) extends UnicastMessage
   case class Start(from: PID, to: PID) extends UnicastMessage
 }
 
@@ -14,10 +14,10 @@ class ParallelTraversal(c: ProcessConfig) extends ReactiveProtocol(c, "bcast cca
 {
   import ParallelBcast._
 
-  private var parent = Option[]
-  private var children = None
+  private var parent = PID(-1) // set parent to PID = -1 so its non-existent for now
+  private var children = Nil // init children list
   private var expected_msgs = neighbors.size
-  private val value_set = Nil
+  private var value_set = Nil
 
   def onSend = {
     case _ =>
@@ -32,18 +32,18 @@ class ParallelTraversal(c: ProcessConfig) extends ReactiveProtocol(c, "bcast cca
     case Start(_,_) =>
       // set parent to itself to signify root node.
       parent = me
-      val l = 1 :: Nil
+      val l = 1.0 :: Nil
 
       for (x <- neighbors.toIterator) {
         SEND(Go(me, x, l))
       }
     case Go(from, to, msg) =>
-      if (parent == None) {
+      if (parent == PID(-1)) {
         // set the parent to what ever process among the neighbors
         //   sends a message first.
         parent = from
         // set children 
-        children = None
+        children = Nil
         // indicates that a msg has been received from the parent of
         //   this process.
         expected_msgs -= 1
@@ -59,26 +59,27 @@ class ParallelTraversal(c: ProcessConfig) extends ReactiveProtocol(c, "bcast cca
         }
       }
       else {
-        SEND(Back(me, from,_))
+        val msg = Nil
+        SEND(Back(me, from, msg))
       }
     case Back(from, to, msg) =>
       // Successfully received back a message so decrement expected_msgs counter.
       expected_msgs -= 1
-      msg = 1 :: msg
       if (expected_msgs == 0) {
+        val new_msg = 1.0 :: msg
         if (parent != me) { // if this is not the root node
-          SEND(Back(me, parent, msg))
+          SEND(Back(me, parent, new_msg))
         }
         else { // if this is the root node
-          println("computed value: " + compute_function(msg))
+          println("computed value: " + compute_function(new_msg))
         }
       }
     case _ =>
       println("nothing")
   }
 
-  def compute_function(msg: List[Long]) : Long = {
-    val sum = 0
+  def compute_function(msg: List[Double]) : Double = {
+    var sum = 0.0
     for (x <- msg.toIterator) {
       sum += x
     }
