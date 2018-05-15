@@ -9,8 +9,12 @@ import neko._
 
 class BcastApp(p: ProcessConfig) extends ActiveProtocol(p, "bcast ccast")
 {
-  def run() {
+  import ParallelBcast._
 
+  def run() {
+    if (me == PID(0)) {
+      SEND(Start(me, PID(0)))
+    }
   }
 }
 

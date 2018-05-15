@@ -16,17 +16,19 @@ class ParallelTraversal(c: ProcessConfig) extends ReactiveProtocol(c, "bcast cca
 
   private val parent = None
   private val children = None
-  //private val expected_msgs // how to get number of neighbours of process?
+  private val expected_msgs = neighbors.size
 
   def onSend = {
-    case _ => SEND(Go(me, PID(0), 1))
+    case _ =>
+      SEND(Go(me, PID(0), 1))
+      println("expected:" + expected_msgs)
   }
 
   listenTo(classOf[Go])
   listenTo(classOf[Back])
   listenTo(classOf[Start])
   def onReceive = {
-    case _ => SEND(Go(me, PID(0), 1))
+    case Start(_,_) => SEND(Go(me, PID(0), 1))
     // case Start(from, to) =>
     //   //
     // case _ =>
