@@ -20,7 +20,8 @@ class ParallelTraversal(c: ProcessConfig) extends ReactiveProtocol(c, "bcast cca
 
   def onSend = {
     case _ =>
-      SEND(Go(me, PID(0), 1))
+      // SEND(Go(me, PID(0), 1))
+      println("PID is:" + me)
       println("expected:" + expected_msgs)
   }
 
@@ -28,7 +29,12 @@ class ParallelTraversal(c: ProcessConfig) extends ReactiveProtocol(c, "bcast cca
   listenTo(classOf[Back])
   listenTo(classOf[Start])
   def onReceive = {
-    case Start(_,_) => SEND(Go(me, PID(0), 1))
+    case Start(_,_) =>
+      for (x <- neighbors.toIterator) {
+        SEND(Go(me, x, 1))
+      }
+    case _ => println("nothing")
+      
     // case Start(from, to) =>
     //   //
     // case _ =>
