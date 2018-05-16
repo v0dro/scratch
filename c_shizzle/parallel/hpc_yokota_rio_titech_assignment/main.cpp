@@ -130,36 +130,39 @@ void micro_kernel(double *A, double *B, double *C, aux_t *aux)
       B_ptr = &B[k*aux->mc_min];
       //    A_avx = _mm256_load_pd(A_ptr);
       for (int j = 0; j < NR; j += 4) {
+        // C(i,j) += A(i,k)*B(k,j)
         // B_avx = _mm256_load_pd(B_ptr);
         // C_avx = _mm256_load_pd(C_ptr);
         // C_avx = _mm256_fmadd_pd(A_avx, B_avx, C_avx);
         // _mm256_store_pd(C_ptr, C_avx);
         
         *(C_ptr)   += *(A_ptr)*(*B_ptr);
-        *(C_ptr+1) += *(A_ptr)*(*B_ptr+1);
-        *(C_ptr+2) += *(A_ptr)*(*B_ptr+2);
-        *(C_ptr+3) += *(A_ptr)*(*B_ptr+3);
+        *(C_ptr+1) += *(A_ptr)*(*(B_ptr+1));
+        *(C_ptr+2) += *(A_ptr)*(*(B_ptr+2));
+        *(C_ptr+3) += *(A_ptr)*(*(B_ptr+3));
 
         *(C_ptr)   += *(A_ptr+1)*(*B_ptr);
-        *(C_ptr+1) += *(A_ptr+1)*(*B_ptr+1);
-        *(C_ptr+2) += *(A_ptr+1)*(*B_ptr+2);
-        *(C_ptr+3) += *(A_ptr+1)*(*B_ptr+3);
+        *(C_ptr+1) += *(A_ptr+1)*(*(B_ptr+1));
+        *(C_ptr+2) += *(A_ptr+1)*(*(B_ptr+2));
+        *(C_ptr+3) += *(A_ptr+1)*(*(B_ptr+3));
 
         *(C_ptr)   += *(A_ptr+2)*(*B_ptr);
-        *(C_ptr+1) += *(A_ptr+2)*(*B_ptr+1);
-        *(C_ptr+2) += *(A_ptr+2)*(*B_ptr+2);
-        *(C_ptr+3) += *(A_ptr+2)*(*B_ptr+3);
+        *(C_ptr+1) += *(A_ptr+2)*(*(B_ptr+1));
+        *(C_ptr+2) += *(A_ptr+2)*(*(B_ptr+2));
+        *(C_ptr+3) += *(A_ptr+2)*(*(B_ptr+3));
 
         *(C_ptr)   += *(A_ptr+3)*(*B_ptr);
-        *(C_ptr+1) += *(A_ptr+3)*(*B_ptr+1);
-        *(C_ptr+2) += *(A_ptr+3)*(*B_ptr+2);
-        *(C_ptr+3) += *(A_ptr+3)*(*B_ptr+3);
+        *(C_ptr+1) += *(A_ptr+3)*(*(B_ptr+1));
+        *(C_ptr+2) += *(A_ptr+3)*(*(B_ptr+2));
+        *(C_ptr+3) += *(A_ptr+3)*(*(B_ptr+3));
+        
         B_ptr += 4;
         C_ptr += 4;
         //*(C_ptr++) += *(A_ptr)*(*B_ptr++);
       }
+      C_ptr -= 8;
       // replace innermost loop with AVX2 instructions.
-      A_ptr += 4;
+      A_ptr += 4;      
     }
     C_ptr += ldc;
   }
