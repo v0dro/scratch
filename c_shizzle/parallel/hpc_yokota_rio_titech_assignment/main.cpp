@@ -119,14 +119,21 @@ void micro_kernel(double *A, double *B, double *C, aux_t *aux)
 {
   double *A_ptr, * B_ptr, *C_ptr;
   C_ptr = C;
+
+  // AVX2 container for A, B and C.
+  _mm256d A_avx, B_avx, C_avx;
   
   for (int i = 0; i < MR; ++i) {
     A_ptr = &A[i*aux->kc_min];
     for (int k = 0; k < aux->kc_min; ++k) {
       B_ptr = &B[k*aux->mc_min];
-      for (int j = 0; j < NR; ++j) {
-        *(C_ptr++) += *(A_ptr)*(*B_ptr++);
+      for (int j = 0; j < NR; j += 4) {
+        B_avx = _mm256_load_pd(B_ptr);
+        
+        // *(C_ptr++) += *(A_ptr)*(*B_ptr++);
       }
+      // replace innermost loop with AVX2 instructions.
+      
       A_ptr++;
     }
     C_ptr += ldc;
@@ -136,8 +143,8 @@ void micro_kernel(double *A, double *B, double *C, aux_t *aux)
 void matmul(double *A, double *B, double *C, aux_t *aux)
 {
   double *packA, *packB;
-  packA = (double*)malloc(sizeof(double)*NC*KC);
-  packB = (double*)malloc(sizeof(double)*KC*MC);
+  packA = (double*)malloc_aligned(NC, KC, sizeof(double));
+  packB = (double*)malloc_aligned(KC, MC, sizeof(double));
   // each iteration of this loop advances the rows of A and C.
   for (int nc = 0; nc < N; nc += NC) {  // like i.
     aux->nc = nc;
