@@ -1,1 +1,64 @@
-[0m[[0m[0mdebug[0m] [0m[0mNo changes[0m
+[0m[[0m[0mdebug[0m] [0m[0mInvalidating /home/sameer/.ivy2/cache/titech.c.coord/scalaneko_2.12/jars/scalaneko_2.12-0.19.0-SNAPSHOT.jar: stamp changed from lastModified(1523533863466) to lastModified(1525495713095)[0m
+[0m[[0m[0mdebug[0m] [0m[0mInvalidating /usr/lib/jvm/java-8-openjdk-amd64/jre/lib/rt.jar: stamp changed from lastModified(1521029755000) to lastModified(1524839833000)[0m
+[0m[[0m[0mdebug[0m] [0m[0m[0m
+[0m[[0m[0mdebug[0m] [0m[0mInitial source changes: [0m
+[0m[[0m[0mdebug[0m] [0m[0m	removed:Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0m	added: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0m	modified: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0mInvalidated products: Set(/home/sameer/gitrepos/scratch/scala/hello/target/scala-2.12/classes/session01/a_hello/Hello.class, /home/sameer/gitrepos/scratch/scala/hello/target/scala-2.12/classes/session01/a_hello/HelloNeko$$anonfun$$lessinit$greater$1.class, /home/sameer/gitrepos/scratch/scala/hello/target/scala-2.12/classes/session01/a_hello/HelloNeko$.class, /home/sameer/gitrepos/scratch/scala/hello/target/scala-2.12/classes/session01/a_hello/HelloNeko.class)[0m
+[0m[[0m[0mdebug[0m] [0m[0mExternal API changes: API Changes: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0mModified binary dependencies: Set(/home/sameer/.ivy2/cache/titech.c.coord/scalaneko_2.12/jars/scalaneko_2.12-0.19.0-SNAPSHOT.jar, /usr/lib/jvm/java-8-openjdk-amd64/jre/lib/rt.jar)[0m
+[0m[[0m[0mdebug[0m] [0m[0mInitial directly invalidated classes: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0m[0m
+[0m[[0m[0mdebug[0m] [0m[0mSources indirectly invalidated by:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	product: Set(/home/sameer/gitrepos/scratch/scala/hello/src/main/scala/example/Hello.scala)[0m
+[0m[[0m[0mdebug[0m] [0m[0m	binary dep: Set(/home/sameer/gitrepos/scratch/scala/hello/src/main/scala/example/Hello.scala)[0m
+[0m[[0m[0mdebug[0m] [0m[0m	external source: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0mAll sources are invalidated.[0m
+[0m[[0m[0mdebug[0m] [0m[0mRecompiling all 1 sources: invalidated sources (1) exceeded 50.0% of all sources[0m
+[0m[[0m[0minfo[0m] [0m[0mCompiling 1 Scala source to /home/sameer/gitrepos/scratch/scala/hello/target/scala-2.12/classes ...[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting org.scala-sbt:compiler-bridge_2.12:1.1.1:compile for Scala 2.12.5[0m
+[0m[[0m[0minfo[0m] [0m[0mNon-compiled module 'compiler-bridge_2.12' for Scala 2.12.5. Compiling...[0m
+[0m[[0m[0mdebug[0m] [0m[0mCreating plain compiler interface for 2.12.5.[0m
+[0m[[0m[0mdebug[0m] [0m[0m  > Arguments: [0m
+[0m[[0m[0mdebug[0m] [0m[0m	-nowarn[0m
+[0m[[0m[0mdebug[0m] [0m[0m	-d[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_857cf89f[0m
+[0m[[0m[0mdebug[0m] [0m[0m	-bootclasspath[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/resources.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/rt.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/sunrsasign.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/jsse.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/jce.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/charsets.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/jfr.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/classes:/home/sameer/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.5.jar[0m
+[0m[[0m[0mdebug[0m] [0m[0m	-classpath[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_7a2aaf0c/jars/org.scala-sbt/compiler-interface/compiler-interface-1.1.1.jar:/tmp/sbt_7a2aaf0c/jars/org.scala-sbt/util-interface/util-interface-1.1.2.jar:/tmp/sbt_7a2aaf0c/srcs/org.scala-sbt/compiler-bridge_2.12/compiler-bridge_2.12-1.1.1-sources.jar:/home/sameer/.ivy2/cache/org.scala-lang/scala-compiler/jars/scala-compiler-2.12.5.jar:/home/sameer/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.12.5.jar:/home/sameer/.ivy2/cache/org.scala-lang.modules/scala-xml_2.12/bundles/scala-xml_2.12-1.0.6.jar:/home/sameer/.ivy2/cache/jline/jline/jars/jline-2.14.5.jar[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/API.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/Analyzer.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/CallbackGlobal.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/ClassName.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/Command.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/Compat.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/CompilerInterface.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/ConsoleInterface.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/DelegatingReporter.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/Dependency.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/ExtractAPI.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/ExtractUsedNames.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/GlobalHelpers.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/InteractiveConsoleFactory.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/InteractiveConsoleHelper.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/InteractiveConsoleInterface.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/InteractiveConsoleResponse.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/JavaUtils.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/LocalToNonLocalClass.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/LocateClassFile.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/Log.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/Message.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/tmp/sbt_5f008f7b/xsbt/ScaladocInterface.scala[0m
+[0m[[0m[0mdebug[0m] [0m[0m      [0m
+[0m[[0m[0minfo[0m] [0m[0m  Compilation completed in 12.269s.[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting org.scala-sbt:compiler-bridge_2.12:1.1.1:compile for Scala 2.12.5[0m
+[0m[[0m[0mdebug[0m] [0m[0m[zinc] Running cached compiler 7416fbd5 for Scala compiler version 2.12.5[0m
+[0m[[0m[0mdebug[0m] [0m[0m[zinc] The Scala compiler is invoked with:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	-bootclasspath[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/resources.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/rt.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/sunrsasign.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/jsse.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/jce.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/charsets.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/jfr.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/classes:/home/sameer/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.5.jar[0m
+[0m[[0m[0mdebug[0m] [0m[0m	-classpath[0m
+[0m[[0m[0mdebug[0m] [0m[0m	/home/sameer/gitrepos/scratch/scala/hello/target/scala-2.12/classes:/home/sameer/.ivy2/cache/titech.c.coord/scalaneko_2.12/jars/scalaneko_2.12-0.19.0-SNAPSHOT.jar:/home/sameer/.ivy2/cache/com.typesafe/config/bundles/config-1.3.3.jar:/home/sameer/.ivy2/cache/com.typesafe.scala-logging/scala-logging_2.12/bundles/scala-logging_2.12-3.7.2.jar:/home/sameer/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.12.5.jar:/home/sameer/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.25.jar:/home/sameer/.ivy2/cache/ch.qos.logback/logback-classic/jars/logback-classic-1.2.3.jar:/home/sameer/.ivy2/cache/ch.qos.logback/logback-core/jars/logback-core-1.2.3.jar:/home/sameer/.ivy2/cache/org.scala-graph/graph-core_2.12/jars/graph-core_2.12-1.12.3.jar:/home/sameer/.ivy2/cache/org.scalafx/scalafx_2.12/jars/scalafx_2.12-8.0.144-R12.jar[0m
+[0m[[0m[0mdebug[0m] [0m[0mScala compilation took 13.179732366 s[0m
+[0m[[0m[0minfo[0m] [0m[0mDone compiling.[0m

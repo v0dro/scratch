@@ -1,4 +1,5 @@
 // Implement simple distributed LU decomposition using scalapack.
+// This code uses a simple block distribution of data. Not block cyclic.
 // author: Sameer Deshmukh (@v0dro)
 
 #include "mpi.h"
