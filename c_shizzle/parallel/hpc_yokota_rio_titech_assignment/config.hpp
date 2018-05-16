@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <sys/time.h>
 #include <immintrin.h>
+#include <cmath>
 
 // caches for Xeon E5-2637 v4 - Intel. TSUBAME login node.
 #define L1 128*1024/4/8 //= 4096 doubles => size * bits / cores / sizeof(double)

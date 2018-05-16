@@ -119,22 +119,47 @@ void micro_kernel(double *A, double *B, double *C, aux_t *aux)
 {
   double *A_ptr, * B_ptr, *C_ptr;
   C_ptr = C;
-
+  B_ptr = B;
+  A_ptr = A;
   // AVX2 container for A, B and C.
-  _mm256d A_avx, B_avx, C_avx;
+  __m256d A_avx, B_avx, C_avx;
   
   for (int i = 0; i < MR; ++i) {
     A_ptr = &A[i*aux->kc_min];
-    for (int k = 0; k < aux->kc_min; ++k) {
+    for (int k = 0; k < aux->kc_min; k += 4) {
       B_ptr = &B[k*aux->mc_min];
+      //    A_avx = _mm256_load_pd(A_ptr);
       for (int j = 0; j < NR; j += 4) {
-        B_avx = _mm256_load_pd(B_ptr);
+        // B_avx = _mm256_load_pd(B_ptr);
+        // C_avx = _mm256_load_pd(C_ptr);
+        // C_avx = _mm256_fmadd_pd(A_avx, B_avx, C_avx);
+        // _mm256_store_pd(C_ptr, C_avx);
         
-        // *(C_ptr++) += *(A_ptr)*(*B_ptr++);
+        *(C_ptr)   += *(A_ptr)*(*B_ptr);
+        *(C_ptr+1) += *(A_ptr)*(*B_ptr+1);
+        *(C_ptr+2) += *(A_ptr)*(*B_ptr+2);
+        *(C_ptr+3) += *(A_ptr)*(*B_ptr+3);
+
+        *(C_ptr)   += *(A_ptr+1)*(*B_ptr);
+        *(C_ptr+1) += *(A_ptr+1)*(*B_ptr+1);
+        *(C_ptr+2) += *(A_ptr+1)*(*B_ptr+2);
+        *(C_ptr+3) += *(A_ptr+1)*(*B_ptr+3);
+
+        *(C_ptr)   += *(A_ptr+2)*(*B_ptr);
+        *(C_ptr+1) += *(A_ptr+2)*(*B_ptr+1);
+        *(C_ptr+2) += *(A_ptr+2)*(*B_ptr+2);
+        *(C_ptr+3) += *(A_ptr+2)*(*B_ptr+3);
+
+        *(C_ptr)   += *(A_ptr+3)*(*B_ptr);
+        *(C_ptr+1) += *(A_ptr+3)*(*B_ptr+1);
+        *(C_ptr+2) += *(A_ptr+3)*(*B_ptr+2);
+        *(C_ptr+3) += *(A_ptr+3)*(*B_ptr+3);
+        B_ptr += 4;
+        C_ptr += 4;
+        //*(C_ptr++) += *(A_ptr)*(*B_ptr++);
       }
       // replace innermost loop with AVX2 instructions.
-      
-      A_ptr++;
+      A_ptr += 4;
     }
     C_ptr += ldc;
   }
@@ -224,7 +249,7 @@ int main(int argc, char ** argv)
   aux_t aux;
   A = (double*)malloc(sizeof(double)*N*N);
   B = (double*)malloc(sizeof(double)*N*N);
-  C = (double*)malloc(sizeof(double)*N*N);
+  C = malloc_aligned(N, N, sizeof(double));
   generate_data(A, B, C, N);
   
   start = get_time();
