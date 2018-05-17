@@ -119,50 +119,69 @@ void micro_kernel(double *A, double *B, double *C, aux_t *aux)
 {
   double *A_ptr, * B_ptr, *C_ptr;
   C_ptr = C;
-  B_ptr = B;
-  A_ptr = A;
   // AVX2 container for A, B and C.
   __m256d A_avx, B_avx, C_avx;
   
   for (int i = 0; i < MR; ++i) {
     A_ptr = &A[i*aux->kc_min];
-    for (int k = 0; k < aux->kc_min; k += 4) {
+    for (int k = 0; k < aux->kc_min; k += 1) {
       B_ptr = &B[k*aux->mc_min];
       //    A_avx = _mm256_load_pd(A_ptr);
-      for (int j = 0; j < NR; j += 4) {
+      // for (int j = 0; j < NR; j += 8) {
         // C(i,j) += A(i,k)*B(k,j)
         // B_avx = _mm256_load_pd(B_ptr);
         // C_avx = _mm256_load_pd(C_ptr);
         // C_avx = _mm256_fmadd_pd(A_avx, B_avx, C_avx);
         // _mm256_store_pd(C_ptr, C_avx);
         
-        *(C_ptr)   += *(A_ptr)*(*B_ptr);
-        *(C_ptr+1) += *(A_ptr)*(*(B_ptr+1));
-        *(C_ptr+2) += *(A_ptr)*(*(B_ptr+2));
-        *(C_ptr+3) += *(A_ptr)*(*(B_ptr+3));
+        // *(C_ptr)   += *(A_ptr)*(*B_ptr);
+        // *(C_ptr+1) += *(A_ptr)*(*(B_ptr+1));
+        // *(C_ptr+2) += *(A_ptr)*(*(B_ptr+2));
+        // *(C_ptr+3) += *(A_ptr)*(*(B_ptr+3));
 
-        *(C_ptr)   += *(A_ptr+1)*(*B_ptr);
-        *(C_ptr+1) += *(A_ptr+1)*(*(B_ptr+1));
-        *(C_ptr+2) += *(A_ptr+1)*(*(B_ptr+2));
-        *(C_ptr+3) += *(A_ptr+1)*(*(B_ptr+3));
+        // *(C_ptr)   += *(A_ptr+1)*(*B_ptr);
+        // *(C_ptr+1) += *(A_ptr+1)*(*(B_ptr+1));
+        // *(C_ptr+2) += *(A_ptr+1)*(*(B_ptr+2));
+        // *(C_ptr+3) += *(A_ptr+1)*(*(B_ptr+3));
 
-        *(C_ptr)   += *(A_ptr+2)*(*B_ptr);
-        *(C_ptr+1) += *(A_ptr+2)*(*(B_ptr+1));
-        *(C_ptr+2) += *(A_ptr+2)*(*(B_ptr+2));
-        *(C_ptr+3) += *(A_ptr+2)*(*(B_ptr+3));
+        // *(C_ptr)   += *(A_ptr+2)*(*B_ptr);
+        // *(C_ptr+1) += *(A_ptr+2)*(*(B_ptr+1));
+        // *(C_ptr+2) += *(A_ptr+2)*(*(B_ptr+2));
+        // *(C_ptr+3) += *(A_ptr+2)*(*(B_ptr+3));
 
-        *(C_ptr)   += *(A_ptr+3)*(*B_ptr);
-        *(C_ptr+1) += *(A_ptr+3)*(*(B_ptr+1));
-        *(C_ptr+2) += *(A_ptr+3)*(*(B_ptr+2));
-        *(C_ptr+3) += *(A_ptr+3)*(*(B_ptr+3));
+        // *(C_ptr)   += *(A_ptr+3)*(*B_ptr);
+        // *(C_ptr+1) += *(A_ptr+3)*(*(B_ptr+1));
+        // *(C_ptr+2) += *(A_ptr+3)*(*(B_ptr+2));
+        // *(C_ptr+3) += *(A_ptr+3)*(*(B_ptr+3));
         
-        B_ptr += 4;
-        C_ptr += 4;
-        //*(C_ptr++) += *(A_ptr)*(*B_ptr++);
-      }
-      C_ptr -= 8;
+        // B_ptr += 4;
+        // C_ptr += 4;
+        *(C_ptr) += *(A_ptr)*(*B_ptr);
+        *(C_ptr+1) += *(A_ptr)*(*B_ptr+1);
+        *(C_ptr+2) += *(A_ptr)*(*B_ptr+2);
+        *(C_ptr+3) += *(A_ptr)*(*B_ptr+3);
+        *(C_ptr+4) += *(A_ptr)*(*B_ptr+4);
+        *(C_ptr+5) += *(A_ptr)*(*B_ptr+5);
+        *(C_ptr+6) += *(A_ptr)*(*B_ptr+6);
+        *(C_ptr+7) += *(A_ptr)*(*B_ptr+7);
+
+        // *(C_ptr) += *(A_ptr+1)*(*B_ptr);
+        // *(C_ptr+1) += *(A_ptr+1)*(*B_ptr+1);
+        // *(C_ptr+2) += *(A_ptr+1)*(*B_ptr+2);
+        // *(C_ptr+3) += *(A_ptr+1)*(*B_ptr+3);
+        // *(C_ptr+4) += *(A_ptr+1)*(*B_ptr+4);
+        // *(C_ptr+5) += *(A_ptr+1)*(*B_ptr+5);
+        // *(C_ptr+6) += *(A_ptr+1)*(*B_ptr+6);
+        // *(C_ptr+7) += *(A_ptr+1)*(*B_ptr+7);
+
+        // C_ptr is advanced by 8 for each iteration of k
+        C_ptr += 8;
+        B_ptr += 8;
+          
+        //}
+      //C_ptr -= 8;
       // replace innermost loop with AVX2 instructions.
-      A_ptr += 4;      
+      A_ptr += 1;      
     }
     C_ptr += ldc;
   }
@@ -232,7 +251,7 @@ int main(int argc, char ** argv)
   if (argc != 2) {
     std::cout << "provide nrows and ncols" << std::endl;
     exit(1);
-  }
+   }
 
   if (MC < MR) {
     std::cout << "wrong config: MC should be greater than MR." << std::endl;

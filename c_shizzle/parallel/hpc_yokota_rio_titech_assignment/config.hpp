@@ -97,3 +97,5 @@ void generate_data(double *A, double* B, double *C, int N)
     }
   }
 }
+
+// stable : https://github.com/v0dro/scratch/blob/705edb56975615cb5311ab2ff791f2e0f2434843/c_shizzle/parallel/hpc_yokota_rio_titech_assignment/main.cpp
