@@ -91,8 +91,8 @@ void generate_data(double *A, double* B, double *C, int N)
 {
   for (int i=0; i < N; ++i) {
     for (int j=0; j < N; ++j) {
-      A[i*N + j] = i + j;
-      B[i*N + j] = i + j;
+      A[i*N + j] = i*N + j;
+      B[i*N + j] = i*N + j;
       C[i*N + j] = 0;
     }
   }
