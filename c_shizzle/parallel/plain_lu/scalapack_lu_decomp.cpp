@@ -75,7 +75,7 @@ int main(int argc, char ** argv)
   // generate matrix data
   for (int j = 0; j < nb; ++j) {
     for (int i = 0; i < nb; ++i) {
-      int index = i*nb + j;
+      int index = i + j*nb;
       int row_i = myrow*nb + i;
       int col_j = mycol*nb + j;
       a[index] = row_i + col_j*N;
