@@ -1,13 +1,12 @@
 import numpy as np
 import scipy.linalg as la
 
-l =  [[0,1,8,9],
-      [4, 5, 12, 13],
-      [32, 33, 40, 41],
-      [36, 37,  44,  45]]
-a = np.array(l)
+np.set_printoptions(precision=1)
+a = np.arange(8*8).reshape(8,8)
+print(a)
 p, l, u = la.lu(a)
 
+print("\n")
 print(p)
 print(l)
 print(u)

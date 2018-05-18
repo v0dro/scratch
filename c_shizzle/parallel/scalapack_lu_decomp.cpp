@@ -56,7 +56,7 @@ int main(int argc, char ** argv)
       int index = i*nb + j;
       int row_i = myrow*nb + i;
       int col_j = mycol*nb + j;
-      a[index] = row_i + col_j;
+      a[index] = row_i*N + col_j;
     }
     cout << endl;
   }

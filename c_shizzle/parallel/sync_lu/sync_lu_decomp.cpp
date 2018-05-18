@@ -34,10 +34,11 @@ int main(int argc, char ** argv)
   // create array descriptor
   int desca[9];
   int rsrc = 0, csrc = 0, info;
-  int b_fac = 2;
-  int lld = numroc_(&N, &b_fac, &myrow, &rsrc, &num_procs);
-  lld = 4;
-  descinit_(desca, &N, &N, &b_fac, &b_fac, &rsrc, &csrc, &BLACS_CONTEXT, &lld, &info);
+  int b_fac = 4;
+  int lld = numroc_(&N, &b_fac, &mycol, &rsrc, &num_procs);
+  cout << "lld: " << lld << endl;
+  //lld = 4;
+   descinit_(desca, &N, &N, &b_fac, &b_fac, &rsrc, &csrc, &BLACS_CONTEXT, &lld, &info);
   // end create array descriptor
  
   // synchronous LU decomposition
