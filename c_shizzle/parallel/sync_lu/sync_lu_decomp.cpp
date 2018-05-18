@@ -47,14 +47,19 @@ int main(int argc, char ** argv)
   int *ipiv;
   ipiv = (int*)malloc(sizeof(int)*N);
 
+  for (int i = 0; i < N; ++i) {
+    ipiv[i] = i;
+  }
+
   // loop over matrix blocks.
-  for (int ia = 0; ia < nb; ia += nb) {
-    diagonal_block_lu(a, ia, nb, N, ipiv, &BLACS_CONTEXT, desca);
+  //for (int ia = 0; ia < N; ia += nb) {
+  int ia ;
+  diagonal_block_lu(a, ia, nb, N, ipiv, &BLACS_CONTEXT, desca);
     // compute LU of diagonal block.
     // broadcast block along rows and cols.
     // broadcast row and col blocks along the lower right block of the matrix and multiply.
     // 
-  }
+    //}
 
   print_files(a, nb, nb, myrow, mycol);
 

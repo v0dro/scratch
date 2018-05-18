@@ -24,7 +24,8 @@ void generate_data(double *a, int block_size_per_process_r,
             mycol*block_size_per_process_c + j;
           int index = (bcounter_i*block_size_per_process_r + bcounter_j)*
             num_blocks_per_process +  i*process_block_size + j;
-          a[index] = row_i + col_j*N;
+          
+          a[index] = row_i*N + col_j;
         }
       }
     }
