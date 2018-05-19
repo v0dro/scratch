@@ -6,6 +6,8 @@ scala/*/target/*
 scala/*/lib_managed/
 scala/*/src_managed/
 scala/*/project/boot/
+scala/*/project/target/*
+scala/*/project/target/streams/*
 scala/*/project/plugins/project/
 scala/*/.history
 scala/*/.cache

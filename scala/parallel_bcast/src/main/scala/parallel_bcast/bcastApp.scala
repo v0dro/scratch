@@ -13,8 +13,16 @@ class BcastApp(p: ProcessConfig) extends ActiveProtocol(p, "bcast ccast")
 
   def run() {
     if (me == PID(0)) {
+      //init()
       SEND(Start(me, PID(0)))
     }
+  }
+
+  listenTo(classOf[Computation])
+  override def onReceive = {
+    case Computation(_,_,res) =>
+      println("The result of computation from all nodes is :" + res)
+    case _ => // do nothing
   }
 }
 
