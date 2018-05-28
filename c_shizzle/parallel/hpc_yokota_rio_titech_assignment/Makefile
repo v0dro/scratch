@@ -11,6 +11,10 @@ main: main.o $(SOURCES)
 	$(CXX) $?
 	./a.out 1024
 
+b_pack: b_pack.o $(SOURCES)
+	$(CXX) $?
+	./a.out
+
 perf: main.o $(SOURCES)
 	$(CXX) $? -lblas
 	perf stat -B ./a.out 2000

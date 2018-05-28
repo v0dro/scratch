@@ -73,7 +73,13 @@ void macro_kernel_4x4(double *A, double *B, double *C, int i, int k)
 
 // XA - array of size NCxKC.
 // XB - array of size KCxMC.
-void macro_kernel(double *XA, double *XB, double *C, int nc_min, int kc_min, int mc_min, aux_t *aux)
+void macro_kernel(double *XA,
+                  double *XB,
+                  double *C,
+                  int nc_min,
+                  int kc_min,
+                  int mc_min,
+                  aux_t *aux)
 {
   // inside this loop is a block of A of dim MC x KC and B of dim KC x NC.
   // now we need to iterate over the elements of these make it run.
@@ -109,7 +115,7 @@ void macro_kernel(double *XA, double *XB, double *C, int nc_min, int kc_min, int
     for (int nr = 0; nr < mc_min; nr += NR) {
       aux->nr = nr;
       aux->mr = mr;
-      micro_kernel(&XA[mr*aux->kc_min], &XB[nr*aux->kc_min], &C[mr*MR + nr], aux);
+      micro_kernel(&XA[mr*aux->kc_min], &XB[nr*aux->kc_min], &C[mr*ldc + nr], aux);
     }
   }
 }
@@ -117,94 +123,23 @@ void macro_kernel(double *XA, double *XB, double *C, int nc_min, int kc_min, int
 // multiply micro-panels of size MR x KC and KC x NR.
 void micro_kernel(double *A, double *B, double *C, aux_t *aux)
 {
-  double *A_ptr, * B_ptr, *C_ptr;
+  double *A_ptr, *B_ptr, *C_ptr, *temp;
   C_ptr = C;
   B_ptr = B;
   A_ptr = A;
-  //std::cout << "----> size of kc x nr:" << aux->kc_min*NR << std::endl;
-  //print_mat(B, aux->kc_min, NR, "kc x nr:");
   // AVX2 container for A, B and C.
   __m256d A_avx, B_avx, C_avx;
   
-  for (int i = 0; i < MR; ++i) {
-    //A_ptr = &A[i*aux->kc_min];
-    B_ptr = B;   
+  for (int i = 0; i < MR; i++) {
+    B_ptr = B;
     // For each completion of the below two nested loops, B is scanned from top to bottom.
-    for (int k = 0; k < aux->kc_min; k ++) {
-      B_ptr = &B[k*NR];
-      //    A_avx = _mm256_load_pd(A_ptr);
-      for (int j = 0; j < NR; j += 1) {
-         *(C_ptr++) += *(A_ptr)*(*B_ptr++);
+    for (int k = 0; k < aux->kc_min; k++) {
+      // A_avx = _mm256_load_pd(A_ptr);
+      temp = C_ptr;
+      for (int j = 0; j < NR; j++) {
+        (*temp++) += *(A_ptr)*(*B_ptr++);
       }
-      //C_ptr -= 
       A_ptr++;
-        // C(i,j) += A(i,k)*B(k,j)
-        // B_avx = _mm256_load_pd(B_ptr);
-        // C_avx = _mm256_load_pd(C_ptr);
-        // C_avx = _mm256_fmadd_pd(A_avx, B_avx, C_avx);
-        // _mm256_store_pd(C_ptr, C_avx);
-        
-        // *(C_ptr)   += *(A_ptr)*(*B_ptr);
-        // *(C_ptr+1) += *(A_ptr)*(*(B_ptr+1));
-        // *(C_ptr+2) += *(A_ptr)*(*(B_ptr+2));
-        // *(C_ptr+3) += *(A_ptr)*(*(B_ptr+3));
-
-        // *(C_ptr)   += *(A_ptr+1)*(*B_ptr);
-        // *(C_ptr+1) += *(A_ptr+1)*(*(B_ptr+1));
-        // *(C_ptr+2) += *(A_ptr+1)*(*(B_ptr+2));
-        // *(C_ptr+3) += *(A_ptr+1)*(*(B_ptr+3));
-
-        // *(C_ptr)   += *(A_ptr+2)*(*B_ptr);
-        // *(C_ptr+1) += *(A_ptr+2)*(*(B_ptr+1));
-        // *(C_ptr+2) += *(A_ptr+2)*(*(B_ptr+2));
-        // *(C_ptr+3) += *(A_ptr+2)*(*(B_ptr+3));
-
-        // *(C_ptr)   += *(A_ptr+3)*(*B_ptr);
-        // *(C_ptr+1) += *(A_ptr+3)*(*(B_ptr+1));
-        // *(C_ptr+2) += *(A_ptr+3)*(*(B_ptr+2));
-        // *(C_ptr+3) += *(A_ptr+3)*(*(B_ptr+3));
-        
-        // B_ptr += 4;
-        // C_ptr += 4;
-        //       *(C_ptr) += *(A_ptr)*(*B_ptr);
-        // *(C_ptr+1) += *(A_ptr)*(*B_ptr+1);
-        // *(C_ptr+2) += *(A_ptr)*(*B_ptr+2);
-        // *(C_ptr+3) += *(A_ptr)*(*B_ptr+3);
-        // *(C_ptr+4) += *(A_ptr)*(*B_ptr+4);
-        // *(C_ptr+5) += *(A_ptr)*(*B_ptr+5);
-        // *(C_ptr+6) += *(A_ptr)*(*B_ptr+6);
-        // *(C_ptr+7) += *(A_ptr)*(*B_ptr+7);
-
-        // *(C_ptr) += *(A_ptr+1)*(*B_ptr);
-        // *(C_ptr+1) += *(A_ptr+1)*(*B_ptr+1);
-        // *(C_ptr+2) += *(A_ptr+1)*(*B_ptr+2);
-        // *(C_ptr+3) += *(A_ptr+1)*(*B_ptr+3);
-        // *(C_ptr+4) += *(A_ptr+1)*(*B_ptr+4);
-        // *(C_ptr+5) += *(A_ptr+1)*(*B_ptr+5);
-        // *(C_ptr+6) += *(A_ptr+1)*(*B_ptr+6);
-        // *(C_ptr+7) += *(A_ptr+1)*(*B_ptr+7);
-
-        // A_ptr is advanced by 8 for each iteration of k
-      //        C_ptr += 8;
-        // std::cout << "address bout:" << B_ptr + 8 << " new bptr: " <<   &B[(k+1)*aux->mc_min] << std::endl;
-        //B_ptr = &B[(k+1)*aux->mc_min];
-      // B_ptr += 8;
-      // A_ptr += 1;
-
-      //   *(C_ptr) += *(A_ptr)*(*B_ptr);
-      //   *(C_ptr+1) += *(A_ptr)*(*B_ptr+1);
-      //   *(C_ptr+2) += *(A_ptr)*(*B_ptr+2);
-      //   *(C_ptr+3) += *(A_ptr)*(*B_ptr+3);
-      //   *(C_ptr+4) += *(A_ptr)*(*B_ptr+4);
-      //   *(C_ptr+5) += *(A_ptr)*(*B_ptr+5);
-      //   *(C_ptr+6) += *(A_ptr)*(*B_ptr+6);
-      //   *(C_ptr+7) += *(A_ptr)*(*B_ptr+7);
-          
-      //   //}
-      // //C_ptr -= 8;
-      // // replace innermost loop with AVX2 instructions.
-      //   A_ptr += 1; B_ptr += 8; C_ptr += 8;
-        
     }
     C_ptr += ldc;
   }
@@ -234,10 +169,7 @@ void matmul(double *A, double *B, double *C, aux_t *aux)
         aux->mc_min = mc_min;
         
         packB_KCxMC(packB, B, kc_min, mc_min, aux);
-        //print_mat(packB, kc_min, mc_min, "kc x mc");
-        std::cout << "----> kc x mc :" << kc_min*mc_min << std::endl;
         macro_kernel(packA, packB, &C[nc*nc_min], nc_min, kc_min, mc_min, aux);
-        std::cout << "------- HELLO WORLD --------";
       }
     }
   }
@@ -261,14 +193,13 @@ void packB_KCxMC(double *packB, double *B, int kc_min, int mc_min, aux_t *aux)
   double *packB_temp = packB, *temp;
   double *B_ptr;
 
-  for (int k = aux->kc; k < aux->kc + kc_min; k += 1) {
-    B_ptr = &B(k, aux->mc);
-    for (int m = 0; m < mc_min; m += NR) {
-      temp = B_ptr + m;
-      for (int i = 0; i < NR; i++) {
+  for (int m = aux->mc; m < aux->mc + mc_min; m += NR) {
+    for (int k = aux->kc; k < aux->kc + kc_min; k++) {
+      temp = &B(k,m);
+      for (int i = 0; i < NR; ++i) {
         *(packB_temp++) = *(temp++);
       }
-    }    
+    }
   }
 }
 
@@ -285,13 +216,8 @@ int main(int argc, char ** argv)
   }
   
   N = atoi(argv[1]); M = N;
-
-  // if (N % NC != 0){ 
-  //   std::cout << "N" << N << "is not a multiple of NC " << NC << endl;;
-  //   exit(1);
-  // }
+  
   lda = ldb = ldc = N;
-  // double A[N*N], B[N*N], C[N*N];
   double *A, *B, *C;
   double start, stop;
   aux_t aux;
@@ -301,9 +227,6 @@ int main(int argc, char ** argv)
   generate_data(A, B, C, N);
   
   start = get_time();
-  // print_mat(A, N, N, "A:");
-  // print_mat(B, N, N, "A:");
-  // print_mat(C, N, N, "A:");
   matmul(A, B, C, &aux);
   stop = get_time();
 
