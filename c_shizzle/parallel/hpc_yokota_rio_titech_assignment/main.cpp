@@ -135,10 +135,17 @@ void micro_kernel(double *A, double *B, double *C, aux_t *aux)
     // For each completion of the below two nested loops, B is scanned from top to bottom.
     for (int k = 0; k < aux->kc_min; k++) {
       // A_avx = _mm256_load_pd(A_ptr);
-      temp = C_ptr;
-      for (int j = 0; j < NR; j++) {
-        (*temp++) += *(A_ptr)*(*B_ptr++);
-      }
+
+      (*C_ptr)     += *(A_ptr)*(*(B_ptr));
+      (*(C_ptr+1)) += *(A_ptr)*(*(B_ptr +1));
+      (*(C_ptr+2)) += *(A_ptr)*(*(B_ptr +2));
+      (*(C_ptr+3)) += *(A_ptr)*(*(B_ptr +3));
+      
+      (*(C_ptr+4)) += *(A_ptr)*(*(B_ptr+4));
+      (*(C_ptr+5)) += *(A_ptr)*(*(B_ptr+5));
+      (*(C_ptr+6)) += *(A_ptr)*(*(B_ptr+6));
+      (*(C_ptr+7)) += *(A_ptr)*(*(B_ptr+7));
+      B_ptr += NR;
       A_ptr++;
     }
     C_ptr += ldc;
