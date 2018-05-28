@@ -123,7 +123,7 @@ void macro_kernel(double *XA,
 // multiply micro-panels of size MR x KC and KC x NR.
 void micro_kernel(double *A, double *B, double *C, aux_t *aux)
 {
-  double *A_ptr, *B_ptr, *C_ptr, *temp;
+  double *A_ptr, *B_ptr, *C_ptr;
   C_ptr = C;
   B_ptr = B;
   A_ptr = A;
@@ -134,17 +134,18 @@ void micro_kernel(double *A, double *B, double *C, aux_t *aux)
     B_ptr = B;
     // For each completion of the below two nested loops, B is scanned from top to bottom.
     for (int k = 0; k < aux->kc_min; k++) {
-      // A_avx = _mm256_load_pd(A_ptr);
-
-      (*C_ptr)     += *(A_ptr)*(*(B_ptr));
-      (*(C_ptr+1)) += *(A_ptr)*(*(B_ptr +1));
-      (*(C_ptr+2)) += *(A_ptr)*(*(B_ptr +2));
-      (*(C_ptr+3)) += *(A_ptr)*(*(B_ptr +3));
+      A_avx = _mm256_broadcast_sd(A_ptr);
       
-      (*(C_ptr+4)) += *(A_ptr)*(*(B_ptr+4));
-      (*(C_ptr+5)) += *(A_ptr)*(*(B_ptr+5));
-      (*(C_ptr+6)) += *(A_ptr)*(*(B_ptr+6));
-      (*(C_ptr+7)) += *(A_ptr)*(*(B_ptr+7));
+      B_avx = _mm256_load_pd(B_ptr);
+      C_avx = _mm256_load_pd(C_ptr);
+      C_avx = _mm256_fmadd_pd(A_avx, B_avx, C_avx);
+      _mm256_store_pd(C_ptr, C_avx);
+      
+      B_avx = _mm256_load_pd(B_ptr+4);
+      C_avx = _mm256_load_pd(C_ptr+4);
+      C_avx = _mm256_fmadd_pd(A_avx, B_avx, C_avx);
+      _mm256_store_pd(C_ptr+4, C_avx);
+      
       B_ptr += NR;
       A_ptr++;
     }
@@ -228,8 +229,8 @@ int main(int argc, char ** argv)
   double *A, *B, *C;
   double start, stop;
   aux_t aux;
-  A = (double*)malloc(sizeof(double)*N*N);
-  B = (double*)malloc(sizeof(double)*N*N);
+  A = malloc_aligned(N, N, sizeof(double));
+  B = malloc_aligned(N, N, sizeof(double));
   C = malloc_aligned(N, N, sizeof(double));
   generate_data(A, B, C, N);
   

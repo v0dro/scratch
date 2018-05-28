@@ -1,4 +1,4 @@
-CXX = g++ -ggdb3 -mavx2 -mfma -Wall -lm -I.
+CXX = g++ -O0 -mavx2 -mfma -Wall -lm -I.
 CFLAGS=-I.
 #SOURCES = libscalapack.a	
 
