@@ -128,27 +128,31 @@ void micro_kernel(double *A, double *B, double *C, aux_t *aux)
   B_ptr = B;
   A_ptr = A;
   // AVX2 container for A, B and C.
-  __m256d A_avx, B_avx, C_avx;
+  __m256d A_avx, B_avx, C_avx1, C_avx2;
   
   for (int i = 0; i < MR; i++) {
     B_ptr = B;
     // For each completion of the below two nested loops, B is scanned from top to bottom.
+
+    // Also notice that C stays inside the same place in memory throughout the loop.
+    // Thus it can be a good candidate for assigning into registers.
+    C_avx1 = _mm256_load_pd(C_ptr);
+    C_avx2 = _mm256_load_pd(C_ptr+4);
     for (int k = 0; k < aux->kc_min; k++) {
       A_avx = _mm256_broadcast_sd(A_ptr);
-      
+   
       B_avx = _mm256_load_pd(B_ptr);
-      C_avx = _mm256_load_pd(C_ptr);
-      C_avx = _mm256_fmadd_pd(A_avx, B_avx, C_avx);
-      _mm256_store_pd(C_ptr, C_avx);
-      
+      C_avx1 = _mm256_fmadd_pd(A_avx, B_avx, C_avx1);
+   
       B_avx = _mm256_load_pd(B_ptr+4);
-      C_avx = _mm256_load_pd(C_ptr+4);
-      C_avx = _mm256_fmadd_pd(A_avx, B_avx, C_avx);
-      _mm256_store_pd(C_ptr+4, C_avx);
+      C_avx2 = _mm256_fmadd_pd(A_avx, B_avx, C_avx2);
       
       B_ptr += NR;
       A_ptr++;
     }
+
+    _mm256_store_pd(C_ptr, C_avx1);
+    _mm256_store_pd(C_ptr+4, C_avx2);
     C_ptr += ldc;
   }
 }
