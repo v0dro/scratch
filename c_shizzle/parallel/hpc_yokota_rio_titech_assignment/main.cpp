@@ -124,6 +124,7 @@ void macro_kernel(double *XA,
 void micro_kernel(double *A, double *B, double *C, aux_t *aux)
 {
   double *A_ptr, *B_ptr, *C_ptr;
+  register double A_reg;
   C_ptr = C;
   B_ptr = B;
   A_ptr = A;
@@ -139,7 +140,8 @@ void micro_kernel(double *A, double *B, double *C, aux_t *aux)
     C_avx1 = _mm256_load_pd(C_ptr);
     C_avx2 = _mm256_load_pd(C_ptr+4);
     for (int k = 0; k < aux->kc_min; k++) {
-      A_avx = _mm256_broadcast_sd(A_ptr);
+      A_reg = *A_ptr;
+      A_avx = _mm256_broadcast_sd(&A_ptr);
    
       B_avx = _mm256_load_pd(B_ptr);
       C_avx1 = _mm256_fmadd_pd(A_avx, B_avx, C_avx1);
