@@ -6,7 +6,6 @@
 #define A(i,j) A[(i)*N + j]
 #define B(i,j) B[(i)*N + j]
 #define C(i,j) C[(i)*N + j]
-#define BLOCK 4
 
 void packB_KCxMC(double *packB, double *B, int , int , aux_t *);
 void packA_NCxKC(double *packA, double *A, int , int , aux_t *);
@@ -52,6 +51,7 @@ void macro_kernel(double *XA,
 
   // Note that the entire configuration changes when row-major is being done. Algorithms
   // must be entirely reworked for that purpose when changing
+#pragma omp parallel for
   for (int mr = 0; mr < nc_min; mr += MR) {
     int index_c = (aux->nc + mr)*ldc + aux->mc;
     for (int nr = 0; nr < mc_min; nr += NR) {
@@ -77,7 +77,7 @@ void micro_kernel(double *A, double *B, double *C, aux_t *aux)
     C_avx100, C_avx101,
     C_avx200, C_avx201,
     C_avx300, C_avx301;
-  
+
   for (int i = 0; i < MR; i += MR_INCR) {
     B_ptr = B;
     // For each completion of the below two nested loops, B is scanned from top to bottom.
@@ -86,10 +86,13 @@ void micro_kernel(double *A, double *B, double *C, aux_t *aux)
     // Thus it can be a good candidate for assigning into registers.
     C_avx000 = _mm256_load_pd(C_ptr);
     C_avx001 = _mm256_load_pd(C_ptr + 4);
+    
     C_avx100 = _mm256_load_pd(C_ptr + ldc);
     C_avx101 = _mm256_load_pd(C_ptr + ldc + 4);
+    
     C_avx200 = _mm256_load_pd(C_ptr + 2*ldc);
     C_avx201 = _mm256_load_pd(C_ptr + 2*ldc + 4);
+    
     C_avx300 = _mm256_load_pd(C_ptr + 3*ldc);
     C_avx301 = _mm256_load_pd(C_ptr + 3*ldc + 4);
 
@@ -104,7 +107,7 @@ void micro_kernel(double *A, double *B, double *C, aux_t *aux)
       A_avx3 = _mm256_broadcast_sd(A_ptr + 3*aux->kc_min);
       
       B_avx0 = _mm256_load_pd(B_ptr);
-      B_avx1 = _mm256_load_pd(B_ptr+4);
+      B_avx1 = _mm256_load_pd(B_ptr + 4);
       
       // A0 * NR0
       C_avx000 = _mm256_fmadd_pd(A_avx0, B_avx0, C_avx000);
@@ -151,6 +154,7 @@ void matmul(double *A, double *B, double *C, aux_t *aux)
     int nc_min = std::min((N-nc), NC);
     
     // each iteration of this advances the cols of A and rows of B.
+    //#pragma omp parallel for
     for (int kc = 0; kc < N; kc += KC) { // like k.
       int kc_min = std::min((N-kc), KC);
       aux->kc = kc;
@@ -162,7 +166,8 @@ void matmul(double *A, double *B, double *C, aux_t *aux)
         aux->mc = mc;
         int mc_min = std::min(N-mc, MC);
         aux->mc_min = mc_min;
-        
+
+        #pragma omp parallel
         packB_KCxMC(packB, B, kc_min, mc_min, aux);
         macro_kernel(packA, packB, &C[nc*nc_min], nc_min, kc_min, mc_min, aux);
       }
@@ -188,12 +193,21 @@ void packB_KCxMC(double *packB, double *B, int kc_min, int mc_min, aux_t *aux)
   double *packB_temp = packB, *temp;
   double *B_ptr;
 
+  #pragma omp parallel for
   for (int m = aux->mc; m < aux->mc + mc_min; m += NR) {
     for (int k = aux->kc; k < aux->kc + kc_min; k++) {
       temp = &B(k,m);
-      for (int i = 0; i < NR; ++i) {
-        *(packB_temp++) = *(temp++);
-      }
+      *(packB_temp) = *(temp);
+      *(packB_temp+1) = *(temp + 1);
+      *(packB_temp+2) = *(temp + 2);
+      *(packB_temp+3) = *(temp + 3);
+      
+      *(packB_temp+4) = *(temp + 4);
+      *(packB_temp+5) = *(temp + 5);
+      *(packB_temp+6) = *(temp + 6);
+      *(packB_temp+7) = *(temp + 7);
+
+      packB_temp += 8;
     }
   }
 }
