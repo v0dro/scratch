@@ -12,65 +12,6 @@ void packB_KCxMC(double *packB, double *B, int , int , aux_t *);
 void packA_NCxKC(double *packA, double *A, int , int , aux_t *);
 void micro_kernel(double *A, double *B, double *C, aux_t *);
 
-// performs element-wise multiplication
-void macro_kernel(double *A, double *B, double *C, int i, int k)
-{
-  for (int j = 0; j < N; j += 1) {
-    C[i*N + j] += A[i*N + k]*B[k*N + j];
-  }
-}
-
-void macro_kernel_1x4(double *A, double *B, double *C, int i, int k)
-{
-  register double a0 = A(0,k), a1 = A(1,k), a2 = A(2,k), a3 = A(3,k);
-  double *b_ptr = &B(k,0);
-  
-  for (int j = 0; j < N; j += 1) {
-    C(0,j) += a0*(*b_ptr);
-    C(1,j) += a1*(*b_ptr);
-    C(2,j) += a2*(*b_ptr);
-    C(3,j) += a3*(*b_ptr++);
-  }
-}
-
-void macro_kernel_4x4(double *A, double *B, double *C, int i, int k)
-{
-  // register double a0 = A(0,k), a1 = A(1,k), a2 = A(2,k), a3 = A(3,k);
-  // double *b_ptr = &B(k,0);
-  for (int j = 0; j < N; j += 1) {
-// -    for (int ii = i; ii < BLOCK+i; ++ii) {
-//       for (int kk = k; kk < BLOCK+k; ++kk) {
-//         for (int jj = j; jj < BLOCK+j; ++jj) {
-//           C(ii,jj) += A(ii,kk)*B(kk,jj);
-//         }
-//       }
-//     }
-      // 0th row
-      C(0,j) += A(0,k)  *B(k,j);
-      C(0,j) += A(0,k+1)*B(k+1,j);
-      C(0,j) += A(0,k+2)*B(k+2,j);
-      C(0,j) += A(0,k+3)*B(k+3,j);
-
-      // 1st row
-      C(1,j) += A(1,k)  *B(k,j);
-      C(1,j) += A(1,k+1)*B(k+1,j);
-      C(1,j) += A(1,k+2)*B(k+2,j);
-      C(1,j) += A(1,k+3)*B(k+3,j);
-
-      // 2nd row
-      C(2,j) += A(2,k)  *B(k,j);
-      C(2,j) += A(2,k+1)*B(k+1,j);
-      C(2,j) += A(2,k+2)*B(k+2,j);
-      C(2,j) += A(2,k+3)*B(k+3,j);
-
-      // 3rd row
-      C(3,j) += A(3,k)  *B(k,j);
-      C(3,j) += A(3,k+1)*B(k+1,j);
-      C(3,j) += A(3,k+2)*B(k+2,j);
-      C(3,j) += A(3,k+3)*B(k+3,j);
-  }
-}
-
 // XA - array of size NCxKC.
 // XB - array of size KCxMC.
 void macro_kernel(double *XA,
@@ -112,10 +53,12 @@ void macro_kernel(double *XA,
   // Note that the entire configuration changes when row-major is being done. Algorithms
   // must be entirely reworked for that purpose when changing
   for (int mr = 0; mr < nc_min; mr += MR) {
+    int index_c = (aux->nc + mr)*ldc + aux->mc;
     for (int nr = 0; nr < mc_min; nr += NR) {
       aux->nr = nr;
       aux->mr = mr;
-      micro_kernel(&XA[mr*aux->kc_min], &XB[nr*aux->kc_min], &C[mr*ldc + nr], aux);
+      micro_kernel(&XA[mr*aux->kc_min], &XB[nr*aux->kc_min],
+                   &C[index_c + nr], aux);
     }
   }
 }
@@ -128,40 +71,80 @@ void micro_kernel(double *A, double *B, double *C, aux_t *aux)
   B_ptr = B;
   A_ptr = A;
   // AVX2 container for A, B and C.
-  __m256d A_avx, B_avx, C_avx1, C_avx2;
+  __m256d A_avx0, A_avx1, A_avx2, A_avx3;
+  __m256d B_avx0, B_avx1;
+  __m256d C_avx000, C_avx001,
+    C_avx100, C_avx101,
+    C_avx200, C_avx201,
+    C_avx300, C_avx301;
   
-  for (int i = 0; i < MR; i++) {
+  for (int i = 0; i < MR; i += MR_INCR) {
     B_ptr = B;
     // For each completion of the below two nested loops, B is scanned from top to bottom.
 
     // Also notice that C stays inside the same place in memory throughout the loop.
     // Thus it can be a good candidate for assigning into registers.
-    C_avx1 = _mm256_load_pd(C_ptr);
-    C_avx2 = _mm256_load_pd(C_ptr+4);
-    for (int k = 0; k < aux->kc_min; k++) {
-      A_avx = _mm256_broadcast_sd(A_ptr);
-   
-      B_avx = _mm256_load_pd(B_ptr);
-      C_avx1 = _mm256_fmadd_pd(A_avx, B_avx, C_avx1);
-   
-      B_avx = _mm256_load_pd(B_ptr+4);
-      C_avx2 = _mm256_fmadd_pd(A_avx, B_avx, C_avx2);
+    C_avx000 = _mm256_load_pd(C_ptr);
+    C_avx001 = _mm256_load_pd(C_ptr + 4);
+    C_avx100 = _mm256_load_pd(C_ptr + ldc);
+    C_avx101 = _mm256_load_pd(C_ptr + ldc + 4);
+    C_avx200 = _mm256_load_pd(C_ptr + 2*ldc);
+    C_avx201 = _mm256_load_pd(C_ptr + 2*ldc + 4);
+    C_avx300 = _mm256_load_pd(C_ptr + 3*ldc);
+    C_avx301 = _mm256_load_pd(C_ptr + 3*ldc + 4);
+
+    // For every iteration of k, B_ptr is incremented once by NR.
+    //   Thus the whole array is scanned.
+    // For every iteration of k, A_ptr is incremented once by 1.
+    //   Thus one row of A_ptr is scanned.
+    for (int k = 0; k < aux->kc_min; k += 1) {
+      A_avx0 = _mm256_broadcast_sd(A_ptr);
+      A_avx1 = _mm256_broadcast_sd(A_ptr + aux->kc_min);
+      A_avx2 = _mm256_broadcast_sd(A_ptr + 2*aux->kc_min);
+      A_avx3 = _mm256_broadcast_sd(A_ptr + 3*aux->kc_min);
+      
+      B_avx0 = _mm256_load_pd(B_ptr);
+      B_avx1 = _mm256_load_pd(B_ptr+4);
+      
+      // A0 * NR0
+      C_avx000 = _mm256_fmadd_pd(A_avx0, B_avx0, C_avx000);
+      C_avx001 = _mm256_fmadd_pd(A_avx0, B_avx1, C_avx001);
+
+      // A4 * NR0
+      C_avx100 = _mm256_fmadd_pd(A_avx1, B_avx0, C_avx100);
+      C_avx101 = _mm256_fmadd_pd(A_avx1, B_avx1, C_avx101);
+
+      // A8 * NR0
+      C_avx200 = _mm256_fmadd_pd(A_avx2, B_avx0, C_avx200);
+      C_avx201 = _mm256_fmadd_pd(A_avx2, B_avx1, C_avx201);
+
+      // A12 * NR0
+      C_avx300 = _mm256_fmadd_pd(A_avx3, B_avx0, C_avx300);
+      C_avx301 = _mm256_fmadd_pd(A_avx3, B_avx1, C_avx301);
       
       B_ptr += NR;
       A_ptr++;
     }
 
-    _mm256_store_pd(C_ptr, C_avx1);
-    _mm256_store_pd(C_ptr+4, C_avx2);
-    C_ptr += ldc;
+    _mm256_store_pd(C_ptr            , C_avx000);
+    _mm256_store_pd(C_ptr + 4        , C_avx001);
+    _mm256_store_pd(C_ptr + ldc      , C_avx100);
+    _mm256_store_pd(C_ptr + ldc + 4  , C_avx101);
+    _mm256_store_pd(C_ptr + 2*ldc    , C_avx200);
+    _mm256_store_pd(C_ptr + 2*ldc + 4, C_avx201);
+    _mm256_store_pd(C_ptr + 3*ldc    , C_avx300);
+    _mm256_store_pd(C_ptr + 3*ldc + 4, C_avx301);
+    
+    C_ptr += MR_INCR*ldc;
+    A_ptr += (MR_INCR - 1)*aux->kc_min;
   }
 }
 
 void matmul(double *A, double *B, double *C, aux_t *aux)
 {
   double *packA, *packB;
-  packA = (double*)malloc_aligned(NC, KC, sizeof(double));
-  packB = (double*)malloc_aligned(KC, MC, sizeof(double));
+  packA = malloc_aligned(NC, KC, sizeof(double));
+  packB = malloc_aligned(KC, MC, sizeof(double));
   // each iteration of this loop advances the rows of A and C.
   for (int nc = 0; nc < N; nc += NC) {  // like i.
     aux->nc = nc;

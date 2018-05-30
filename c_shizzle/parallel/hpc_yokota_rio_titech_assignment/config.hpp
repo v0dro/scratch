@@ -28,6 +28,8 @@ int lda, ldb, ldc;
 // MC * KC -> L2
 // KC * NC -> L3
 
+#define MR_INCR 4
+
 // memalign parameter
 #define GEMM_SIMD_ALIGN_SIZE 32
 
