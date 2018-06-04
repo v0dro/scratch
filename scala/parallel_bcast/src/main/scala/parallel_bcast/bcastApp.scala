@@ -2,27 +2,22 @@
 // Student ID: 17M38101
 // Parallel broadcast and convergecast code in scala.
 
+import neko.PID
+import neko.ProcessConfig
+import neko.Event
+import neko.util
+import neko.util.TraversalClient
+import neko.ReactiveProtocol
 
-package parallel_bcast.parallel_bcast
-
-import neko._
-
-class BcastApp(p: ProcessConfig) extends ActiveProtocol(p, "bcast ccast")
-{
-  import ParallelBcast._
-
-  def run() {
-    if (me == PID(0)) {
-      //init()
-      SEND(Start(me, PID(0)))
+class BcastApp(p: ProcessConfig, root: PID = PID(0))
+  extends ReactiveProtocol(p, "AppTraversal") with util.TraversalClient
+  {
+    override def preStart(): Unit =
+    {
+      if (me == root) initiate()
     }
-  }
 
-  listenTo(classOf[Computation])
-  override def onReceive = {
-    case Computation(_,_,res) =>
-      println("The result of computation from all nodes is :" + res)
-    case _ => // do nothing
-  }
-}
+    def onReceive = PartialFunction.empty[Event,Unit]
 
+    def onSend = PartialFunction.empty[Event,Unit]
+  }

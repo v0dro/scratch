@@ -1,120 +1,104 @@
-package parallel_bcast.parallel_bcast
-import scala.collection.mutable.ListBuffer
+import neko.PID
+import neko.Main
+import neko.ProcessInitializer
+import neko.topology
+import neko.ProcessConfig
+import neko.ReactiveProtocol
+import neko.UnicastMessage
+import neko.MulticastMessage
+import collection.mutable.Map
+import collection.mutable.ArrayBuffer
 
-import neko._
-
-object ParallelBcast
+class ParallelBcast (p:ProcessConfig)
+  extends ReactiveProtocol(p, "ParallelBcast")
 {
-  // define case classes
-  case class Go(from: PID, to: PID, payload: List[Double]) extends UnicastMessage
-  case class Back(from: PID, to: PID, payload: List[Double]) extends UnicastMessage
-  case class Start(from: PID, to: PID) extends UnicastMessage
-  case class Computation(from: PID, to: PID, payload: Double) extends UnicastMessage
-}
+  import ParallelBcast.Go
+  import ParallelBcast.Back
+  import ParallelBcast.compute
 
-class ParallelTraversal(c: ProcessConfig) extends ReactiveProtocol(c, "bcast ccast")
-{
-  import ParallelBcast._
-
-  private var parent = PID(-1) // set parent to PID = -1 so its non-existent for now
-  private var children = new ListBuffer[PID]() // init children list
-  private var expected_msgs = neighbors.size
-  private var value_set = new ListBuffer[Double]()
-  private var new_msg = Nil
+  private var parent = ArrayBuffer[PID]()
+  private var pid_to_index = Map[PID, Int]()
+  private var children = ArrayBuffer[Set[PID]]()
+  private var expected_msg = ArrayBuffer[Int]()
+  private var val_set = ArrayBuffer[Set[List[Int]]]()
 
   def onSend = {
-    case Start(from, to) =>
-      // set parent to itself to signify root node.
-      parent = me
-      val l = 1.0 :: Nil
-
-      for (x <- neighbors.toIterator) {
-        SEND(Go(me, x, l))
-      }
-      println("PID is:" + me)
-      println("expected:" + expected_msgs)
+    case initiate =>
+      pid_to_index += (me -> parent.size)
+      parent += me
+      children += Set.empty[PID]
+      val_set += Set.empty[List[Int]]
+      expected_msg += neighbors.toList.size
+      SEND(Go(me, neighbors, me))
   }
 
   listenTo(classOf[Go])
   listenTo(classOf[Back])
-  listenTo(classOf[Start])
   def onReceive = {
-    // case Start(_,_) =>
-    //   // set parent to itself to signify root node.
-    //   parent = me
-    //   val l = 1.0 :: Nil
-
-    //   for (x <- neighbors.toIterator) {
-    //     SEND(Go(me, x, l))
-    //   }
-    case Go(from, to, msg) =>
-
-      if (parent == PID(-1)) {
-        println("received GO from " + from + " list " + msg)
-        // set the parent to what ever process among the neighbors
-        //   sends a message first.
-        parent = from
-        // set children 
-        //children = Nil
-        // indicates that a msg has been received from the parent of
-        //   this process.
-        expected_msgs -= 1
-
-        // if no more messages to be received.
-        if (expected_msgs == 0) {
-          SEND(Back(me, parent, msg))
+    case Go(from, _, k) =>
+      println(s"Received GO from ${from} at me: ${me}")
+      if (!pid_to_index.contains(k)) {
+        pid_to_index += (k -> parent.size)
+        parent += from
+        children += Set.empty[PID]
+        val_set += Set(List(me.value, k.value))
+        expected_msg += (neighbors).toList.size - 1
+        if (expected_msg(pid_to_index(k)) == 0) {
+          SEND(Back(me, from, val_set(pid_to_index(k)), k))
+        } else {
+          SEND(Go(me, neighbors - from, k))
         }
-        else {
-          for (x <- neighbors.toIterator) {
-            SEND(Go(me, x, msg))
-          }
+      } else {
+        SEND(Back(me, from, Set.empty[List[Int]], k))
+      }
+    case Back(from, _, val_set_, k) =>
+      println(s"Received BACK from ${from} at me: ${me}")
+      expected_msg(pid_to_index(k)) -= 1
+      if (!val_set.isEmpty) {
+        children(pid_to_index(k)) = children(pid_to_index(k)) + from
+        val_set(pid_to_index(k)) =  val_set(pid_to_index(k)) | val_set_
+      }
+      if (expected_msg(pid_to_index(k)) == 0) {
+        val_set(pid_to_index(k)) = val_set(pid_to_index(k))
+        if (parent(pid_to_index(k)) != me) {
+          SEND(Back(me, parent(pid_to_index(k)), val_set(pid_to_index(k)), k))
+        } else {
+          val calc_root: Int = compute(val_set(pid_to_index(me)), me)
+          val check: Boolean = (calc_root == me.value)
+          println(s"Root: ${me.value}. Result : ${calc_root}")
         }
       }
-      else {
-        val msg = Nil
-        SEND(Back(me, from, msg))
-      }
-    case Back(from, to, msg) =>
-      
-      // Successfully received back a message so decrement expected_msgs counter.
-      expected_msgs -= 1
-      if (msg !=Nil) {
-        println("received BACK from " + from)
-        children += from
-        for (x <- msg.toIterator) {
-          value_set += x
-        }
-      }
-      println(value_set)
-
-      if (expected_msgs == 0) {
-        if (parent != me) { // if this is not the root node
-   //       SEND(Back(me, parent, new_msg)) // 
-          SEND(Back(me, parent, value_set.toList))
-        }
-        else { // if this is the root node
-          DELIVER(Computation(from, to, compute_function(value_set.toList)))
-        }
-      }
-    case _ =>
-      println("nothing")
-  }
-
-  def compute_function(msg: List[Double]) : Double = {
-    var sum = 0.0
-    for (x <- msg.toIterator) {
-      sum += x
-    }
-
-    return sum
   }
 }
 
-object ParallelBcastMain extends Main(topology.Grid(4,4))(
-  ProcessInitializer { p =>
-    val app = new BcastApp(p)
-    val traverse = new ParallelTraversal(p)
-    app --> traverse
+object ParallelBcast
+{
+  case class Go(from: PID, to: Set[PID], val k: PID)
+    extends MulticastMessage
+  case class Back(from: PID, to: PID, val val_set: Set[List[Int]], val k: PID)
+    extends UnicastMessage
+  def compute (val_set: Set[List[Int]], k: PID) : Int = {
+    var sum: Int = 0
+    val_set.foreach((set: List[Int]) => sum += set(0) * (set(1) + 1))
+    sum /= (k.value + 1)
+    var root_id: Int = (val_set.size * (val_set.size + 1))/2 - sum
+    return root_id
   }
-)
+}
 
+object MainParallelBcast
+  extends Main(topology.Grid(8, 8)) (
+    ProcessInitializer { p =>
+      val app0 = new BcastApp(p, PID(0))
+      val app1 = new BcastApp(p, PID(5))
+      val app2 = new BcastApp(p, PID(10))
+      val app3 = new BcastApp(p, PID(15))
+      val app4 = new BcastApp(p, PID(20))
+      val bfs = new ParallelBcast(p)
+      app0 --> bfs
+      app1 --> bfs
+      app2 --> bfs
+      app3 --> bfs
+      app4 --> bfs
+    }
+  )
