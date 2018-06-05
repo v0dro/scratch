@@ -6,6 +6,7 @@
 
 import numpy as np
 import math
+import sys
 
 np.set_printoptions(precision=5, linewidth=150)
 
@@ -41,16 +42,16 @@ def get_big_matrix(files, major, n, nb, pb, num_procs):
                     for pc in range(pb):
                         glob_row = int(r*nb + myrow*pb + pr)
                         glob_col = int(c*nb + mycol*pb + pc)
-                        if major == "row":
-                            index = (r*pb + c)*nb + pr*pb + pc
-                        elif major == "col":
-                            index = pr + pc*pb
+                        #if major == "row":
+                        index = (r*pb + c)*nb + pr*pb + pc
+                        # elif major == "col":
+                        #     index = (r*pb + c)*nb + pr + pc*pb
 
+                        # print(str(glob_row) + " " + str(glob_col) + " " + str(index) + " " + str(arr[index]))
                         matrix[glob_row, glob_col] = arr[index]
     return matrix
 
-def main():
-    major = "row"
+def main(major):
     n = 8
     nb = 4
     pb = 2
@@ -85,4 +86,8 @@ def main():
     print(np.matmul(lower, upper))
 
 if __name__ == "__main__":
-    main()
+    major = sys.argv[1] if len(sys.argv) > 1 else None
+    if major is None:
+        major = "row"
+
+    main(major)

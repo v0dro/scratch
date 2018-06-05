@@ -9,8 +9,8 @@ void diagonal_block_lu(double *A, int ia, int nb, int N, int *ipiv,
                        int *BLACS_CONTEXT, int *desca)
 {
   
-   int info;
-   ia = 1;
+  int info;
+  ia = 1;
   nb = 8;
   pdgetrf_(&nb, &nb, A, &ia, &ia, desca, ipiv, &info);
 }

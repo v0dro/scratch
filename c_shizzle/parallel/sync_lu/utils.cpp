@@ -25,7 +25,7 @@ void generate_data(double *a, int block_size_per_process_r,
           int index = (bcounter_i*block_size_per_process_r + bcounter_j)*
             num_blocks_per_process +  i*process_block_size + j;
           
-          a[index] = row_i*N + col_j;
+          a[index] = row_i + col_j*N;
         }
       }
     }
@@ -61,7 +61,7 @@ void print_block(double *A, int nb, int nc, int myrow, int mycol, char *desc)
   cout << endl;
 }
 
-void print_files(double *A, int nrows, int ncols, int myrow, int mycol, string postfix="")
+void print_files(double *A, int nrows, int ncols, int myrow, int mycol, string postfix /*=""*/)
 {
   string n = to_string(myrow*2 + mycol); 
   ofstream file;
