@@ -56,5 +56,5 @@ void print_all(double *A, int nrows, int ncols, int myrow, int mycol, char *desc
 
 void print_block(double *A, int nb, int nc, int myrow, int mycol, char *desc);
 
-void print_files(double *A, int nrows, int ncols, int myrow, int mycol);
+void print_files(double *A, int nrows, int ncols, int myrow, int mycol, string postfix="");
 #endif /* UTILS_H */

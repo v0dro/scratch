@@ -1,7 +1,9 @@
 // Author: @v0dro
 // Desc: Store a distributed matrix in contiguos blocks in an array on each
 // process and perform a synchronous LU decomposition. Assume square block
-// decomposition
+// decomposition.
+
+// Row major matrix storage in all cases.
 
 #include "sync_lu_decomp.hpp"
 
@@ -37,8 +39,7 @@ int main(int argc, char ** argv)
   int b_fac = 4;
   int lld = numroc_(&N, &b_fac, &mycol, &rsrc, &num_procs);
   cout << "lld: " << lld << endl;
-  //lld = 4;
-   descinit_(desca, &N, &N, &b_fac, &b_fac, &rsrc, &csrc, &BLACS_CONTEXT, &lld, &info);
+  descinit_(desca, &N, &N, &b_fac, &b_fac, &rsrc, &csrc, &BLACS_CONTEXT, &lld, &info);
   // end create array descriptor
  
   // synchronous LU decomposition
@@ -53,6 +54,7 @@ int main(int argc, char ** argv)
 
   // loop over matrix blocks.
   //for (int ia = 0; ia < N; ia += nb) {
+  print_files(a, nb, nb, myrow, mycol, "input");
   int ia ;
   diagonal_block_lu(a, ia, nb, N, ipiv, &BLACS_CONTEXT, desca);
     // compute LU of diagonal block.
@@ -60,7 +62,7 @@ int main(int argc, char ** argv)
     // broadcast row and col blocks along the lower right block of the matrix and multiply.
     // 
     //}
-
+ 
   print_files(a, nb, nb, myrow, mycol);
 
   

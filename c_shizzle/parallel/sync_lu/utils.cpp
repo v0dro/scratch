@@ -61,12 +61,12 @@ void print_block(double *A, int nb, int nc, int myrow, int mycol, char *desc)
   cout << endl;
 }
 
-void print_files(double *A, int nrows, int ncols, int myrow, int mycol)
+void print_files(double *A, int nrows, int ncols, int myrow, int mycol, string postfix="")
 {
   string n = to_string(myrow*2 + mycol); 
   ofstream file;
 
-  file.open(n + ".txt");
+  file.open(n + postfix + ".txt");
   print_arr(A, nrows*ncols, n, file);
   //print_mat(A, nrows, ncols, myrow, mycol, n, file);
   file.close();
@@ -74,7 +74,7 @@ void print_files(double *A, int nrows, int ncols, int myrow, int mycol)
 
 void print_arr(double *A, int size, string desc, ostream &o)
 {
-  o << desc << endl;
+  //o << desc << endl;
   for (int i = 0; i < size; ++i) {
     o << A[i] << " ";
   }

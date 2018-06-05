@@ -12,34 +12,48 @@ np.set_printoptions(precision=5, linewidth=150)
 def convert_to_number_list(string):
     return [float(s) for s in string.split(' ')]
 
-def get_big_matrix(files, major, n, nb, process_block_r, process_block_c, num_procs):
+"""
+Create a big matrix from a bunch of files that have been written by MPI processes.
+Works for block cyclic square matrices.
+
+files     -- Dict of process number and file name.
+major     -- String denoting storage format. Can be "row" or "col".
+n         -- Number of rows and cols of the global matrix.
+nb        -- Number of rows and cols of the matrix block.
+pb        -- Number of rows and cols of the process block.
+num_procs -- Number of processes that output this matrix.
+"""
+def get_big_matrix(files, major, n, nb, pb, num_procs):
     matrix = np.zeros([n,n])
     width = math.sqrt(num_procs)
+    nb_r = int(math.sqrt(nb))
+    nb_c = int(math.sqrt(nb))
+    
     for proc, file_name in files.items():
         f = open(file_name, "r").read().rstrip()
         arr = convert_to_number_list(f)
         myrow = int(proc // width)
         mycol = int(proc - (myrow * width))
         
-        for r in range(nb):
-            for c in range(nb):
-                glob_row = int(myrow*nb + r)
-                glob_col = int(mycol*nb + c)
-                if major == "row":
-                    index = r*nb + c
-                elif major == "col":
-                    index = r + c*nb
+        for r in range(nb_r):
+            for c in range(nb_c):
+                for pr in range(pb):
+                    for pc in range(pb):
+                        glob_row = int(r*nb + myrow*pb + pr)
+                        glob_col = int(c*nb + mycol*pb + pc)
+                        if major == "row":
+                            index = (r*pb + c)*nb + pr*pb + pc
+                        elif major == "col":
+                            index = pr + pc*pb
 
-                matrix[glob_row, glob_col] = arr[index]
-
+                        matrix[glob_row, glob_col] = arr[index]
     return matrix
 
 def main():
-    major = "col"
+    major = "row"
     n = 8
     nb = 4
-    process_block_c = 4
-    process_block_r = 4
+    pb = 2
     
     input_files = {
         0 : "0input.txt",
@@ -58,10 +72,10 @@ def main():
     num_procs = len(input_files.keys())
 
     print("printing input ... \n")
-    print(get_big_matrix(input_files, major, n, nb, process_block_r, process_block_c, num_procs))
+    print(get_big_matrix(input_files, major, n, nb, pb, num_procs))
     
     print("printing output ... \n")
-    output = get_big_matrix(output_files, major, n, nb, process_block_r, process_block_c, num_procs)
+    output = get_big_matrix(output_files, major, n, nb, pb, num_procs)
     print(output)
 
     print("product of lower and upper ... \n")

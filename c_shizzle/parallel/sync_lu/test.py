@@ -10,4 +10,5 @@ print("\n")
 print(p)
 print(l)
 print(u)
-
+print("\n")
+print(np.matmul(l, u))

@@ -48,7 +48,6 @@ void print_files(double *A, int nrows, int ncols, int myrow, int mycol, string p
 }
 
 
-
 int main(int argc, char ** argv)
 {
   // MPI init
@@ -98,6 +97,9 @@ int main(int argc, char ** argv)
   // LU decomposition
   int ia = 1, ja = 1;
   int *ipiv = (int*)calloc(sizeof(int), N);
+  for (int i = 0; i < N; ++i) {
+    ipiv[i] = i+1;
+  }
   pdgetrf_(&N, &N, a, &ia, &ja, desca, ipiv, &info);
   // end LU decomposition
 

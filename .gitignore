@@ -19,8 +19,5 @@ scala/*/.lib/
 *.out
 *.class
 *.cache
-c_shizzle/parallel/sync_lu/0.txt
-c_shizzle/parallel/sync_lu/1.txt
-c_shizzle/parallel/sync_lu/2.txt
-c_shizzle/parallel/sync_lu/3.txt
+c_shizzle/parallel/sync_lu/*.txt
 
