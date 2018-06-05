@@ -30,19 +30,19 @@ extern "C" {
 
 void print_arr(double *A, int size, string desc, ostream &o)
 {
-  o << desc << endl;
+  //o << desc << endl;
   for (int i = 0; i < size; ++i) {
     o << A[i] << " ";
   }
   o << endl;
 }
 
-void print_files(double *A, int nrows, int ncols, int myrow, int mycol)
+void print_files(double *A, int nrows, int ncols, int myrow, int mycol, string post="")
 {
   string n = to_string(myrow*2 + mycol); 
   std::ofstream file;
 
-  file.open(n + ".txt");
+  file.open(n + post + ".txt");
   print_arr(A, nrows*ncols, n, file);
   file.close();
 }
@@ -82,6 +82,7 @@ int main(int argc, char ** argv)
     }
     cout << endl;
   }
+  print_files(a, nb, nb, myrow, mycol, "input");
   // end matrix properties
 
   // create array descriptor
@@ -92,9 +93,11 @@ int main(int argc, char ** argv)
 
   Cblacs_barrier(BLACS_CONTEXT, "All");
 
+  //int locr = numroc_(&N, &nb, &myrow, &rsrc, &num_procs);
+  //std::cout << "locr + mba : " << locr + nb << std::endl;
   // LU decomposition
   int ia = 1, ja = 1;
-  int *ipiv = (int*)malloc(sizeof(int)*N);
+  int *ipiv = (int*)calloc(sizeof(int), N);
   pdgetrf_(&N, &N, a, &ia, &ja, desca, ipiv, &info);
   // end LU decomposition
 
@@ -104,5 +107,11 @@ int main(int argc, char ** argv)
       cout << ipiv[i] << " ";
     }
   }
+
+  if (myrow == 1 && mycol == 1) {
+    for(int i = 0; i < N; ++i) {
+      cout << ipiv[i] << " ";
+    }
+  }  
   MPI_Finalize();
 }
