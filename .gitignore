@@ -20,4 +20,6 @@ scala/*/.lib/
 *.class
 *.cache
 c_shizzle/parallel/sync_lu/*.txt
+c_shizzle/parallel/row_major_dist_lu/*.txt
+
 
