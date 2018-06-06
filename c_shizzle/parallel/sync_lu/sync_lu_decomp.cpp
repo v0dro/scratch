@@ -38,7 +38,8 @@ int main(int argc, char ** argv)
   int rsrc = 0, csrc = 0, info;
   int b_fac = 4;
   int lld = numroc_(&N, &b_fac, &mycol, &rsrc, &num_procs);
-  cout << "lld: " << lld << endl;
+  lld = 4;
+  //  cout << "lld: " << lld << endl;
   descinit_(desca, &N, &N, &b_fac, &b_fac, &rsrc, &csrc, &BLACS_CONTEXT, &lld, &info);
   // end create array descriptor
  
@@ -63,12 +64,8 @@ int main(int argc, char ** argv)
     // 
     //}
  
-  print_files(a, nb, nb, myrow, mycol);
-
-  
+  print_files(a, nb, nb, myrow, mycol);  
   // end synchronous LU decomposition
 
-  
-  
   MPI_Finalize();
 }

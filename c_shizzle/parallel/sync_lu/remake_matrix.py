@@ -35,20 +35,19 @@ def get_big_matrix(files, major, n, nb, pb, num_procs):
         arr = convert_to_number_list(f)
         myrow = int(proc // width)
         mycol = int(proc - (myrow * width))
-        
-        for r in range(nb_r):
-            for c in range(nb_c):
-                for pr in range(pb):
-                    for pc in range(pb):
-                        glob_row = int(r*nb + myrow*pb + pr)
-                        glob_col = int(c*nb + mycol*pb + pc)
-                        #if major == "row":
-                        index = (r*pb + c)*nb + pr*pb + pc
-                        # elif major == "col":
-                        #     index = (r*pb + c)*nb + pr + pc*pb
 
-                        # print(str(glob_row) + " " + str(glob_col) + " " + str(index) + " " + str(arr[index]))
-                        matrix[glob_row, glob_col] = arr[index]
+        if major == "col":
+            for c in range(nb_c):
+                for r in range(nb_r):
+                    for pc in range(pb):
+                        for pr in range(pb):
+                            glob_row = int(myrow*pb + pr + pc*nb)
+                            glob_col = int(c*nb + mycol*2 + r)   
+                            index = pr + pc*pb + (r + c*2)*nb
+                            matrix[glob_row, glob_col] = arr[index]
+        elif major == "row":
+            pass
+        
     return matrix
 
 def main(major):

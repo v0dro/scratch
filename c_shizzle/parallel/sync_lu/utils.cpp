@@ -14,37 +14,24 @@ void generate_data(double *a, int block_size_per_process_r,
                    int block_size_per_process_c, int process_block_size,
                    int num_blocks_per_process, int myrow, int mycol, int N)
 {
-  for (int bcounter_i = 0; bcounter_i < block_size_per_process_r; ++bcounter_i) {
-    for (int bcounter_j = 0; bcounter_j < block_size_per_process_c; ++bcounter_j) {
-      for (int i = 0; i < process_block_size; ++i) {
+  if (COL_MAJOR) {
+    // loop over block cols
+    for (int bc = 0; bc < block_size_per_process_c; ++bc) {
+      // loop over block rows
+      for (int br = 0; br < block_size_per_process_r; ++br) {
+        // loop over number cols
         for (int j = 0; j < process_block_size; ++j) {
-          int row_i = bcounter_i*num_blocks_per_process +
-            myrow*block_size_per_process_r + i;
-          int col_j = bcounter_j*num_blocks_per_process +
-            mycol*block_size_per_process_c + j;
-          int index = (bcounter_i*block_size_per_process_r + bcounter_j)*
-            num_blocks_per_process +  i*process_block_size + j;
-          
-          a[index] = row_i + col_j*N;
+          // loop over number rows
+          for (int i = 0; i < process_block_size; ++i) {
+            int row_i = myrow*process_block_size + i + j * num_blocks_per_process;
+            int col_i = bc*num_blocks_per_process + mycol * process_block_size + br;
+            int index = i + j * process_block_size +
+              (br + bc * process_block_size) * num_blocks_per_process;
+            a[index]  = row_i + col_i*N;
+          }
         }
       }
     }
-  }
-}
-
-void print_all(double *A, int nrows, int ncols, int myrow, int mycol, char *desc)
-{
-  if (myrow == 0 && mycol == 0) {
-    print_mat(A, nrows, ncols, 0,0, desc, cout);
-  }
-  else if (myrow == 0 && mycol == 1) {
-    print_mat(A, nrows, ncols, 0,1, desc, cout);
-  }
-  else if (myrow == 1 && mycol == 0) {
-    print_mat(A, nrows, ncols, 1,0, desc, cout);
-  }
-  else if (myrow == 1 && mycol == 1) {
-    print_mat(A, nrows, ncols, 1,1, desc, cout);
   }
 }
 
@@ -68,13 +55,11 @@ void print_files(double *A, int nrows, int ncols, int myrow, int mycol, string p
 
   file.open(n + postfix + ".txt");
   print_arr(A, nrows*ncols, n, file);
-  //print_mat(A, nrows, ncols, myrow, mycol, n, file);
   file.close();
 }
 
 void print_arr(double *A, int size, string desc, ostream &o)
 {
-  //o << desc << endl;
   for (int i = 0; i < size; ++i) {
     o << A[i] << " ";
   }

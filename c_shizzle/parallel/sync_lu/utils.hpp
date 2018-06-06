@@ -7,6 +7,9 @@
 #include <string>
 using namespace std;
 
+#define ROW_MAJOR 0
+#define COL_MAJOR 1
+
 extern "C" {
   /* Cblacs declarations */
   void Cblacs_pinfo(int*, int*);
