@@ -13,4 +13,7 @@ void diagonal_block_lu(double *A, int ia, int nb, int N, int *ipiv,
   ia = 1;
   nb = 8;
   pdgetrf_(&nb, &nb, A, &ia, &ia, desca, ipiv, &info);
+  // compute LU of diagonal block.
+  // broadcast block along rows and cols.
+  // broadcast row and col blocks along the lower right block of the matrix and multiply.
 }
