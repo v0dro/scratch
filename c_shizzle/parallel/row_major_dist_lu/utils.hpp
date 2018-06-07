@@ -43,6 +43,18 @@ extern "C" {
   
 }
 
+// Descriptor of a matrix.
+typedef struct desc {
+  int M;             // numrows of global matrix A
+  int N;             // numcols of global matrix A
+  int MB;            // numrows of blocks of matrix A
+  int NB;            // numcols of blocks of matrix A
+  int BLACS_CONTEXT; // Blacs context handle
+  int rsrc;          // The process row number containing the first row of the global matrix A
+  int csrc;          // The process col containing the first col of the global matrix A
+  int lld;           // Leading dimension of the number of the local array
+} desc;
+
 void initialize_blacs(int *BLACS_CONTEXT, int *proc_nrows, int *proc_ncols,
                       int *myrow, int *mycol, int *proc_id, int *num_procs);
 
