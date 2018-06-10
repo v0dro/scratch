@@ -5,11 +5,18 @@
 #include <sys/time.h>
 #include <immintrin.h>
 #include <cmath>
+#include <errno.h>
 
-// caches for Xeon E5-2637 v4 - Intel. TSUBAME login node.
-#define L1 128*1024/4/8 //= 4096 doubles => size * bits / cores / sizeof(double)
-#define L2 1024*1024/4/8 // = 32,768
-#define L3 10*1024*1024/4/8 // = 3,27,680
+// // caches for Xeon E5-2637 v4 - Intel. TSUBAME login node.
+// #define L1 128*1024/4/8 //= 4096 doubles => size * bytes / cores / sizeof(double)
+// #define L2 1024*1024/4/8 // = 32,768
+// #define L3 10*1024*1024/4/8 // = 3,27,680
+
+// caches for Xeon Intel(R) Xeon(R) CPU E5-2680 v4 @ 2.40GHz. TSUBAME f-node.
+// cache values are per-core.
+#define L1 32*1024/8 // size in kb * bytes per kb / sizeof(double)
+#define L2 256*1024/8
+#define L3 35*1024*1024/8 // L3 cache is per chip so shared among cores.
 // nrows and ncols
 int M, N;
 int lda, ldb, ldc;
@@ -49,14 +56,19 @@ double get_time()
 double *malloc_aligned(int m, int n, int size)
 {
   double *ptr;
-  int    err;
-  err = posix_memalign( (void**)&ptr, (size_t)GEMM_SIMD_ALIGN_SIZE, size * m * n );
 
-  if ( err ) {
-    std::cout << "bl_malloc_aligned(): posix_memalign() failures";
+  ptr = (double*)aligned_alloc((size_t) GEMM_SIMD_ALIGN_SIZE, m*n*size);
+  if ( ptr == NULL ) {
+    std::cout << "malloc_aligned failed. failure reason : ";
+    if (errno == ENOMEM) {
+      std::cout << "insufficient memory.";
+    }
+    else if (errno == EINVAL) {
+      std::cout << "alignment not a power of two.";
+    }
+
     exit( 1 );    
-  }
-    
+  }    
   return ptr;
 }
 
@@ -91,6 +103,7 @@ void print_arr(double *a, int size, char *desc)
 
 void generate_data(double *A, double* B, double *C, int N)
 {
+  #pragma omp parallel for
   for (int i=0; i < N; ++i) {
     for (int j=0; j < N; ++j) {
       A[i*N + j] = i*N + j;

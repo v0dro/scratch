@@ -51,7 +51,7 @@ void macro_kernel(double *XA,
 
   // Note that the entire configuration changes when row-major is being done. Algorithms
   // must be entirely reworked for that purpose when changing
-#pragma omp parallel for
+  #pragma omp parallel for
   for (int mr = 0; mr < nc_min; mr += MR) {
     int index_c = (aux->nc + mr)*ldc + aux->mc;
     for (int nr = 0; nr < mc_min; nr += NR) {
@@ -68,8 +68,14 @@ void micro_kernel(double *A, register double *B, double *C, aux_t *aux)
 {
   register double *B_ptr, *C_ptr, *A_ptr, *A_temp;
   register int lead_c = ldc;
+  register int lead_c_p4 = lead_c + 4;
   register int lead_c_2 = 2*ldc;
+  register int lead_c_2_p4 = lead_c_2 + 4;
   register int lead_c_3 = 3*ldc;
+  register int lead_c_3_p4 = lead_c_3 + 4;
+  register int inc_C = MR_INCR*lead_c;
+  register int inc_A = (MR_INCR - 1)*aux->kc_min;
+  
   C_ptr = C;
   B_ptr = B;
   A_ptr = A;
@@ -91,13 +97,13 @@ void micro_kernel(double *A, register double *B, double *C, aux_t *aux)
     C_avx001 = _mm256_load_pd(C_ptr + 4);
     
     C_avx100 = _mm256_load_pd(C_ptr + lead_c);
-    C_avx101 = _mm256_load_pd(C_ptr + lead_c + 4);
+    C_avx101 = _mm256_load_pd(C_ptr + lead_c_p4);
     
     C_avx200 = _mm256_load_pd(C_ptr + lead_c_2);
-    C_avx201 = _mm256_load_pd(C_ptr + lead_c_2 + 4);
+    C_avx201 = _mm256_load_pd(C_ptr + lead_c_2_p4);
     
     C_avx300 = _mm256_load_pd(C_ptr + lead_c_3);
-    C_avx301 = _mm256_load_pd(C_ptr + lead_c_3 + 4);
+    C_avx301 = _mm256_load_pd(C_ptr + lead_c_3_p4);
 
     // For every iteration of k, B_ptr is incremented once by NR.
     //   Thus the whole array is scanned.
@@ -139,14 +145,14 @@ void micro_kernel(double *A, register double *B, double *C, aux_t *aux)
     _mm256_store_pd(C_ptr            , C_avx000);
     _mm256_store_pd(C_ptr + 4        , C_avx001);
     _mm256_store_pd(C_ptr + lead_c      , C_avx100);
-    _mm256_store_pd(C_ptr + lead_c + 4  , C_avx101);
+    _mm256_store_pd(C_ptr + lead_c_p4  , C_avx101);
     _mm256_store_pd(C_ptr + lead_c_2    , C_avx200);
-    _mm256_store_pd(C_ptr + lead_c_2 + 4, C_avx201);
+    _mm256_store_pd(C_ptr + lead_c_2_p4, C_avx201);
     _mm256_store_pd(C_ptr + lead_c_3    , C_avx300);
-    _mm256_store_pd(C_ptr + lead_c_3 + 4, C_avx301);
+    _mm256_store_pd(C_ptr + lead_c_3_p4, C_avx301);
     
-    C_ptr += MR_INCR*lead_c;
-    A_ptr += (MR_INCR - 1)*aux->kc_min;
+    C_ptr += inc_C;
+    A_ptr += inc_A;
   }
 }
 
@@ -173,7 +179,6 @@ void matmul(double *A, double *B, double *C, aux_t *aux)
         int mc_min = std::min(N-mc, MC);
         aux->mc_min = mc_min;
 
-        #pragma omp parallel
         packB_KCxMC(packB, B, kc_min, mc_min, aux);
         macro_kernel(packA, packB, &C[nc*nc_min], nc_min, kc_min, mc_min, aux);
       }
@@ -197,7 +202,6 @@ void packA_NCxKC(double *packA, double *A, int nc_min, int kc_min, aux_t *aux)
 void packB_KCxMC(double *packB, double *B, int kc_min, int mc_min, aux_t *aux)
 {
   double *packB_temp = packB, *temp;
-  double *B_ptr;
 
   #pragma omp parallel for
   for (int m = aux->mc; m < aux->mc + mc_min; m += NR) {
@@ -234,8 +238,8 @@ int main(int argc, char ** argv)
   double *A, *B, *C;
   double start, stop;
   aux_t aux;
-  A = malloc_aligned(N, N, sizeof(double));
-  B = malloc_aligned(N, N, sizeof(double));
+  A = (double*)malloc(N * N * sizeof(double));
+  B = (double*)malloc(N * N * sizeof(double));
   C = malloc_aligned(N, N, sizeof(double));
   generate_data(A, B, C, N);
   
