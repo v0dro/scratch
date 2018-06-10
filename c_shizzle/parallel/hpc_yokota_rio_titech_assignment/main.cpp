@@ -64,9 +64,12 @@ void macro_kernel(double *XA,
 }
 
 // multiply micro-panels of size MR x KC and KC x NR.
-void micro_kernel(double *A, double *B, double *C, aux_t *aux)
+void micro_kernel(double *A, register double *B, double *C, aux_t *aux)
 {
-  double *A_ptr, *B_ptr, *C_ptr;
+  register double *B_ptr, *C_ptr, *A_ptr, *A_temp;
+  register int lead_c = ldc;
+  register int lead_c_2 = 2*ldc;
+  register int lead_c_3 = 3*ldc;
   C_ptr = C;
   B_ptr = B;
   A_ptr = A;
@@ -87,24 +90,28 @@ void micro_kernel(double *A, double *B, double *C, aux_t *aux)
     C_avx000 = _mm256_load_pd(C_ptr);
     C_avx001 = _mm256_load_pd(C_ptr + 4);
     
-    C_avx100 = _mm256_load_pd(C_ptr + ldc);
-    C_avx101 = _mm256_load_pd(C_ptr + ldc + 4);
+    C_avx100 = _mm256_load_pd(C_ptr + lead_c);
+    C_avx101 = _mm256_load_pd(C_ptr + lead_c + 4);
     
-    C_avx200 = _mm256_load_pd(C_ptr + 2*ldc);
-    C_avx201 = _mm256_load_pd(C_ptr + 2*ldc + 4);
+    C_avx200 = _mm256_load_pd(C_ptr + lead_c_2);
+    C_avx201 = _mm256_load_pd(C_ptr + lead_c_2 + 4);
     
-    C_avx300 = _mm256_load_pd(C_ptr + 3*ldc);
-    C_avx301 = _mm256_load_pd(C_ptr + 3*ldc + 4);
+    C_avx300 = _mm256_load_pd(C_ptr + lead_c_3);
+    C_avx301 = _mm256_load_pd(C_ptr + lead_c_3 + 4);
 
     // For every iteration of k, B_ptr is incremented once by NR.
     //   Thus the whole array is scanned.
     // For every iteration of k, A_ptr is incremented once by 1.
     //   Thus one row of A_ptr is scanned.
     for (int k = 0; k < aux->kc_min; k += 1) {
-      A_avx0 = _mm256_broadcast_sd(A_ptr);
-      A_avx1 = _mm256_broadcast_sd(A_ptr + aux->kc_min);
-      A_avx2 = _mm256_broadcast_sd(A_ptr + 2*aux->kc_min);
-      A_avx3 = _mm256_broadcast_sd(A_ptr + 3*aux->kc_min);
+      A_temp = A_ptr;
+      A_avx0 = _mm256_broadcast_sd(A_temp);
+      A_temp += aux->kc_min;
+      A_avx1 = _mm256_broadcast_sd(A_temp);
+      A_temp += aux->kc_min;
+      A_avx2 = _mm256_broadcast_sd(A_temp);
+      A_temp += aux->kc_min;
+      A_avx3 = _mm256_broadcast_sd(A_temp);
       
       B_avx0 = _mm256_load_pd(B_ptr);
       B_avx1 = _mm256_load_pd(B_ptr + 4);
@@ -131,14 +138,14 @@ void micro_kernel(double *A, double *B, double *C, aux_t *aux)
 
     _mm256_store_pd(C_ptr            , C_avx000);
     _mm256_store_pd(C_ptr + 4        , C_avx001);
-    _mm256_store_pd(C_ptr + ldc      , C_avx100);
-    _mm256_store_pd(C_ptr + ldc + 4  , C_avx101);
-    _mm256_store_pd(C_ptr + 2*ldc    , C_avx200);
-    _mm256_store_pd(C_ptr + 2*ldc + 4, C_avx201);
-    _mm256_store_pd(C_ptr + 3*ldc    , C_avx300);
-    _mm256_store_pd(C_ptr + 3*ldc + 4, C_avx301);
+    _mm256_store_pd(C_ptr + lead_c      , C_avx100);
+    _mm256_store_pd(C_ptr + lead_c + 4  , C_avx101);
+    _mm256_store_pd(C_ptr + lead_c_2    , C_avx200);
+    _mm256_store_pd(C_ptr + lead_c_2 + 4, C_avx201);
+    _mm256_store_pd(C_ptr + lead_c_3    , C_avx300);
+    _mm256_store_pd(C_ptr + lead_c_3 + 4, C_avx301);
     
-    C_ptr += MR_INCR*ldc;
+    C_ptr += MR_INCR*lead_c;
     A_ptr += (MR_INCR - 1)*aux->kc_min;
   }
 }
@@ -154,7 +161,6 @@ void matmul(double *A, double *B, double *C, aux_t *aux)
     int nc_min = std::min((N-nc), NC);
     
     // each iteration of this advances the cols of A and rows of B.
-    //#pragma omp parallel for
     for (int kc = 0; kc < N; kc += KC) { // like k.
       int kc_min = std::min((N-kc), KC);
       aux->kc = kc;
@@ -179,7 +185,7 @@ void packA_NCxKC(double *packA, double *A, int nc_min, int kc_min, aux_t *aux)
 {
   double *packA_temp = packA;
   double *A_ptr;
-  
+
   for (int n = aux->nc; n < aux->nc + nc_min; ++n) {
     A_ptr = &A(n,aux->kc);
     for (int k = 0; k < kc_min; ++k) {
@@ -197,17 +203,15 @@ void packB_KCxMC(double *packB, double *B, int kc_min, int mc_min, aux_t *aux)
   for (int m = aux->mc; m < aux->mc + mc_min; m += NR) {
     for (int k = aux->kc; k < aux->kc + kc_min; k++) {
       temp = &B(k,m);
-      *(packB_temp) = *(temp);
-      *(packB_temp+1) = *(temp + 1);
-      *(packB_temp+2) = *(temp + 2);
-      *(packB_temp+3) = *(temp + 3);
+      *(packB_temp++) = *(temp);
+      *(packB_temp++) = *(temp + 1);
+      *(packB_temp++) = *(temp + 2);
+      *(packB_temp++) = *(temp + 3);
       
-      *(packB_temp+4) = *(temp + 4);
-      *(packB_temp+5) = *(temp + 5);
-      *(packB_temp+6) = *(temp + 6);
-      *(packB_temp+7) = *(temp + 7);
-
-      packB_temp += 8;
+      *(packB_temp++) = *(temp + 4);
+      *(packB_temp++) = *(temp + 5);
+      *(packB_temp++) = *(temp + 6);
+      *(packB_temp++) = *(temp + 7);
     }
   }
 }
