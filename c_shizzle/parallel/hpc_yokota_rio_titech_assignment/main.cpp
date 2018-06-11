@@ -66,7 +66,7 @@ void macro_kernel(double *XA,
 // multiply micro-panels of size MR x KC and KC x NR.
 void micro_kernel(double *A, register double *B, double *C, aux_t *aux)
 {
-  register double *B_ptr, *C_ptr, *A_ptr, *A_temp;
+  register double *B_ptr, *C_ptr, *A_ptr, *A_temp, *C_temp, *C_temp_p4;
   register int lead_c = ldc;
   register int lead_c_p4 = lead_c + 4;
   register int lead_c_2 = 2*ldc;
@@ -75,7 +75,7 @@ void micro_kernel(double *A, register double *B, double *C, aux_t *aux)
   register int lead_c_3_p4 = lead_c_3 + 4;
   register int inc_C = MR_INCR*lead_c;
   register int inc_A = (MR_INCR - 1)*aux->kc_min;
-  
+
   C_ptr = C;
   B_ptr = B;
   A_ptr = A;
@@ -86,24 +86,43 @@ void micro_kernel(double *A, register double *B, double *C, aux_t *aux)
     C_avx100, C_avx101,
     C_avx200, C_avx201,
     C_avx300, C_avx301;
-
+  // format - instruction source_op dest_op
+  
   for (int i = 0; i < MR; i += MR_INCR) {
     B_ptr = B;
+    C_temp = C_ptr;
+    C_temp_p4 = C_ptr + 4;
     // For each completion of the below two nested loops, B is scanned from top to bottom.
 
     // Also notice that C stays inside the same place in memory throughout the loop.
     // Thus it can be a good candidate for assigning into registers.
-    C_avx000 = _mm256_load_pd(C_ptr);
-    C_avx001 = _mm256_load_pd(C_ptr + 4);
+    // __asm__ volatile("vmovapd (%1), %%ymm0  \n\t"
+    //                  "    \n\t"
+    //                  :  // output
+    //                  : "r" (C_ptr), "r" (lead_c), "r" (lead_c_p4),
+    //                    "r" (lead_c_2), "r" (lead_c_2_p4), "r" (lead_c_3),
+    //                    "r" (lead_c_3_p4)// input
+    //                  ); // clobber
+
     
-    C_avx100 = _mm256_load_pd(C_ptr + lead_c);
-    C_avx101 = _mm256_load_pd(C_ptr + lead_c_p4);
     
-    C_avx200 = _mm256_load_pd(C_ptr + lead_c_2);
-    C_avx201 = _mm256_load_pd(C_ptr + lead_c_2_p4);
+    C_avx000 = _mm256_load_pd(C_temp);
+    C_avx001 = _mm256_load_pd(C_temp_p4);
+    C_temp += lead_c;
+    C_temp_p4 += lead_c;
     
-    C_avx300 = _mm256_load_pd(C_ptr + lead_c_3);
-    C_avx301 = _mm256_load_pd(C_ptr + lead_c_3_p4);
+    C_avx100 = _mm256_load_pd(C_temp);
+    C_avx101 = _mm256_load_pd(C_temp_p4);
+    C_temp += lead_c;
+    C_temp_p4 += lead_c;
+    
+    C_avx200 = _mm256_load_pd(C_temp);
+    C_avx201 = _mm256_load_pd(C_temp_p4);
+    C_temp += lead_c;
+    C_temp_p4 += lead_c;
+    
+    C_avx300 = _mm256_load_pd(C_temp);
+    C_avx301 = _mm256_load_pd(C_temp_p4);
 
     // For every iteration of k, B_ptr is incremented once by NR.
     //   Thus the whole array is scanned.
@@ -203,7 +222,6 @@ void packB_KCxMC(double *packB, double *B, int kc_min, int mc_min, aux_t *aux)
 {
   double *packB_temp = packB, *temp;
 
-  #pragma omp parallel for
   for (int m = aux->mc; m < aux->mc + mc_min; m += NR) {
     for (int k = aux->kc; k < aux->kc + kc_min; k++) {
       temp = &B(k,m);

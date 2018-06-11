@@ -13,3 +13,4 @@ make -k main
 ./a.out 1024
 ./a.out 2048
 ./a.out 4096
+./a.out 8192

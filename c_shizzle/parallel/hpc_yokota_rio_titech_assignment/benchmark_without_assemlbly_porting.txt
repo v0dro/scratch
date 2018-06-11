@@ -1,0 +1,11 @@
+O0 optimizations : \n
+N = 16. time: 2.19345e-05 s. Gflops: 0.373475
+N = 32. time: 6.19888e-05 s. Gflops: 1.05722
+N = 64. time: 0.000106812 s. Gflops: 4.90853
+N = 128. time: 0.000464201 s. Gflops: 9.03553
+N = 256. time: 0.0018208 s. Gflops: 18.4284
+N = 512. time: 0.0115919 s. Gflops: 23.1571
+N = 1024. time: 0.0804389 s. Gflops: 26.6971
+N = 2048. time: 0.57316 s. Gflops: 29.974
+N = 4096. time: 4.24614 s. Gflops: 32.368
+N = 8192. time: 33.606 s. Gflops: 32.7177
