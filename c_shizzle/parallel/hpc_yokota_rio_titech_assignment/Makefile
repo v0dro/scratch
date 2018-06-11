@@ -1,4 +1,4 @@
-CXX = g++ -O0 -fopenmp -mavx2 -mfma -Wall -lm -I.
+CXX = g++ -fopenmp -O0 -mavx2 -mfma -Wall -lm -I.
 CFLAGS=-I.
 
 .PHONY : clean
@@ -8,7 +8,6 @@ CFLAGS=-I.
 
 main: main.o $(SOURCES)
 	$(CXX) $?
-	./a.out 128
 
 clean:
 	rm -f *.o *.out

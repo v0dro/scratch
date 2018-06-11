@@ -1,3 +1,4 @@
+// Author : Sameer Deshmukh. 17M38101.
 // Program for achieving highest flops/sec for matrix multiplication.
 // Use SIMD, multi-threading, cache blocking, etc.
 
@@ -67,62 +68,64 @@ void macro_kernel(double *XA,
 void micro_kernel(double *A, register double *B, double *C, aux_t *aux)
 {
   register double *B_ptr, *C_ptr, *A_ptr, *A_temp, *C_temp, *C_temp_p4;
+  register int reg_kc = aux->kc_min;
   register int lead_c = ldc;
-  register int lead_c_p4 = lead_c + 4;
-  register int lead_c_2 = 2*ldc;
-  register int lead_c_2_p4 = lead_c_2 + 4;
-  register int lead_c_3 = 3*ldc;
-  register int lead_c_3_p4 = lead_c_3 + 4;
   register int inc_C = MR_INCR*lead_c;
-  register int inc_A = (MR_INCR - 1)*aux->kc_min;
+  register int inc_A = (MR_INCR - 1)*reg_kc;
+
 
   C_ptr = C;
   B_ptr = B;
   A_ptr = A;
-  // AVX2 container for A, B and C.
-  __m256d A_avx0, A_avx1, A_avx2, A_avx3;
-  __m256d B_avx0, B_avx1;
-  __m256d C_avx000, C_avx001,
-    C_avx100, C_avx101,
-    C_avx200, C_avx201,
-    C_avx300, C_avx301;
-  // format - instruction source_op dest_op
-  
+
+  // format - instruction source_op dest_op  
   for (int i = 0; i < MR; i += MR_INCR) {
     B_ptr = B;
     C_temp = C_ptr;
     C_temp_p4 = C_ptr + 4;
+    
     // For each completion of the below two nested loops, B is scanned from top to bottom.
 
     // Also notice that C stays inside the same place in memory throughout the loop.
     // Thus it can be a good candidate for assigning into registers.
-    // __asm__ volatile("vmovapd (%1), %%ymm0  \n\t"
-    //                  "    \n\t"
-    //                  :  // output
-    //                  : "r" (C_ptr), "r" (lead_c), "r" (lead_c_p4),
-    //                    "r" (lead_c_2), "r" (lead_c_2_p4), "r" (lead_c_3),
-    //                    "r" (lead_c_3_p4)// input
-    //                  ); // clobber
 
-    
-    
-    C_avx000 = _mm256_load_pd(C_temp);
-    C_avx001 = _mm256_load_pd(C_temp_p4);
+    // C_avx000 = _mm256_load_pd(C_temp);
+    // C_avx001 = _mm256_load_pd(C_temp_p4);
+    __asm__ volatile ("vmovapd (%0), %%ymm0   \n\t"
+                      "vmovapd (%1), %%ymm1   \n\t"
+                      :  // output
+                      : "r" (C_temp), "r" (C_temp_p4)
+                      : ); 
+    C_temp += lead_c;
+    C_temp_p4 += lead_c;
+   
+    // C_avx100 = _mm256_load_pd(C_temp);
+    // C_avx101 = _mm256_load_pd(C_temp_p4);
+    __asm__ volatile ("vmovapd (%0), %%ymm2   \n\t"
+                      "vmovapd (%1), %%ymm3   \n\t"
+                      : // output
+                      : "r" (C_temp), "r" (C_temp_p4)
+                      : );
     C_temp += lead_c;
     C_temp_p4 += lead_c;
     
-    C_avx100 = _mm256_load_pd(C_temp);
-    C_avx101 = _mm256_load_pd(C_temp_p4);
+    // C_avx200 = _mm256_load_pd(C_temp);
+    // C_avx201 = _mm256_load_pd(C_temp_p4);
+    __asm__ volatile ("vmovapd (%0), %%ymm4   \n\t"
+                      "vmovapd (%1), %%ymm5   \n\t"
+                      : // output
+                      : "r" (C_temp), "r" (C_temp_p4)
+                      : );    
     C_temp += lead_c;
     C_temp_p4 += lead_c;
     
-    C_avx200 = _mm256_load_pd(C_temp);
-    C_avx201 = _mm256_load_pd(C_temp_p4);
-    C_temp += lead_c;
-    C_temp_p4 += lead_c;
-    
-    C_avx300 = _mm256_load_pd(C_temp);
-    C_avx301 = _mm256_load_pd(C_temp_p4);
+    // C_avx300 = _mm256_load_pd(C_temp);
+    // C_avx301 = _mm256_load_pd(C_temp_p4);
+    __asm__ volatile ("vmovapd (%0), %%ymm6   \n\t"
+                      "vmovapd (%1), %%ymm7   \n\t"
+                      : // output
+                      : "r" (C_temp), "r" (C_temp_p4)
+                      : );
 
     // For every iteration of k, B_ptr is incremented once by NR.
     //   Thus the whole array is scanned.
@@ -130,46 +133,105 @@ void micro_kernel(double *A, register double *B, double *C, aux_t *aux)
     //   Thus one row of A_ptr is scanned.
     for (int k = 0; k < aux->kc_min; k += 1) {
       A_temp = A_ptr;
-      A_avx0 = _mm256_broadcast_sd(A_temp);
-      A_temp += aux->kc_min;
-      A_avx1 = _mm256_broadcast_sd(A_temp);
-      A_temp += aux->kc_min;
-      A_avx2 = _mm256_broadcast_sd(A_temp);
-      A_temp += aux->kc_min;
-      A_avx3 = _mm256_broadcast_sd(A_temp);
       
-      B_avx0 = _mm256_load_pd(B_ptr);
-      B_avx1 = _mm256_load_pd(B_ptr + 4);
+      // A_avx0 = _mm256_broadcast_sd(A_temp);
+      __asm__ volatile ("vbroadcastsd (%0), %%ymm8  \n\t"
+                        : 
+                        : "r"  (A_temp)
+                        :);
+      A_temp += reg_kc;
       
-      // A0 * NR0
-      C_avx000 = _mm256_fmadd_pd(A_avx0, B_avx0, C_avx000);
-      C_avx001 = _mm256_fmadd_pd(A_avx0, B_avx1, C_avx001);
-
-      // A4 * NR0
-      C_avx100 = _mm256_fmadd_pd(A_avx1, B_avx0, C_avx100);
-      C_avx101 = _mm256_fmadd_pd(A_avx1, B_avx1, C_avx101);
-
-      // A8 * NR0
-      C_avx200 = _mm256_fmadd_pd(A_avx2, B_avx0, C_avx200);
-      C_avx201 = _mm256_fmadd_pd(A_avx2, B_avx1, C_avx201);
-
-      // A12 * NR0
-      C_avx300 = _mm256_fmadd_pd(A_avx3, B_avx0, C_avx300);
-      C_avx301 = _mm256_fmadd_pd(A_avx3, B_avx1, C_avx301);
+      // A_avx1 = _mm256_broadcast_sd(A_temp);
+      __asm__ volatile ("vbroadcastsd (%0), %%ymm9 \n\t"
+                        :  // op
+                        : "r" (A_temp)  // ip
+                        :);
+      A_temp += reg_kc;
       
-      B_ptr += NR;
+      // A_avx2 = _mm256_broadcast_sd(A_temp);
+      __asm__ volatile (//"addl %2, (%0)               \n\t"
+                        "vbroadcastsd (%0), %%ymm10 \n\t"
+                        : // "=r" (A_temp) // op
+                        : "r"  (A_temp)//, "r" (reg_kc)  // ip
+                        :);
+      A_temp += reg_kc;
+      
+      // A_avx3 = _mm256_broadcast_sd(A_temp);
+      __asm__ volatile (//"addl %2, (%0)               \n\t"
+                        "vbroadcastsd (%0), %%ymm11 \n\t"
+                        : //"=r" (A_temp) // op
+                        : "r"  (A_temp)//, "r" (reg_kc)  // ip
+                        :);
+      
+      // B_avx0 = _mm256_load_pd(B_ptr);
+      __asm__ volatile ("vmovapd (%0), %%ymm12 \n\t"
+                        :  // op
+                        : "r"  (B_ptr)  // ip
+                        :);
+      B_ptr += 4;
+      // B_avx1 = _mm256_load_pd(B_ptr);
+      __asm__ volatile ("vmovapd (%0), %%ymm13 \n\t"
+                        :  // op
+                        : "r"  (B_ptr)  // ip
+                        :);
+      
+      
+      __asm__ volatile ("vfmadd231pd %%ymm8,  %%ymm12, %%ymm0  \n\t" // A0 * NR0
+                        "vfmadd231pd %%ymm8,  %%ymm13, %%ymm1  \n\t"
+                        "vfmadd231pd %%ymm9,  %%ymm12, %%ymm2  \n\t" // A4 * NR0
+                        "vfmadd231pd %%ymm9,  %%ymm13, %%ymm3  \n\t"
+                        "vfmadd231pd %%ymm10, %%ymm12, %%ymm4  \n\t" // A8 * NR0
+                        "vfmadd231pd %%ymm10, %%ymm13, %%ymm5  \n\t" 
+                        "vfmadd231pd %%ymm11, %%ymm12, %%ymm6  \n\t"  // A12 * NR0
+                        "vfmadd231pd %%ymm11, %%ymm13, %%ymm7  \n\t" 
+                        : // op
+                        : // ip
+                        :
+                        );
+      B_ptr += 4;
       A_ptr++;
     }
 
-    _mm256_store_pd(C_ptr            , C_avx000);
-    _mm256_store_pd(C_ptr + 4        , C_avx001);
-    _mm256_store_pd(C_ptr + lead_c      , C_avx100);
-    _mm256_store_pd(C_ptr + lead_c_p4  , C_avx101);
-    _mm256_store_pd(C_ptr + lead_c_2    , C_avx200);
-    _mm256_store_pd(C_ptr + lead_c_2_p4, C_avx201);
-    _mm256_store_pd(C_ptr + lead_c_3    , C_avx300);
-    _mm256_store_pd(C_ptr + lead_c_3_p4, C_avx301);
+    C_temp = C_ptr;
+    C_temp_p4 = C_ptr + 4;
     
+    // _mm256_store_pd(C_temp       , C_avx000);
+    // _mm256_store_pd(C_temp_p4    , C_avx001);
+    __asm__ volatile ("vmovapd %%ymm0, (%0)   \n\t"
+                      "vmovapd %%ymm1, (%1)   \n\t"
+                      : // output
+                      : "r" (C_temp), "r" (C_temp_p4)
+                      : ); 
+    C_temp += lead_c;
+    C_temp_p4 += lead_c;
+    
+    // _mm256_store_pd(C_temp      , C_avx100);
+    // _mm256_store_pd(C_temp_p4  , C_avx101);    
+    __asm__ volatile ("vmovapd %%ymm2, (%0)   \n\t"
+                      "vmovapd %%ymm3, (%1)   \n\t"
+                      : // output
+                      : "r" (C_temp), "r" (C_temp_p4)
+                      : );
+    C_temp += lead_c;
+    C_temp_p4 += lead_c;
+
+    // _mm256_store_pd(C_temp    , C_avx200);
+    // _mm256_store_pd(C_temp_p4, C_avx201);
+    __asm__ volatile ("vmovapd %%ymm4, (%0)   \n\t"
+                      "vmovapd %%ymm5, (%1)   \n\t"
+                      : // output
+                      : "r" (C_temp), "r" (C_temp_p4)
+                      : );
+    C_temp += lead_c;
+    C_temp_p4 += lead_c;   
+    
+    // _mm256_store_pd(C_temp   , C_avx300);
+    // _mm256_store_pd(C_temp_p4, C_avx301); 
+    __asm__ volatile ("vmovapd %%ymm6, (%0)   \n\t"
+                      "vmovapd %%ymm7, (%1)   \n\t"
+                      : // output
+                      : "r" (C_temp), "r" (C_temp_p4)
+                      : );   
     C_ptr += inc_C;
     A_ptr += inc_A;
   }
@@ -225,15 +287,15 @@ void packB_KCxMC(double *packB, double *B, int kc_min, int mc_min, aux_t *aux)
   for (int m = aux->mc; m < aux->mc + mc_min; m += NR) {
     for (int k = aux->kc; k < aux->kc + kc_min; k++) {
       temp = &B(k,m);
-      *(packB_temp++) = *(temp);
-      *(packB_temp++) = *(temp + 1);
-      *(packB_temp++) = *(temp + 2);
-      *(packB_temp++) = *(temp + 3);
+      *(packB_temp++) = *(temp++);
+      *(packB_temp++) = *(temp++);
+      *(packB_temp++) = *(temp++);
+      *(packB_temp++) = *(temp++);
       
-      *(packB_temp++) = *(temp + 4);
-      *(packB_temp++) = *(temp + 5);
-      *(packB_temp++) = *(temp + 6);
-      *(packB_temp++) = *(temp + 7);
+      *(packB_temp++) = *(temp++);
+      *(packB_temp++) = *(temp++);
+      *(packB_temp++) = *(temp++);
+      *(packB_temp++) = *(temp);
     }
   }
 }
@@ -271,8 +333,11 @@ int main(int argc, char ** argv)
   double *D = (double*)calloc(sizeof(double), N*N);
   reset_matrix(D, N, 0);
   start = get_time();
+  #pragma omp parallel for
   for (int i=0; i<N; i++) {
+    #pragma omp parallel for
     for (int j=0; j<N; j++) {
+      #pragma omp parallel for
       for (int k=0; k<N; k++) {
         D[i*N + j] += A[i*N + k] * B[k*N + j];
       }
