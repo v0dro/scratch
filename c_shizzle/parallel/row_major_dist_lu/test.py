@@ -2,8 +2,19 @@ import numpy as np
 import scipy.linalg as la
 import pdb
 
-np.set_printoptions(precision=1, linewidth=150)
+np.set_printoptions(precision=1, linewidth=150, suppress=True)
 
+"""
+Accept pivot array ipiv and create a pivot matrix.
+"""
+def create_pivot_matrix(ipiv):
+    s = ipiv.shape[0]
+    p = np.zeros([s, s])
+    for index, x in np.ndenumerate(ipiv):
+        p[x, index] = 1
+
+    return p
+        
 def compute_lu(a, show=False):
     p, l, u = la.lu(a)
     computed = np.matmul(l, u)
@@ -23,8 +34,7 @@ def pivot_matrix(ipiv):
 Abs max element in the ith column.
 """
 def idamax(panel, i):
-    print(np.absolute(panel[:,i]))
-    return np.argmax(np.absolute(panel[:,i]), axis=0)
+    return np.argmax(np.absolute(panel[i:,i]), axis=0)
 
 """
 swap rows of the panel
@@ -56,24 +66,40 @@ i - Indices to update.
 def dger(mat, i):
     mat[i+1:,i+1:] -= np.matmul(mat[i+1:, i], mat[i,i+1:].transpose())
 
+def pivot_panel(panel, ipiv, k1, k2, c, nb, n):
+    for index, x in np.ndenumerate(ipiv):
+        i = index[0] 
+        if x != i + k1: # because index will start from 0
+            t = np.copy(panel[i])
+            panel[i] = panel[x]
+            panel[x] = t    
 """
 Apply row interchanges to the left and right of the panel. Row interchanges
 start from row k1 of matrix mat and go on until row k2. The ipiv array is
 used for this purpose.
 """
-def dlaswp(mat, ipiv, k1, k2, c, nb):
-    if k1 == 0: # 
+def dlaswp(mat, ipiv, k1, k2, c, nb, n):
+    # case 1 : only pivot right panel
+    if c == 0:
+        pivot_panel(mat[:,nb:n], ipiv, k1, k2, c, nb, n)
         
-    else:
-            
-    # right panel. Always swap.
+    # case 2 : only pivot left panel
+    if c == n-nb:
+        pivot_panel(mat[:,0:n-nb], ipiv, k1, k2, c, nb, n)
+
+    # case 3 : pivot both left and right panel
+    if c > 0 and c < n - nb:
+        pivot_panel(mat[:, 0:c], ipiv, k1, k2, c, nb, n) # pivot left
+        pivot_panel(mat[:, c+nb:n], ipiv, k1, k2, c, nb, n) # pivot right
 
 """
 Update the pivot array. ipiv(i) signifies that the row at index i has been
 swapped with that at index ipiv(i).
 """
-def update_pivot_array(ipiv, original, new):
+def update_pivot_array(ipiv, new, original):
+    print("original " + str(original) + " new " + str(new))
     ipiv[original] = new
+    ipiv[new] = original
 
 """
 Compute LU decomposition of square matrix using right looking LU decomposition
@@ -102,8 +128,9 @@ def right_looking_lu(mat):
             # dgetf2 part
             # --------------------------------------------------
             new_row = idamax(mxnb_panel, i)
-            dswap(mxnb_panel, new_row, i)
-            update_pivot_array(ipiv, c+i, new_row)
+            if c+new_row != c+i:
+                dswap(mxnb_panel, new_row, i) # original row is first or second of this panel
+                update_pivot_array(ipiv, c+new_row, c+i)
             
             column = mxnb_panel[i:,i]
             pivot = column[0]
@@ -115,11 +142,12 @@ def right_looking_lu(mat):
         This function updates the panels to the left and right of the current
         vertical panel with the pivoting updates applied in the previous step.
         """
-        k1 =
-        dlaswp(mat, ipiv, k1, k2, c, nb)
+        k1 = c
+        k2 = n
+        dlaswp(mat, ipiv, k1, k2, c, nb, n)
 
-            
-        
+    print(ipiv)
+    print(create_pivot_matrix(ipiv))
         
 def main():
     a = np.arange(8*8).reshape(8,8).astype(float)
