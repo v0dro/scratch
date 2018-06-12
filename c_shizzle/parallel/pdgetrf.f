@@ -249,7 +249,8 @@
       END IF
 *
 *     Loop over the remaining blocks of columns.
-*
+*     Note :: JN begins with the beginning index of the second matrix block in
+*       in the global matrix.
       DO 10 J = JN+1, JA+MN-1, DESCA( NB_ )
          JB = MIN( MN-J+JA, DESCA( NB_ ) )
          I = IA + J - JA
