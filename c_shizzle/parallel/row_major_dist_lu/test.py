@@ -2,7 +2,7 @@ import numpy as np
 import scipy.linalg as la
 import pdb
 
-np.set_printoptions(precision=1, linewidth=150, suppress=True)
+np.set_printoptions(precision=2, linewidth=150, suppress=True)
 
 """
 Accept pivot array ipiv and create a pivot matrix.
@@ -97,9 +97,22 @@ Update the pivot array. ipiv(i) signifies that the row at index i has been
 swapped with that at index ipiv(i).
 """
 def update_pivot_array(ipiv, new, original):
-    print("original " + str(original) + " new " + str(new))
     ipiv[original] = new
-    ipiv[new] = original
+
+"""
+Multiply the L11 inverse with the U panel.
+"""
+def dtrsm(mat, c, nb, n):
+    L11 = np.tril(mat[c:c+nb,c:c+nb])
+    np.fill_diagonal(L11, 1)
+    L11_inv = np.linalg.inv(L11)
+    mat[c:c+nb,c+nb:n] = np.matmul(L11_inv, mat[c:c+nb,c+nb:n])
+
+
+def dgemm(mat, c, nb, n):
+    L21 = mat[c+nb:n,c:c+nb]
+    U12 = mat[c:c+nb,c+nb:n]
+    mat[c+nb:n,c+nb:n] -= np.matmul(L21, U12)
 
 """
 Compute LU decomposition of square matrix using right looking LU decomposition
@@ -145,9 +158,25 @@ def right_looking_lu(mat):
         k1 = c
         k2 = n
         dlaswp(mat, ipiv, k1, k2, c, nb, n)
+        """
+        This function calculates the U panel in the upper part of the matrix
+        my multiplying it with the inverse of the L11 part of the A11 panel
+        of the overall matrix.
+        """
+        dtrsm(mat, c, nb, n)
+        """
+        Update the rest of the matrix with the updated L and U.
+        """
+        dgemm(mat, c, nb, n)
 
-    print(ipiv)
-    print(create_pivot_matrix(ipiv))
+    l = np.tril(mat)
+    np.fill_diagonal(l, 1)
+    u = np.triu(mat)
+
+    print(l)
+    print(u)
+    
+    return np.matmul(l, u)
         
 def main():
     a = np.arange(8*8).reshape(8,8).astype(float)
@@ -155,9 +184,10 @@ def main():
     print(a)
     print("\n")
 
-    c  = compute_lu(a)
+    c  = compute_lu(a, True)
     rl = right_looking_lu(a)
 
+    print(rl)
     print("2norm subtraction : " + str(np.linalg.norm(c, 2) - np.linalg.norm(rl, 2)))
 
 if __name__ == "__main__":
