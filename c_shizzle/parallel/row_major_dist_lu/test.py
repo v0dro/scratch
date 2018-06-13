@@ -2,7 +2,7 @@ import numpy as np
 import scipy.linalg as la
 import pdb
 
-np.set_printoptions(precision=2, linewidth=150, suppress=True)
+np.set_printoptions(precision=3, linewidth=150, suppress=True)
 
 """
 Accept pivot array ipiv and create a pivot matrix.
@@ -63,8 +63,9 @@ subtract the product from the trailing matrix.
 mat - full matrix.
 i - Indices to update.
 """
-def dger(mat, i):
-    mat[i+1:,i+1:] -= np.matmul(mat[i+1:, i], mat[i,i+1:].transpose())
+def dger(mat, c,i,nb):
+    mat[c+i+1:,c+i+1:c+i+nb] -= np.matmul(mat[c+i+1:, c+i], mat[c+i,c+i+1:c+i+nb].
+                                          transpose())
 
 def pivot_panel(panel, ipiv, k1, k2, c, nb, n):
     for index, x in np.ndenumerate(ipiv):
@@ -142,17 +143,19 @@ def right_looking_lu(mat):
             # --------------------------------------------------
             new_row = idamax(mxnb_panel, i)
             if c+new_row != c+i:
-                dswap(mxnb_panel, new_row, i) # original row is first or second of this panel
+                # original row is first or second of this panel
+                dswap(mxnb_panel, new_row, i)
                 update_pivot_array(ipiv, c+new_row, c+i)
             
             column = mxnb_panel[i:,i]
             pivot = column[0]
             dscal(column, pivot)
             
-            dger(mat, c+i)
+            dger(mat, c, i, nb)
+            print("J = ", c+i+1)
+            print(ipiv + 1)
+            print(mat)
             # -------------------------------------------------
-        print("J = ", c)
-        print(mat)
         """
         This function updates the panels to the left and right of the current
         vertical panel with the pivoting updates applied in the previous step.
@@ -177,6 +180,8 @@ def right_looking_lu(mat):
 
     print(l)
     print(u)
+    print("ipiv : ")
+    print(ipiv+1)
     
     return np.matmul(l, u)
         

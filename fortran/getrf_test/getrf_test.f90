@@ -154,6 +154,8 @@ print*,"\n"
 do I_FOR=1, 8
    write (*,"(100G15.5)") (a(I_FOR,J_FOR), J_FOR=1,8)
 enddo
+print*, "ipiv array: "
+write (*,"(100G15.5)") (ipiv(J_FOR), J_FOR=1,8)
 
  if ( info /= 0 ) then
     write ( *, '(a)' ) ' '
