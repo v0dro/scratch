@@ -151,6 +151,8 @@ def right_looking_lu(mat):
             
             dger(mat, c+i)
             # -------------------------------------------------
+        print("J = ", c)
+        print(mat)
         """
         This function updates the panels to the left and right of the current
         vertical panel with the pivoting updates applied in the previous step.

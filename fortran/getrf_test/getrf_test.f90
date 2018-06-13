@@ -143,6 +143,7 @@ do I_FOR=1, 8
    write (*,"(100G15.5)") (a(I_FOR,J_FOR), J_FOR=1,8)
 enddo
 print*,"\n"
+
  b(1:n) = 1.0D+00
 !
 !  Factor the matrix.
