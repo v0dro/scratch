@@ -53,8 +53,8 @@ As per the SCALAPACK code, this divides the column below the diagonal
 element by the pivot to achieve the scaling and does not make those
 elements 0, unlike what is specified in the article in mendeley.
 """
-def dscal(col, pivot):
-    col[1:] = col[1:]/pivot
+def dscal(mat, pivot, pos):
+    mat[pos+1:, pos] = mat[pos+1:, pos]/pivot
 
 """
 Update trailing matrix. Multiply the pivot row with pivot column and
@@ -63,12 +63,9 @@ subtract the product from the trailing matrix.
 mat - full matrix.
 i - Indices to update.
 """
-def dger(mat, c,i,nb):
-    # print(str(mat[c+i+1:,c+i+1:c+i+nb].shape))
-    # print(str(mat[c+i+1:, c+i]))
-    # print(str(mat[c+i,c+i+1:c+i+nb]))
-    # print(str(mat[c+i+1:, c+i] * mat[c+i,c+i+1:c+i+nb]))
-    mat[c+i+1:,c+i+1:c+i+nb] -= np.matmul(mat[c+i+1:, c+i:c+i+1], mat[c+i:c+i+1,c+i+1:c+i+nb])
+def dger(mat, pos,nb):
+    mat[pos+1:,pos+1:] -= np.matmul(mat[pos+1:,pos:pos+1], mat[pos:pos+1, pos+1:])
+    # mat[c+i+1:,c+i+1:c+i+nb] -= np.matmul(mat[c+i+1:, c+i:c+i+1], mat[c+i:c+i+1,c+i+1:c+i+nb])
 
 def pivot_panel(panel, ipiv, k1, k2, c, nb, n):
     for index, x in np.ndenumerate(ipiv):
@@ -133,36 +130,30 @@ def right_looking_lu(mat):
 
     nb = 2
 
-    for c in range(0, n, nb):
-        mxnb_panel = mat[c:m,c:nb+c]
-        """
-        Think of it this way - you're sending the panel into the below loop
-        and all the work being done inside the below loop is strictly in the
-        panel and nowhere else (apart from the grid update). So all the indices
-        should be wrt this panel only.
-        """
+    for block in range(0, n, nb):
+        # iterations within a block of size nb.
         for i in range(0, nb):
             # dgetf2 part
             # --------------------------------------------------
-            new_row = idamax(mxnb_panel, i)
+            # get index of max element in column block+i
+            new_row = idamax(mat, block+i)
             print("new row " + str(new_row))
-            if c+i+new_row != c+i:
-                # original row is first or second of this panel
-                dswap(mxnb_panel, new_row, i)
-                update_pivot_array(ipiv, c+i+new_row, c+i)
+            if block+i != new_row:
+                # original row is block+i
+                dswap(mat, new_row, block+i)
+                update_pivot_array(ipiv, new_row, block+i)
             
-            column = mxnb_panel[i:,i]
-            pivot = column[0]
-            dscal(column, pivot)
+            pivot = mat[block+i,block+i]
+            dscal(mat, pivot, block+i)
 
             """
             Update the rest of the vertical panel.
             """
-            dger(mat, c, i, nb)
+            dger(mat, block+i, nb)
             print("interm matrix...")
             print(mat)
             # -------------------------------------------------
-        print("C = ", c+i+1)
+        print("C = ", block+i)
         print(ipiv + 1)
         print(mat)
         """
@@ -177,11 +168,11 @@ def right_looking_lu(mat):
         my multiplying it with the inverse of the L11 part of the A11 panel
         of the overall matrix.
         """
-        dtrsm(mat, c, nb, n)
+        dtrsm(mat, block, nb, n)
         """
         Update the rest of the matrix with the updated L and U.
         """
-        dgemm(mat, c, nb, n)
+        dgemm(mat, block, nb, n)
 
     l = np.tril(mat)
     np.fill_diagonal(l, 1)
