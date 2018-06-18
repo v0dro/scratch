@@ -64,8 +64,11 @@ mat - full matrix.
 i - Indices to update.
 """
 def dger(mat, c,i,nb):
-    mat[c+i+1:,c+i+1:c+i+nb] -= np.matmul(mat[c+i+1:, c+i], mat[c+i,c+i+1:c+i+nb].
-                                          transpose())
+    # print(str(mat[c+i+1:,c+i+1:c+i+nb].shape))
+    # print(str(mat[c+i+1:, c+i]))
+    # print(str(mat[c+i,c+i+1:c+i+nb]))
+    # print(str(mat[c+i+1:, c+i] * mat[c+i,c+i+1:c+i+nb]))
+    mat[c+i+1:,c+i+1:c+i+nb] -= np.matmul(mat[c+i+1:, c+i:c+i+1], mat[c+i:c+i+1,c+i+1:c+i+nb])
 
 def pivot_panel(panel, ipiv, k1, k2, c, nb, n):
     for index, x in np.ndenumerate(ipiv):
@@ -142,20 +145,26 @@ def right_looking_lu(mat):
             # dgetf2 part
             # --------------------------------------------------
             new_row = idamax(mxnb_panel, i)
-            if c+new_row != c+i:
+            print("new row " + str(new_row))
+            if c+i+new_row != c+i:
                 # original row is first or second of this panel
                 dswap(mxnb_panel, new_row, i)
-                update_pivot_array(ipiv, c+new_row, c+i)
+                update_pivot_array(ipiv, c+i+new_row, c+i)
             
             column = mxnb_panel[i:,i]
             pivot = column[0]
             dscal(column, pivot)
-            
+
+            """
+            Update the rest of the vertical panel.
+            """
             dger(mat, c, i, nb)
-            print("J = ", c+i+1)
-            print(ipiv + 1)
+            print("interm matrix...")
             print(mat)
             # -------------------------------------------------
+        print("C = ", c+i+1)
+        print(ipiv + 1)
+        print(mat)
         """
         This function updates the panels to the left and right of the current
         vertical panel with the pivoting updates applied in the previous step.

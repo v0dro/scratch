@@ -1,5 +1,5 @@
 COMPILER = gfortran
-SOURCES = ~/gitrepos/lapack-3.8.0/libtmglib.a ~/gitrepos/lapack-3.8.0/liblapack.a librefblas.a
+SOURCES = ~/gitrepos/lapack-3.8.0/libtmglib.a ~/gitrepos/lapack-3.8.0/liblapack.a ~/gitrepos/lapack-3.8.0/librefblas.a
 
 .PHONY: clean
 
