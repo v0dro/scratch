@@ -2,7 +2,7 @@ import numpy as np
 import scipy.linalg as la
 import pdb
 
-np.set_printoptions(precision=3, linewidth=150, suppress=True)
+np.set_printoptions(precision=3, linewidth=250, suppress=True)
 
 """
 Accept pivot array ipiv and create a pivot matrix.
@@ -33,18 +33,18 @@ def pivot_matrix(ipiv):
 """
 Abs max element in the ith column.
 """
-def idamax(panel, i):
-    return np.argmax(np.absolute(panel[i:,i]), axis=0)
+def idamax(mat, i):
+    return np.argmax(np.absolute(mat[i:,i]), axis=0)
 
 """
 swap rows of the panel
 
 panel - numpy array denoting the panel to be swapped
 """
-def dswap(panel, new_row, original_row):
-    t = np.copy(panel[new_row])
-    panel[new_row] = panel[original_row]
-    panel[original_row] = t
+def dswap(mat, new_row, original_row, block, nb):
+    t = np.copy(mat[new_row:new_row+1, block:block+nb])
+    mat[new_row:new_row+1, block:block+nb] = mat[original_row:original_row+1, block:block+nb]
+    mat[original_row:original_row+1, block:block+nb] = t
     return None
 
 """
@@ -57,41 +57,48 @@ def dscal(mat, pivot, pos):
     mat[pos+1:, pos] = mat[pos+1:, pos]/pivot
 
 """
-Update trailing matrix. Multiply the pivot row with pivot column and
+Update trailing vertical matrix panel. Multiply the pivot row with pivot column and
 subtract the product from the trailing matrix.
 
 mat - full matrix.
-i - Indices to update.
+block - block iteration
+i - iteration within the block
+nb - block size
 """
-def dger(mat, pos,nb):
-    mat[pos+1:,pos+1:] -= np.matmul(mat[pos+1:,pos:pos+1], mat[pos:pos+1, pos+1:])
+def dger(mat, block, i, nb):
+    mat[block+i+1:,block+i+1:block+nb] -= np.matmul(mat[block+i+1:,block+i:block+i+1],
+                                                    mat[block+i:block+i+1, block+i+1:block+nb])
     # mat[c+i+1:,c+i+1:c+i+nb] -= np.matmul(mat[c+i+1:, c+i:c+i+1], mat[c+i:c+i+1,c+i+1:c+i+nb])
 
-def pivot_panel(panel, ipiv, k1, k2, c, nb, n):
-    for index, x in np.ndenumerate(ipiv):
-        i = index[0] 
-        if x != i + k1: # because index will start from 0
-            t = np.copy(panel[i])
-            panel[i] = panel[x]
-            panel[x] = t    
+"""
+panel is a matrix slice that contains all the rows but only the specific columns that
+need pivoting. This is done to keep uniformity with the pivot array.
+"""
+def pivot_panel(panel, ipiv, k1, k2, block, nb, n):
+    for i in range(k1,k2):
+        x = ipiv[i]
+        if x != i:
+            t = np.copy(panel[i:i+1])
+            panel[i:i+1] = panel[x:x+1]
+            panel[x:x+1] = t
 """
 Apply row interchanges to the left and right of the panel. Row interchanges
 start from row k1 of matrix mat and go on until row k2. The ipiv array is
 used for this purpose.
 """
-def dlaswp(mat, ipiv, k1, k2, c, nb, n):
+def dlaswp(mat, ipiv, k1, k2, block, nb, n):
     # case 1 : only pivot right panel
-    if c == 0:
-        pivot_panel(mat[:,nb:n], ipiv, k1, k2, c, nb, n)
+    if block == 0:
+        pivot_panel(mat[:,nb:n], ipiv, k1, k2, block, nb, n)
         
     # case 2 : only pivot left panel
-    if c == n-nb:
-        pivot_panel(mat[:,0:n-nb], ipiv, k1, k2, c, nb, n)
+    if block == n-nb:
+        pivot_panel(mat[:,0:n-nb], ipiv, k1, k2, block, nb, n)
 
     # case 3 : pivot both left and right panel
-    if c > 0 and c < n - nb:
-        pivot_panel(mat[:, 0:c], ipiv, k1, k2, c, nb, n) # pivot left
-        pivot_panel(mat[:, c+nb:n], ipiv, k1, k2, c, nb, n) # pivot right
+    if block > 0 and block < n - nb:
+        pivot_panel(mat[:, 0:block], ipiv, k1, k2, block, nb, n) # pivot left
+        pivot_panel(mat[:, block+nb:n], ipiv, k1, k2, block, nb, n) # pivot right
 
 """
 Update the pivot array. ipiv(i) signifies that the row at index i has been
@@ -103,17 +110,17 @@ def update_pivot_array(ipiv, new, original):
 """
 Multiply the L11 inverse with the U panel.
 """
-def dtrsm(mat, c, nb, n):
-    L11 = np.tril(mat[c:c+nb,c:c+nb])
+def dtrsm(mat, block, nb, n):
+    L11 = np.tril(mat[block:block+nb,block:block+nb])
     np.fill_diagonal(L11, 1)
     L11_inv = np.linalg.inv(L11)
-    mat[c:c+nb,c+nb:n] = np.matmul(L11_inv, mat[c:c+nb,c+nb:n])
+    mat[block:block+nb,block+nb:n] = np.matmul(L11_inv, mat[block:block+nb,block+nb:n])
 
 
-def dgemm(mat, c, nb, n):
-    L21 = mat[c+nb:n,c:c+nb]
-    U12 = mat[c:c+nb,c+nb:n]
-    mat[c+nb:n,c+nb:n] -= np.matmul(L21, U12)
+def dgemm(mat, block, nb, n):
+    L21 = mat[block+nb:n,block:block+nb]
+    U12 = mat[block:block+nb,block+nb:n]
+    mat[block+nb:n,block+nb:n] -= np.matmul(L21, U12)
 
 """
 Compute LU decomposition of square matrix using right looking LU decomposition
@@ -136,11 +143,10 @@ def right_looking_lu(mat):
             # dgetf2 part
             # --------------------------------------------------
             # get index of max element in column block+i
-            new_row = idamax(mat, block+i)
-            print("new row " + str(new_row))
+            new_row = idamax(mat, block+i) + i + block
             if block+i != new_row:
                 # original row is block+i
-                dswap(mat, new_row, block+i)
+                dswap(mat, new_row, block+i, block, nb)
                 update_pivot_array(ipiv, new_row, block+i)
             
             pivot = mat[block+i,block+i]
@@ -149,20 +155,15 @@ def right_looking_lu(mat):
             """
             Update the rest of the vertical panel.
             """
-            dger(mat, block+i, nb)
-            print("interm matrix...")
-            print(mat)
+            dger(mat, block, i, nb)
             # -------------------------------------------------
-        print("C = ", block+i)
-        print(ipiv + 1)
-        print(mat)
         """
         This function updates the panels to the left and right of the current
         vertical panel with the pivoting updates applied in the previous step.
         """
-        k1 = c
+        k1 = block
         k2 = n
-        dlaswp(mat, ipiv, k1, k2, c, nb, n)
+        dlaswp(mat, ipiv, k1, k2, block, nb, n)
         """
         This function calculates the U panel in the upper part of the matrix
         my multiplying it with the inverse of the L11 part of the A11 panel
@@ -177,24 +178,21 @@ def right_looking_lu(mat):
     l = np.tril(mat)
     np.fill_diagonal(l, 1)
     u = np.triu(mat)
-
-    print(l)
-    print(u)
-    print("ipiv : ")
-    print(ipiv+1)
     
     return np.matmul(l, u)
         
 def main():
-    a = np.arange(8*8).reshape(8,8).astype(float)
+    a = np.power(np.arange(8*8).reshape(8,8).astype(float), 2)
     print("original matrix : \n")
     print(a)
-    print("\n")
-
-    c  = compute_lu(a, True)
+    
+    c  = compute_lu(a, False)
     rl = right_looking_lu(a)
-
+    
+    print("python LU")
     print(rl)
+    print("custom LU")
+    print(c)
     print("2norm subtraction : " + str(np.linalg.norm(c, 2) - np.linalg.norm(rl, 2)))
 
 if __name__ == "__main__":
