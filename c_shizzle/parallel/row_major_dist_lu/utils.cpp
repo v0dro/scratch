@@ -10,35 +10,42 @@ void initialize_blacs(int *BLACS_CONTEXT, int *proc_nrows, int *proc_ncols,
   Cblacs_pcoord(*BLACS_CONTEXT, *proc_id, myrow, mycol);
 }
 
-void generate_data(double *a, int block_size_per_process_r,
-                   int block_size_per_process_c, int process_block_size,
-                   int num_blocks_per_process, int myrow, int mycol, int N)
+void generate_data(double *a, int myrow, int mycol, desc desc_a)
 {
-  // loop over block cols
-  for (int bc = 0; bc < block_size_per_process_c; ++bc) {
-    // loop over block rows
-    for (int br = 0; br < block_size_per_process_r; ++br) {
-      // loop over number cols
-      for (int j = 0; j < process_block_size; ++j) {
-        // loop over number rows
-        for (int i = 0; i < process_block_size; ++i) {
-          if (COL_MAJOR) {
-            int row_i = myrow*process_block_size + i + j * num_blocks_per_process;
-            int col_i = bc*num_blocks_per_process + mycol * process_block_size + br;
-            int index = i + j * process_block_size +
-              (br + bc * process_block_size) * num_blocks_per_process;
-            a[index]  = row_i + col_i*N;
-          }
-          else if (ROW_MAJOR) {
-            int row_i = myrow*process_block_size + j + i * num_blocks_per_process;
-            int col_i = br*num_blocks_per_process + mycol * process_block_size + bc;
-            int index = j + i * process_block_size +
-              (bc + br * process_block_size) * num_blocks_per_process;
-            a[index]  = row_i*N + col_i;
+  int pblock_nrows = desc_a.MB/2;
+  int pblock_ncols = desc_a.NB/2;
+  int num_blocks_per_process = 4;
+  //int process_block_size = 
+  
+  if (COL_MAJOR) {
+    // loop over block cols
+    for (int bc = 0; bc < pblock_ncols; ++bc) {
+      // loop over block rows
+      for (int br = 0; br < pblock_nrows; ++br) {
+        // loop over number cols
+        for (int j = 0; j < pblock_ncols; ++j) {
+          // loop over number rows
+          for (int i = 0; i < pblock_nrows; ++i) {
+            int row_i = myrow*pblock_nrows + i + j * num_blocks_per_process;
+            int col_i = bc*num_blocks_per_process + mycol * pblock_ncols + br;
+            int index = i + j * pblock_nrows +
+              (br + bc * pblock_ncols) * num_blocks_per_process;
+            a[index]  = row_i + col_i*desc_a.N;
           }
         }
       }
     }
+  }
+  else if (ROW_MAJOR) {
+    // for (int br = 0; br < block_size_per_process_r; ++br) {
+    //   for (int bc = 0; bc < block_size_per_process_c; ++bc) {
+    //     for (int i = 0; i < process_block_size; ++i) {
+    //       for (int j = 0; j < process_block_size; ++j) {
+    //         //int row_i = 
+    //       }
+    //     }
+    //   }
+    // }
   }
 }
 

@@ -7,8 +7,8 @@
 #include <string>
 using namespace std;
 
-#define ROW_MAJOR 1
-#define COL_MAJOR NULL
+#define ROW_MAJOR NULL
+#define COL_MAJOR 1
 
 extern "C" {
   /* Cblacs declarations */
@@ -58,9 +58,7 @@ typedef struct desc {
 void initialize_blacs(int *BLACS_CONTEXT, int *proc_nrows, int *proc_ncols,
                       int *myrow, int *mycol, int *proc_id, int *num_procs);
 
-void generate_data(double *a, int block_size_per_process_r,
-                   int block_size_per_process_c, int process_block_size,
-                   int num_blocks_per_process, int myrow, int mycol, int N);
+void generate_data(double *a, int myrow, int mycol, desc desc_a);
 
 void print_arr(double *A, int size, string desc, ostream &o);
 

@@ -22,42 +22,42 @@ int main(int argc, char ** argv)
   
   // matrix properties
   // mat size, blk size, portion of block per process
-  int N = 8, nb = 4, process_block_size = 2;
-  int num_blocks_per_process = N/process_block_size;
-  int block_size_per_process_r = sqrt(num_blocks_per_process);
-  int block_size_per_process_c = sqrt(num_blocks_per_process);
-  double* a = (double*)malloc(sizeof(double)*nb*nb);
+  desc desc_a;
+  desc_a.M = 8;
+  desc_a.N = 8;
+  desc_a.MB = 4;
+  desc_a.NB = 4;
+  desc_a.BLACS_CONTEXT = BLACS_CONTEXT;
+  desc_a.rsrc = 0;
+  desc_a.csrc = 0;
+  desc_a.lld = numroc_(&desc_a.N, &desc_a.NB, &mycol, &desc_a.rsrc, &num_procs);
+  double* a = (double*)malloc(sizeof(double)*desc_a.MB*desc_a.NB);
 
   // generate matrix data
-  generate_data(a, block_size_per_process_r, block_size_per_process_c,
-                process_block_size, num_blocks_per_process, myrow, mycol, N);
+  generate_data(a, myrow, mycol, desc_a);
   // end matrix properties
 
   // create array descriptor
-  int desca[9];
-  int rsrc = 0, csrc = 0, info;
-  int b_fac = 4;
-  int lld = numroc_(&N, &b_fac, &mycol, &rsrc, &num_procs);
-  lld = 4;
-  //  cout << "lld: " << lld << endl;
-  descinit_(desca, &N, &N, &b_fac, &b_fac, &rsrc, &csrc, &BLACS_CONTEXT, &lld, &info);
+  int desca[9]; int info;
+  descinit_(desca, &desc_a.M, &desc_a.N, &desc_a.MB, &desc_a.NB,
+            &desc_a.rsrc, &desc_a.csrc, &BLACS_CONTEXT, &desc_a.lld, &info);
   // end create array descriptor
  
   // synchronous LU decomposition
   //   loop over blocks in each process.
   // This loop iterates over each block in each process.
   int *ipiv;
-  ipiv = (int*)malloc(sizeof(int)*N);
+  ipiv = (int*)malloc(sizeof(int)*desc_a.N);
 
-  for (int i = 0; i < N; ++i) {
+  for (int i = 0; i < desc_a.N; ++i) {
     ipiv[i] = i;
   }
 
-  print_files(a, nb, nb, myrow, mycol, "input");
+  print_files(a, desc_a.MB, desc_a.NB, myrow, mycol, "input");
   int ia ;
-  diagonal_block_lu(a, ia, nb, N, ipiv, &BLACS_CONTEXT, desca);
+  diagonal_block_lu(a, ia, desc_a.NB, desc_a.N, ipiv, &BLACS_CONTEXT, desca);
  
-  print_files(a, nb, nb, myrow, mycol);  
+  print_files(a, desc_a.MB, desc_a.NB, myrow, mycol);  
   // end synchronous LU decomposition
 
   MPI_Finalize();

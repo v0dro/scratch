@@ -36,20 +36,17 @@ def get_big_matrix(files, major, n, nb, pb, num_procs):
         myrow = int(proc // width)
         mycol = int(proc - (myrow * width))
 
-        for c in range(nb_c):
-            for r in range(nb_r):
-                for pc in range(pb):
-                    for pr in range(pb):
-                        if major == "col":
+        if major == "col":
+            for c in range(nb_c):
+                for r in range(nb_r):
+                    for pc in range(pb):
+                        for pr in range(pb):
                             glob_row = int(myrow*pb + pr + pc*nb)
                             glob_col = int(c*nb + mycol*pb + r)   
                             index = pr + pc*pb + (r + c*pb)*nb
                             matrix[glob_row, glob_col] = arr[index]
-                        elif major == "row":
-                            glob_row = int(myrow*pb + pc + pr*nb)
-                            glob_col = int(r*nb + mycol*pb + c)   
-                            index = pc + pr*pb + (c + r*pb)*nb
-                            matrix[glob_row, glob_col] = arr[index]
+        elif major == "row":
+            print("row not implemented")
         
     return matrix
 
@@ -90,6 +87,6 @@ def main(major):
 if __name__ == "__main__":
     major = sys.argv[1] if len(sys.argv) > 1 else None
     if major is None:
-        major = "row"
+        major = "col"
 
     main(major)
