@@ -7,8 +7,8 @@
 #include <string>
 using namespace std;
 
-#define ROW_MAJOR NULL
-#define COL_MAJOR 1
+#define ROW_MAJOR 1
+#define COL_MAJOR NULL
 
 extern "C" {
   /* Cblacs declarations */

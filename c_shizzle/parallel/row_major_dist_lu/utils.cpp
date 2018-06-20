@@ -37,15 +37,30 @@ void generate_data(double *a, int myrow, int mycol, desc desc_a)
     }
   }
   else if (ROW_MAJOR) {
-    // for (int br = 0; br < block_size_per_process_r; ++br) {
-    //   for (int bc = 0; bc < block_size_per_process_c; ++bc) {
-    //     for (int i = 0; i < process_block_size; ++i) {
-    //       for (int j = 0; j < process_block_size; ++j) {
-    //         //int row_i = 
-    //       }
-    //     }
-    //   }
-    // }
+    if (myrow == 0 && mycol == 0) {
+      a[0] = 0; a[1] = 1; a[2] = 4; a[3] = 5;
+      a[4] = 8; a[5] = 9; a[6] = 12; a[7] = 13;
+      a[8] = 32; a[9] = 33; a[10] = 36; a[11] = 37;
+      a[12] = 40; a[13] = 41; a[14] = 44; a[15] = 45;
+    }
+    else if (myrow == 0 && mycol == 1) {
+      a[0] = 2; a[1] = 3; a[2] = 6; a[3] = 7;
+      a[4] = 10; a[5] = 11; a[6] = 14; a[7] = 15;
+      a[8] = 34; a[9] = 35; a[10] = 38; a[11] = 39;
+      a[12] = 42; a[13] = 43; a[14] = 46; a[15] = 47;
+    }
+    else if (myrow == 1 && mycol == 0) {
+      a[0] = 16; a[1] = 17; a[2] = 20; a[3] = 21;
+      a[4] = 24; a[5] = 25; a[6] = 28; a[7] = 29;
+      a[8] = 48; a[9] = 49; a[10] = 52; a[11] = 53;
+      a[12] = 56; a[13] = 57; a[14] = 60; a[15] = 61;
+    }
+    else if (myrow == 1 && mycol == 1) {
+      a[0] = 18; a[1] = 19; a[2] = 22; a[3] = 23;
+      a[4] = 26; a[5] = 27; a[6] = 30; a[7] = 31;
+      a[8] = 50; a[9] = 51; a[10] = 54; a[11] = 55;
+      a[12] = 58; a[13] = 59; a[14] = 62; a[15] = 63;
+    }
   }
 }
 
