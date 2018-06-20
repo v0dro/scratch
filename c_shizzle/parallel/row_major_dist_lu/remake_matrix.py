@@ -44,7 +44,7 @@ def get_big_matrix(files, major, n, nb, pb, num_procs):
                             glob_row = int(myrow*pb + pr + pc*nb)
                             glob_col = int(c*nb + mycol*pb + r)   
                             index = pr + pc*pb + (r + c*pb)*nb
-                        matrix[glob_row, glob_col] = arr[index]
+                            matrix[glob_row, glob_col] = arr[index]
         elif major == "row":
             for r in range(nb_r):
                 for c in range(nb_c):

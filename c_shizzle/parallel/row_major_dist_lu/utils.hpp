@@ -7,8 +7,8 @@
 #include <string>
 using namespace std;
 
-#define ROW_MAJOR 1
-#define COL_MAJOR NULL
+#define ROW_MAJOR NULL
+#define COL_MAJOR 1
 
 extern "C" {
   /* Cblacs declarations */
@@ -40,6 +40,10 @@ extern "C" {
   void pdgetf2_(int * M, int * N, double * A,
                 int * IA, int * JA, int * DESCA, int *IPIV,
                 int * INFO);
+
+  void pdamax_( int * N, double * AMAX, int * INDX,
+                double * X, int * IX, int * JX,
+                int * DESCX, int * INCX );
   
 }
 

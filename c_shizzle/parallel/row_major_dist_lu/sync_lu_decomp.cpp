@@ -55,7 +55,7 @@ int main(int argc, char ** argv)
 
   print_files(a, desc_a.MB, desc_a.NB, myrow, mycol, "input");
   int ia ;
-  diagonal_block_lu(a, ia, desc_a.NB, desc_a.N, ipiv, &BLACS_CONTEXT, desca);
+  diagonal_block_lu(a, ipiv, desca, desc_a);
  
   print_files(a, desc_a.MB, desc_a.NB, myrow, mycol);  
   // end synchronous LU decomposition
