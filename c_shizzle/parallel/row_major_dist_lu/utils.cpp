@@ -39,6 +39,13 @@ void global2local(int global, int *local, int num_procs, desc desc_a)
   *local = lrow*desc_a.lld + lcol;
 }
 
+// Convert index to (row, col) pair.
+void index2coords(int index, int ld, int &row, int &col)
+{
+  row = (int)(index / ld);
+  col = index % ld;
+}
+
 void generate_data(double *a, int myrow, int mycol, desc desc_a)
 {
   int pblock_nrows = desc_a.MB/2;

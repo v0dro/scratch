@@ -8,8 +8,8 @@
 #include <cmath>
 using namespace std;
 
-#define ROW_MAJOR NULL
-#define COL_MAJOR 1
+#define ROW_MAJOR 1
+#define COL_MAJOR NULL
 
 extern "C" {
   /* Cblacs declarations */
@@ -59,6 +59,13 @@ typedef struct desc {
   int csrc;          // The process col containing the first col of the global matrix A
   int lld;           // Leading dimension of the number of the local array
 } desc;
+
+// struct defining properties of an MPI process.
+typedef struct mpi_desc {
+  int myrow;
+  int mycol;
+  int num_procs;
+} mpi_desc;
 
 void initialize_blacs(int *BLACS_CONTEXT, int *proc_nrows, int *proc_ncols,
                       int *myrow, int *mycol, int *proc_id, int *num_procs);

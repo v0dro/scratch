@@ -51,7 +51,7 @@ void parallel_lu_decomposition()
 
   print_files(a, desc_a.MB, desc_a.NB, myrow, mycol, "input");
   int ia ;
-  diagonal_block_lu(a, ipiv, desca, desc_a);
+  diagonal_block_lu(a, ipiv, desca, desc_a, myrow, mycol, num_procs);
  
   print_files(a, desc_a.MB, desc_a.NB, myrow, mycol);  
   // end synchronous LU decomposition  
