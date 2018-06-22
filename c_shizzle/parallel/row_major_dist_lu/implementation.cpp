@@ -5,7 +5,7 @@
 // lvmax [out] - local max element
 // limax [out] - local max index
 void find_local_max_element(double *A, int block, int i, desc desc_a,
-                            double &lvmax, int &limax, int num_procs)
+                            double &lvmax, double &limax, int num_procs)
 { 
   int global_index = (block+i)*desc_a.N + (block+i), local_index;
   global2local(global_index, &local_index, num_procs, desc_a);
@@ -24,15 +24,17 @@ void find_local_max_element(double *A, int block, int i, desc desc_a,
 //
 // @param *imax [out] index in global array with max element.
 // @param *vmax [out] max element in the global array.
-void find_max_element_in_col(double *A, int block, int i, int * imax,
+void find_max_element_in_col(double *A, int block, int i, double * imax,
                              double * vmax, desc desc_a, int myrow, int mycol,
                              int num_procs)
 {
   // convert global index to local index
-  double lvmax; int limax;
+  double lvmax, limax;
   find_local_max_element(A, block, i, desc_a, lvmax, limax, num_procs);
-  cout << "myrow " << myrow << " mycol " << mycol << " lvmax " << (lvmax) << endl;
   // broadcast local max indexes and numbers along the process columns.
+  int size = (int)sqrt(num_procs);
+  double max[size*2];
+  max[0] = lvmax; max[1] = limax;
   // choose max element and corresponding global index among broadcasted numbers.
 }
 
@@ -41,7 +43,7 @@ void pivot_column(double *A, int block, int nb, desc desc_a, int myrow,
 {
   // iterate over columns witin this vertical panel.
   for (int i = 0; i < nb; ++i) {
-    double vmax; int imax; // imax - max index. vmax - max element.
+    double vmax, imax; // imax - max index. vmax - max element.
     find_max_element_in_col(A, block, i, &imax, &vmax, desc_a, myrow, mycol, num_procs);
   }
 }

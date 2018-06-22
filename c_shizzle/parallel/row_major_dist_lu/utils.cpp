@@ -13,9 +13,9 @@ void initialize_blacs(int *BLACS_CONTEXT, int *proc_nrows, int *proc_ncols,
 // Convert local co-ordinate per process to global matrix co-ordinate.
 //   Works on flat arrays only.
 //
-// @param *local [in] local array location.
+// @param local [in] local array location.
 // @param *global [out] global array location.
-void local2global(int *local, int *global, int myrow, int mycol)
+void local2global(int local, int *global, int myrow, int mycol, int num_procs, desc desc_a)
 {
   
 }

@@ -3,8 +3,9 @@
 
 #include "utils.hpp"
 #include <assert.h>
-#define TESTING NULL
+#define TESTING 1
 
 void test_global2local();
+void test_local2global();
 
 #endif

@@ -60,6 +60,7 @@ void parallel_lu_decomposition()
 void run_unit_tests()
 {
   test_global2local();
+  test_local2global();
 }
 
 int main(int argc, char ** argv)
