@@ -7,12 +7,8 @@
 
 #include "sync_lu_decomp.hpp"
 
-int main(int argc, char ** argv)
+void parallel_lu_decomposition()
 {
-  // MPI init
-  MPI_Init(&argc, &argv);
-  // end MPI Init
-  
   // BLACS init
   int BLACS_CONTEXT, proc_nrows, proc_ncols, myrow, mycol;
   int proc_id, num_procs;
@@ -58,7 +54,28 @@ int main(int argc, char ** argv)
   diagonal_block_lu(a, ipiv, desca, desc_a);
  
   print_files(a, desc_a.MB, desc_a.NB, myrow, mycol);  
-  // end synchronous LU decomposition
+  // end synchronous LU decomposition  
+}
+
+void run_unit_tests()
+{
+  test_global2local();
+}
+
+int main(int argc, char ** argv)
+{
+  // MPI init
+  MPI_Init(&argc, &argv);
+  // end MPI Init
+
+  if (TESTING) {
+    run_unit_tests();
+  }
+  else {
+    parallel_lu_decomposition();
+  }
+ 
+
 
   MPI_Finalize();
 }

@@ -1,25 +1,5 @@
 #include "implementation.hpp"
 
-// Convert local co-ordinate per process to global matrix co-ordinate.
-//   Works on flat arrays only.
-//
-// @param *local [in] local array location.
-// @param *global [out] global array location.
-void local2global(int *local, int *global, int myrow, int mycol)
-{
-  
-}
-
-// Convert global co-ordinate per process to local matrix co-ordinate.
-//   Works on flat arrays only.
-//
-// @param *global [in] global array location.
-// @param *local [out] local array location.
-void global2local(int *global, int *local, int myrow, int mycol)
-{
-  
-}
-
 // Find the max element in a column given the global block and column number.
 //
 // @param *imax [out] index in global array with max element.
@@ -28,13 +8,13 @@ void find_max_element_in_col(double *A, int block, int i, double * imax,
                              double * vmax, desc desc_a)
 {
   // find local max in each array along with respective local index.
-  double max = A;
+  //double max = A;
   // convert local index to global index.
   // broadcast local max indexes and numbers along the process columns.
   // choose max element and corresponding global index among broadcasted numbers.
 }
 
-void pivot_column(double *A, int block, int ia, int nb, desc desc_a)
+void pivot_column(double *A, int block, int nb, desc desc_a)
 {
   // iterate over columns witin this vertical panel.
   for (int i = 0; i < nb; ++i) {
@@ -54,12 +34,12 @@ void diagonal_block_lu(double *A, int *ipiv, int *desca, desc desc_a)
 {
   if (COL_MAJOR) {
     int info;
-    ia = 1;
+    int ia = 1;
     pdgetrf_(&desc_a.M, &desc_a.N, A, &ia, &ia, desca, ipiv, &info);
   }
   else if (ROW_MAJOR) {
-    for (int block = 0; ia < N; ia += nb) {
-      pivot_column(A, block, ia, nb, desc_a);
+    for (int block = 0; block < desc_a.N; block += desc_a.NB) {
+      pivot_column(A, block, desc_a.NB, desc_a);
       // swap_panels();
       // update_upper_panel();
       // update_trailing_submatrix();

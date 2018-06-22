@@ -7,6 +7,7 @@
 #include <cmath>
 #include "utils.hpp"
 #include "implementation.hpp"
+#include "unit_tests.hpp"
 using namespace std;
 
 void print_block(double *a, int nrows, int ncols, int proc_id)

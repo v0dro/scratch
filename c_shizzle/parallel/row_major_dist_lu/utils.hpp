@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <string>
+#include <cmath>
 using namespace std;
 
 #define ROW_MAJOR NULL
@@ -74,4 +75,8 @@ void print_all(double *A, int nrows, int ncols, int myrow, int mycol, char *desc
 void print_block(double *A, int nb, int nc, int myrow, int mycol, char *desc);
 
 void print_files(double *A, int nrows, int ncols, int myrow, int mycol, string postfix="");
+
+void local2global(int *local, int *global, int myrow, int mycol);
+
+void global2local(int global, int *local, int num_procs, desc desc_a);
 #endif /* UTILS_H */
