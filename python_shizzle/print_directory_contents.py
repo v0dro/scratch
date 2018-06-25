@@ -3,12 +3,12 @@ from os import listdir
 
 def really_get_contents(s, indent, path):
     contents = listdir(path)
-    print(path)
+    
     for content in contents:
-        if os.path.isdir(path + content):
-            s += really_get_contents(s, indent+2, path + content + "/")
-        else:
-            s += "-"*indent + str(content) + "\n"
+        s += "-"*indent + str(content) + "\n"
+        if os.path.isdir(os.path.join(path, content)):
+            s = really_get_contents(s, indent+2, os.path.join(path, content))
+            
     return s
 
 """
@@ -18,7 +18,6 @@ def print_directory_contents(path):
     s = ""
     indent = 0
     return really_get_contents(s, indent, path)
-    #return s
 
-print_directory_contents("/home/sameer/gitrepos/")
-
+s = print_directory_contents("/home/1/17M38101/gitrepos/hpc_lecture/")
+print(s)

@@ -1,0 +1,12 @@
+O0 optimizations : \n
+N = 16. time: 1.69277e-05 s. Gflops: 0.48394
+N = 32. time: 2.90871e-05 s. Gflops: 2.2531
+N = 64. time: 9.10759e-05 s. Gflops: 5.75661
+N = 128. time: 0.000359058 s. Gflops: 11.6814
+N = 256. time: 0.00142002 s. Gflops: 23.6295
+N = 512. time: 0.00633001 s. Gflops: 42.4068
+N = 1024. time: 0.0338309 s. Gflops: 63.477
+N = 2048. time: 0.229985 s. Gflops: 74.7
+N = 4096. time: 1.57101 s. Gflops: 87.4846
+N = 8192. time: 11.4372 s. Gflops: 96.1351
+malloc_aligned failed. failure reason : insufficient memory.

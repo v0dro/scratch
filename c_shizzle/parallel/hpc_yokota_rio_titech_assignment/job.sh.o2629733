@@ -1,0 +1,26 @@
+O0 optimizations : 
+N = 16. time: 2.00272e-05 s. Gflops: 0.409045
+N = 16. time: 1.81198e-05 s. Gflops: 0.452102
+error: 0
+N = 32. time: 2.90871e-05 s. Gflops: 2.2531
+N = 32. time: 0.000155926 s. Gflops: 0.420303
+error: 0
+N = 64. time: 0.000102043 s. Gflops: 5.1379
+N = 64. time: 0.00122786 s. Gflops: 0.426995
+error: 0
+N = 128. time: 0.00030899 s. Gflops: 13.5742
+N = 128. time: 0.0104449 s. Gflops: 0.401566
+error: 0
+N = 256. time: 0.00137305 s. Gflops: 24.4378
+N = 256. time: 0.145079 s. Gflops: 0.231284
+error: 0
+N = 512. time: 0.00621891 s. Gflops: 43.1644
+N = 512. time: 1.11205 s. Gflops: 0.241389
+error: 0
+N = 1024. time: 0.027308 s. Gflops: 78.6394
+N = 1024. time: 8.7021 s. Gflops: 0.246778
+error: 0
+N = 2048. time: 0.214257 s. Gflops: 80.1835
+N = 2048. time: 89.6255 s. Gflops: 0.191685
+error: 0
+N = 4096. time: 1.41102 s. Gflops: 97.4038
