@@ -10,6 +10,13 @@ void initialize_blacs(int *BLACS_CONTEXT, int *proc_nrows, int *proc_ncols,
   Cblacs_pcoord(*BLACS_CONTEXT, *proc_id, myrow, mycol);
 }
 
+// Convert index to (row, col) pair.
+void index2coords(int index, int ld, int &row, int &col)
+{
+  row = (int)(index / ld);
+  col = index % ld;
+}
+
 // Convert local co-ordinate per process to global matrix co-ordinate.
 //   Works on flat arrays only.
 //
@@ -17,7 +24,18 @@ void initialize_blacs(int *BLACS_CONTEXT, int *proc_nrows, int *proc_ncols,
 // @param *global [out] global array location.
 void local2global(int local, int *global, int myrow, int mycol, int num_procs, desc desc_a)
 {
+  int lrow, lcol;
+  index2coords(local, desc_a.NB, lrow, lcol);
+
+  int grow = lrow % (desc_a.M / desc_a.MB) +
+    desc_a.MB * (int)(lrow / sqrt(num_procs)) +
+    myrow * (desc_a.M / desc_a.MB);
   
+  int gcol = lcol % (desc_a.N / desc_a.NB) +
+    desc_a.NB * (int)(lcol / sqrt(num_procs)) +
+    mycol * (desc_a.N / desc_a.NB);
+
+  *global = grow*desc_a.N + gcol;
 }
 
 // Convert global co-ordinate per process to local matrix co-ordinate.
@@ -37,13 +55,6 @@ void global2local(int global, int *local, int num_procs, desc desc_a)
     ((int)(grow/desc_a.MB))*(desc_a.MB/sqrt(num_procs));
 
   *local = lrow*desc_a.lld + lcol;
-}
-
-// Convert index to (row, col) pair.
-void index2coords(int index, int ld, int &row, int &col)
-{
-  row = (int)(index / ld);
-  col = index % ld;
 }
 
 void generate_data(double *a, int myrow, int mycol, desc desc_a)

@@ -36,4 +36,8 @@ void test_local2global()
 
   local2global(local, &global, myrow, mycol, num_procs, desc_a);
   assert(global == 44);
+
+  myrow = 1; mycol = 1; local = 14;
+  local2global(local, &global, myrow, mycol, num_procs, desc_a);
+  assert(global == 62);  
 }
