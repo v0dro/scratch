@@ -26,6 +26,26 @@ extern "C" {
     const int *nb, const int *irsrc, const int *icsrc, const int *ictxt, 
     const int *lld, int *info);
 
+  void Cdgesd2d(
+                int CBLACS_CONTEXT, // CBLACS context
+                int M, // row size of matrix block
+                int N, // col size of matrix block
+                double* A, // pointer to matrix block
+                int LDA, // leading dim of A (col size for C programs)
+                int RDEST, // row number of destination process
+                int CDEST // col number of destination process
+                );
+  
+  void Cdgerv2d(
+                int CBLACS_CONTEXT, // CBLACS context
+                int M, // row size of matrix block
+                int N, // col size of matrix block
+                double *A, // pointer to matrix data.
+                int LDA, // leading dim of A (col size for C)
+                int RSRC, // process row co-ordinate of the sending process.
+                int CSRC // process col co-ordinate of the sending process.
+                );
+  
   void pdgemm_( char* TRANSA, char* TRANSB,
                 int * M, int * N, int * K,
                 double * ALPHA,
@@ -62,10 +82,16 @@ typedef struct desc {
 
 // struct defining properties of an MPI process.
 typedef struct mpi_desc {
-  int myrow;
-  int mycol;
-  int num_procs;
+  int myrow;     // current process row number.
+  int mycol;     // current process column number.
+  int proc_id;
+  int BLACS_CONTEXT;
+  int num_procs; // total number of processes.
+  int MP;        // no. of rows of process grid.
+  int NP;        // no. of cols of process grid.
 } mpi_desc;
+
+extern ofstream err_file;
 
 void initialize_blacs(int *BLACS_CONTEXT, int *proc_nrows, int *proc_ncols,
                       int *myrow, int *mycol, int *proc_id, int *num_procs);

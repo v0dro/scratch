@@ -1,3 +1,5 @@
+// MPI impelementation of the SUMMA matrix multiplication algorithm.
+
 #include "mpi.h"
 #include <cstring>
 #include <cmath>
@@ -21,19 +23,6 @@ double get_time()
   gettimeofday(&t, &tzp);
   return t.tv_sec + t.tv_usec*1e-6;
 }
-
-// double relative_error(double *A, double *B, int nrows, int ncols)
-// {
-//   int i;
-//   double *A_minus_B = (double*)malloc(sizeof(double)*nrows*ncols);
-//   for (i = 0; i < nrows*ncols; ++i) {
-//     A_minus_B[i] = A[i] - B[i];
-//   }
-//   double normA = frob_norm(A, nrows, ncols);
-//   double normA_minus_B = frob_norm(A_minus_B, nrows, ncols);
-//   return normA_minus_B/normA;
-// }
-
 
 void matmul(double *a, double *b, double *c, int nrows_a, int ncols_a, int nrows_b, int ncols_b)
 {

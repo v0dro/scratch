@@ -10,6 +10,8 @@
 #include "unit_tests.hpp"
 using namespace std;
 
+ofstream err_file;
+
 void print_block(double *a, int nrows, int ncols, int proc_id)
 {
   for (int i = 0; i < nrows; ++i) {

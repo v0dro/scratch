@@ -3,7 +3,7 @@
 
 #include "utils.hpp"
 #include <assert.h>
-#define TESTING 1
+#define TESTING NULL
 
 void test_global2local();
 void test_local2global();

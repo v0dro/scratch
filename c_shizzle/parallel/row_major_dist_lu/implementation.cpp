@@ -25,26 +25,43 @@ void find_local_max_element(double *A, int block, int i, desc desc_a,
 // @param *imax [out] index in global array with max element.
 // @param *vmax [out] max element in the global array.
 void find_max_element_in_col(double *A, int block, int i, double * imax,
-                             double * vmax, desc desc_a, int myrow, int mycol,
-                             int num_procs)
+                             double * vmax, desc desc_a, mpi_desc mpi)
 {
   // convert global index to local index
   double lvmax, limax;
-  find_local_max_element(A, block, i, desc_a, lvmax, limax, num_procs);
+  find_local_max_element(A, block, i, desc_a, lvmax, limax, mpi.num_procs);
   // broadcast local max indexes and numbers along the process columns.
-  int size = (int)sqrt(num_procs);
+  int size = mpi.MP;
   double max[size*2];
-  max[0] = lvmax; max[1] = limax;
+  int temp_imax;
+  local2global(limax, &temp_imax, mpi.myrow, mpi.mycol, mpi.num_procs, desc_a);
+  max[mpi.myrow*size]     = lvmax;
+  max[mpi.myrow*size + 1] = temp_imax;
+  // Send the local imax and vmax to all processes in the same column:
+  for (int r = 0; r < mpi.MP; r++) {
+    Cdgesd2d(mpi.BLACS_CONTEXT, 2, 1, &max[mpi.myrow*size], 2, r, mpi.mycol);
+  }
+  // Receive the imax and vmax of all processes in the same column:
+  for (int r = 0; r < mpi.MP; r++) {
+    Cdgerv2d(mpi.BLACS_CONTEXT, 2, 1, &max[r*size], 2, r, mpi.mycol);
+  }
   // choose max element and corresponding global index among broadcasted numbers.
+  *vmax = max[0]; *imax = max[1];
+  for (int i = 2; i < mpi.MP*2; i += 2) {
+    if (*vmax < max[i]) {
+      *vmax = max[i];
+      *imax = max[i+1];
+    }
+  }
 }
 
-void pivot_column(double *A, int block, int nb, desc desc_a, int myrow,
-                  int mycol, int num_procs)
+void pivot_column(double *A, int block, int nb, desc desc_a, mpi_desc mpi)
 {
   // iterate over columns witin this vertical panel.
   for (int i = 0; i < nb; ++i) {
     double vmax, imax; // imax - max index. vmax - max element.
-    find_max_element_in_col(A, block, i, &imax, &vmax, desc_a, myrow, mycol, num_procs);
+    find_max_element_in_col(A, block, i, &imax, &vmax, desc_a, mpi);
+    err_file << "found max " << vmax << " " << imax << endl;
   }
 }
 
@@ -55,8 +72,7 @@ void pivot_column(double *A, int block, int nb, desc desc_a, int myrow,
 //   is the matrix block of size MB * NB, which belongs to a global matrix of size M * N.
 //
 // The implementation is a right-looking block LU decomposition.
-void diagonal_block_lu(double *A, int *ipiv, int *desca, desc desc_a,
-                       int myrow, int mycol, int num_procs)
+void diagonal_block_lu(double *A, int *ipiv, int *desca, desc desc_a, mpi_desc mpi)
 {
   if (COL_MAJOR) {
     int info;
@@ -65,7 +81,7 @@ void diagonal_block_lu(double *A, int *ipiv, int *desca, desc desc_a,
   }
   else if (ROW_MAJOR) {
     for (int block = 0; block < desc_a.N; block += desc_a.NB) {
-      pivot_column(A, block, desc_a.NB, desc_a, myrow, mycol, num_procs);
+      pivot_column(A, block, desc_a.NB, desc_a, mpi);
       // swap_panels();
       // update_upper_panel();
       // update_trailing_submatrix();
