@@ -17,6 +17,12 @@ void index2coords(int index, int ld, int &row, int &col)
   col = index % ld;
 }
 
+// Get info about process co-ordinates based on global co-ords.
+// Assumes block-cyclic distribution of data.
+void procg2l(int grow, int gcol, int *newrow, int *newcol, desc desc_a)
+{
+  
+}
 // Convert local co-ordinate per process to global matrix co-ordinate.
 //   Works on flat arrays only.
 //

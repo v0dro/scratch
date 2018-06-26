@@ -41,3 +41,14 @@ void test_local2global()
   local2global(local, &global, myrow, mycol, num_procs, desc_a);
   assert(global == 62);  
 }
+
+void test_procg2l()
+{
+  desc desc_a;
+  init_desc_a(desc_a);
+  int grow = 3, gcol = 5, newrow, newcol;
+
+  procg2l(grow, gcol, &newrow, &newcol, desc_a);
+  assert(newrow == 1);
+  assert(newcol == 0);
+}

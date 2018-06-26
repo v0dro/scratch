@@ -7,5 +7,6 @@
 
 void test_global2local();
 void test_local2global();
+void test_procg2l();
 
 #endif

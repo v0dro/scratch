@@ -7,7 +7,7 @@
 void find_local_max_element(double *A, int block, int i, desc desc_a,
                             double &lvmax, double &limax, int num_procs)
 { 
-  int global_index = (block+i)*desc_a.N + (block+i), local_index;
+  int global_index = (block+i)*desc_a.N + (block+i); int local_index;
   global2local(global_index, &local_index, num_procs, desc_a);
   lvmax = A[local_index];
   limax = local_index;
@@ -31,19 +31,18 @@ void find_max_element_in_col(double *A, int block, int i, double * imax,
   double lvmax, limax;
   find_local_max_element(A, block, i, desc_a, lvmax, limax, mpi.num_procs);
   // broadcast local max indexes and numbers along the process columns.
-  int size = mpi.MP;
-  double max[size*2];
+  double max[mpi.MP*2];
   int temp_imax;
   local2global(limax, &temp_imax, mpi.myrow, mpi.mycol, mpi.num_procs, desc_a);
-  max[mpi.myrow*size]     = lvmax;
-  max[mpi.myrow*size + 1] = temp_imax;
+  max[mpi.myrow*mpi.MP]     = lvmax;
+  max[mpi.myrow*mpi.MP + 1] = temp_imax;
   // Send the local imax and vmax to all processes in the same column:
   for (int r = 0; r < mpi.MP; r++) {
-    Cdgesd2d(mpi.BLACS_CONTEXT, 2, 1, &max[mpi.myrow*size], 2, r, mpi.mycol);
+    Cdgesd2d(mpi.BLACS_CONTEXT, 2, 1, &max[mpi.myrow*mpi.MP], 2, r, mpi.mycol);
   }
   // Receive the imax and vmax of all processes in the same column:
   for (int r = 0; r < mpi.MP; r++) {
-    Cdgerv2d(mpi.BLACS_CONTEXT, 2, 1, &max[r*size], 2, r, mpi.mycol);
+    Cdgerv2d(mpi.BLACS_CONTEXT, 2, 1, &max[r*mpi.MP], 2, r, mpi.mycol);
   }
   // choose max element and corresponding global index among broadcasted numbers.
   *vmax = max[0]; *imax = max[1];
@@ -55,13 +54,25 @@ void find_max_element_in_col(double *A, int block, int i, double * imax,
   }
 }
 
+// Swap the rows within this current panel.
+void swap_within_current_panel(double *A, desc desc_a, int goriginal, int gnew)
+{
+  int gorig_row, gorig_col;
+  index2coords(goriginal, desc_a.N, gorig_row, gorig_col);
+  
+}
+
 void pivot_column(double *A, int block, int nb, desc desc_a, mpi_desc mpi)
 {
   // iterate over columns witin this vertical panel.
+  int curr_global;
+  double vmax, imax; // imax - max index. vmax - max element.
   for (int i = 0; i < nb; ++i) {
-    double vmax, imax; // imax - max index. vmax - max element.
-    find_max_element_in_col(A, block, i, &imax, &vmax, desc_a, mpi);
-    err_file << "found max " << vmax << " " << imax << endl;
+    curr_global = (block + i)*desc_a.N + block + i;
+    find_max_element_in_col(A, block, i, &imax, &vmax, desc_a, mpi); // idamax
+    if (imax != curr_global) {
+      swap_within_current_panel(A, desc_a, curr_global, imax); // dswap
+    }
   }
 }
 

@@ -50,7 +50,7 @@ void parallel_lu_decomposition()
   }
 
   print_files(a, desc_a.MB, desc_a.NB, mpi_info.myrow, mpi_info.mycol, "input");
-  int ia ;
+  int ia;
   diagonal_block_lu(a, ipiv, desca, desc_a, mpi_info);
  
   print_files(a, desc_a.MB, desc_a.NB, mpi_info.myrow, mpi_info.mycol);  

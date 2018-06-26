@@ -190,7 +190,7 @@
          CALL PXERBLA( ICTXT, 'PDGETF2', -INFO )
          CALL BLACS_ABORT( ICTXT, 1 )
          RETURN
-      END IFinfo
+      END IF
 *
 *     Quick return if possible
 *
