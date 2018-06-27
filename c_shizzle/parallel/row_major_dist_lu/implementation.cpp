@@ -67,11 +67,16 @@ void pivot_column(double *A, int block, int nb, desc desc_a, mpi_desc mpi)
   // iterate over columns witin this vertical panel.
   int curr_global;
   double vmax, imax; // imax - max index. vmax - max element.
-  for (int i = 0; i < nb; ++i) {
-    curr_global = (block + i)*desc_a.N + block + i;
-    find_max_element_in_col(A, block, i, &imax, &vmax, desc_a, mpi); // idamax
-    if (imax != curr_global) {
-      swap_within_current_panel(A, desc_a, curr_global, imax); // dswap
+  int imyrow, imycol;
+  procg2l(block, block, &imyrow, &imycol, desc_a, mpi);
+
+  if (imycol == mpi.mycol) {
+    for (int i = 0; i < nb; ++i) {
+      curr_global = (block + i)*desc_a.N + block + i;
+      find_max_element_in_col(A, block, i, &imax, &vmax, desc_a, mpi); // idamax
+      if (imax != curr_global) {
+        swap_within_current_panel(A, desc_a, curr_global, imax); // dswap
+      }
     }
   }
 }
