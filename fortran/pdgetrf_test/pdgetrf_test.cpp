@@ -30,23 +30,22 @@ extern "C" {
 
 void print_arr(double *A, int size, string desc, ostream &o)
 {
-  //o << desc << endl;
+  o << desc << endl;
   for (int i = 0; i < size; ++i) {
     o << A[i] << " ";
   }
   o << endl;
 }
 
-void print_files(double *A, int nrows, int ncols, int myrow, int mycol, string post="")
+void print_files(double *A, int nrows, int ncols, int myrow, int mycol)
 {
   string n = to_string(myrow*2 + mycol); 
   std::ofstream file;
 
-  file.open(n + post + ".txt");
+  file.open(n + ".txt");
   print_arr(A, nrows*ncols, n, file);
   file.close();
 }
-
 
 int main(int argc, char ** argv)
 {
@@ -67,30 +66,20 @@ int main(int argc, char ** argv)
   // matrix properties
   // mat size, blk size, portion of block per process
   int N = 8, nb = 4, process_block_size = 2;
+  int num_blocks_per_process = N/process_block_size;
+  int block_size_per_process_r = sqrt(num_blocks_per_process);
+  int block_size_per_process_c = sqrt(num_blocks_per_process);
   double* a = (double*)malloc(sizeof(double)*nb*nb);
   // generate matrix data
-  int pblock_nrows = nb/2;
-  int pblock_ncols = nb/2;
-  int num_blocks_per_process = 4;
-  
-  // loop over block cols
-  for (int bc = 0; bc < pblock_ncols; ++bc) {
-    // loop over block rows
-    for (int br = 0; br < pblock_nrows; ++br) {
-      // loop over number cols
-      for (int j = 0; j < pblock_ncols; ++j) {
-        // loop over number rows
-        for (int i = 0; i < pblock_nrows; ++i) {
-          int row_i = myrow*pblock_nrows + i + j * num_blocks_per_process;
-          int col_i = bc*num_blocks_per_process + mycol * pblock_ncols + br;
-          int index = i + j * pblock_nrows +
-            (br + bc * pblock_ncols) * num_blocks_per_process;
-          a[index]  = row_i + col_i*N;
-        }
-      }
+  for (int j = 0; j < nb; ++j) {
+    for (int i = 0; i < nb; ++i) {
+      int index = i + j*nb;
+      int row_i = myrow*nb + i;
+      int col_j = mycol*nb + j;
+      a[index] = row_i + col_j*N;
     }
+    cout << endl;
   }
-  print_files(a, nb, nb, myrow, mycol, "input");
   // end matrix properties
 
   // create array descriptor
@@ -101,14 +90,9 @@ int main(int argc, char ** argv)
 
   Cblacs_barrier(BLACS_CONTEXT, "All");
 
-  //int locr = numroc_(&N, &nb, &myrow, &rsrc, &num_procs);
-  //std::cout << "locr + mba : " << locr + nb << std::endl;
   // LU decomposition
   int ia = 1, ja = 1;
-  int *ipiv = (int*)calloc(sizeof(int), N);
-  for (int i = 0; i < N; ++i) {
-    ipiv[i] = i+1;
-  }
+  int *ipiv = (int*)malloc(sizeof(int)*N);
   pdgetrf_(&N, &N, a, &ia, &ja, desca, ipiv, &info);
   // end LU decomposition
 
@@ -118,11 +102,5 @@ int main(int argc, char ** argv)
       cout << ipiv[i] << " ";
     }
   }
-
-  if (myrow == 1 && mycol == 1) {
-    for(int i = 0; i < N; ++i) {
-      cout << ipiv[i] << " ";
-    }
-  }  
   MPI_Finalize();
 }

@@ -243,7 +243,7 @@
          CALL IGEBR2D( ICTXT, 'Rowwise', ROWBTOP, MN, 1, IPIV( IIA ),
      $                 MN, MYROW, IACOL )
 *
-      END IF
+      END IF ! IF( MYCOL.EQ.IACOL ) THEN
 *
       RETURN
 *

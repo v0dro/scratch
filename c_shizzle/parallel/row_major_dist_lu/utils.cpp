@@ -17,7 +17,8 @@ void index2coords(int index, int ld, int &row, int &col)
   col = index % ld;
 }
 
-// Get info about process co-ordinates based on global co-ords.
+// newrow - The global process row that contains the given global row
+// newcol - The global process col that contains the given global col
 // Assumes block-cyclic distribution of data.
 void procg2l(int grow, int gcol, int *newrow, int *newcol, desc desc_a, mpi_desc mpi)
 {

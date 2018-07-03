@@ -45,6 +45,28 @@ extern "C" {
                 int RSRC, // process row co-ordinate of the sending process.
                 int CSRC // process col co-ordinate of the sending process.
                 );
+
+  void Cdgebr2d(
+                int CBLACS_CONTEXT, // CBLACS context
+                char* SCOPE, // scope of the broadcast. Can be "Row", "Column" or "All"
+                char* TOP, // indicates communication pattern to use for broadcast.
+                int M, // number of rows of matrix.
+                int N, // number of columns of matrix.
+                double* A, // pointer to matrix data.
+                int LDA, // leading dim of matrix (col size for C)
+                int RSRC, // process row co-ordinate of the process who called broadcast/send.
+                int CSRC // process column co-ordinate of the process who called broadcast/send.
+                );
+
+  void Cdgebs2d(
+                int CBLACS_CONTEXT, // CBLACS context.
+                char* SCOPE, // scope of broadcast. can be "All", "Row" or "Column".
+                char* TOP, // network topology to be used.
+                int M, // num of rows of the matrix.
+                int N, // num of cols of the matrix.
+                double *A, // pointer to the matrix data.
+                int LDA // leading dimension of A.
+                );
   
   void pdgemm_( char* TRANSA, char* TRANSB,
                 int * M, int * N, int * K,

@@ -55,11 +55,77 @@ void find_max_element_in_col(double *A, int block, int i, double * imax,
 }
 
 // Swap the rows within this current panel.
-void swap_within_current_panel(double *A, desc desc_a, int goriginal, int gnew)
+void swap_within_current_panel(double *A, desc desc_a, mpi_desc mpi,
+                               int goriginal, int gnew, int block)
 {
-  int gorig_row, gorig_col;
-  index2coords(goriginal, desc_a.N, gorig_row, gorig_col);
+  // get original global row and col
+  int go_row, go_col;
+  index2coords(goriginal, desc_a.N, go_row, go_col);
+
+  // get original local row and col
+  int loriginal, lo_row, lo_col;
+  global2local(goriginal, &loriginal, mpi.num_procs, desc_a);
+  index2coords(loriginal, desc_a.lld, lo_row, lo_col);
+
+  // get process co-ordinates that own the new col
+  int orig_prow, orig_pcol;
+  procg2l(go_row, go_col, &orig_prow, &orig_pcol, desc_a, mpi);
+
+  // get new global row and col
+  int gn_row, gn_col;
+  index2coords(gnew, desc_a.N, gn_row, gn_col);
+
+  // get new local row and col
+  int lnew, ln_row, ln_col;
+  global2local(gnew, &lnew, mpi.num_procs, desc_a);
+  index2coords(lnew, desc_a.lld, ln_row, ln_col);
   
+  // get the process co-ordinates that own the new row
+  int new_prow, new_pcol;
+  procg2l(gn_row, gn_col, &new_prow, &new_pcol, desc_a, mpi);
+
+  // number of elements per process
+  int num = desc_a.MB / mpi.MP;
+  int offset = (int)(block/desc_a.MB);
+
+  // send the original row to the process row that contains the new row
+  // communication needs to happen only between rows.
+  if (mpi.myrow == orig_prow) {
+    Cdgesd2d(mpi.BLACS_CONTEXT, num, 1, &A[lo_row*desc_a.lld + num*offset],
+             desc_a.lld, new_prow, mpi.mycol);
+  }
+
+  // receive the original row in the process row that contains the new row
+  double originalA[num];
+  if (mpi.myrow == new_prow) {
+    Cdgerv2d(mpi.BLACS_CONTEXT, num, 1, originalA, num, orig_prow, mpi.mycol);
+  }
+
+  // send the new row to the process row that contains the original row
+  if (mpi.myrow == new_prow) {
+    Cdgesd2d(mpi.BLACS_CONTEXT, num, 1, &A[ln_row*desc_a.lld + num*offset],
+             num, orig_prow, mpi.mycol);
+  }
+
+  // receive the new row in the process row that contains the original row
+  double newA[num];
+  if (mpi.myrow == orig_prow) {
+    Cdgerv2d(mpi.BLACS_CONTEXT, num, 1, newA, num, new_prow, mpi.mycol);
+  }
+
+  // copy from new
+  if (mpi.myrow == orig_prow) {
+    for (int i = 0; i < num; i++) {
+      A[lo_row*desc_a.lld + num*offset + i] = newA[i];
+    }
+  }
+
+  // copy from original
+  if (mpi.myrow == new_prow) {
+    for (int i = 0; i < num; i++) {
+      A[ln_row*desc_a.lld + num*offset + i] = originalA[i];
+    }
+  }
 }
 
 void pivot_column(double *A, int block, int nb, desc desc_a, mpi_desc mpi)
@@ -67,16 +133,27 @@ void pivot_column(double *A, int block, int nb, desc desc_a, mpi_desc mpi)
   // iterate over columns witin this vertical panel.
   int curr_global;
   double vmax, imax; // imax - max index. vmax - max element.
+  double temp_max[2]; // temp storage for max elements for broadcast.
   int imyrow, imycol;
-  procg2l(block, block, &imyrow, &imycol, desc_a, mpi);
 
-  if (imycol == mpi.mycol) {
-    for (int i = 0; i < nb; ++i) {
+  for (int i = 0; i < nb; ++i) {
+    procg2l(block+i, block+i, &imyrow, &imycol, desc_a, mpi);
+    if (imycol == mpi.mycol) { // find max element in the columns
       curr_global = (block + i)*desc_a.N + block + i;
       find_max_element_in_col(A, block, i, &imax, &vmax, desc_a, mpi); // idamax
-      if (imax != curr_global) {
-        swap_within_current_panel(A, desc_a, curr_global, imax); // dswap
-      }
+      temp_max[0] = imax; temp_max[1] = vmax;
+     
+      // broadcast it to all other processes
+      Cdgebs2d(mpi.BLACS_CONTEXT, "All", " ", 2, 1, temp_max, 2);
+    }
+    else {
+      // receive broadcast
+      Cdgebr2d(mpi.BLACS_CONTEXT, "All", " ", 2, 1, temp_max, 2, mpi.myrow, imycol);
+      imax = temp_max[0]; vmax = temp_max[1];
+    }
+    
+    if (imax != curr_global) {
+      swap_within_current_panel(A, desc_a, mpi, curr_global, imax, block); // dswap
     }
   }
 }

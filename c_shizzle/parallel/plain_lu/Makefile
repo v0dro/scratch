@@ -1,6 +1,6 @@
 CXX = mpicxx -std=c++11 -ggdb3 -Wall -fPIC -O3 -fopenmp -lm -I.
 CFLAGS=-I.
-SOURCES = libscalapack.a
+SOURCES = /home/sameer/gitrepos/scalapack-2.0.2/libscalapack.a
 
 .cpp.o:
 	$(CXX) -c $? -o $@
