@@ -137,9 +137,12 @@ void pivot_column(double *A, int block, int nb, desc desc_a, mpi_desc mpi)
   int imyrow, imycol;
 
   for (int i = 0; i < nb; ++i) {
+    // get process row and col of diagonal element at (block+i,block+i)
     procg2l(block+i, block+i, &imyrow, &imycol, desc_a, mpi);
+    // compute global array block of diagonal element.
+    curr_global = (block + i)*desc_a.N + block + i;
+    
     if (imycol == mpi.mycol) { // find max element in the columns
-      curr_global = (block + i)*desc_a.N + block + i;
       find_max_element_in_col(A, block, i, &imax, &vmax, desc_a, mpi); // idamax
       temp_max[0] = imax; temp_max[1] = vmax;
      
@@ -151,7 +154,6 @@ void pivot_column(double *A, int block, int nb, desc desc_a, mpi_desc mpi)
       Cdgebr2d(mpi.BLACS_CONTEXT, "All", " ", 2, 1, temp_max, 2, mpi.myrow, imycol);
       imax = temp_max[0]; vmax = temp_max[1];
     }
-    
     if (imax != curr_global) {
       swap_within_current_panel(A, desc_a, mpi, curr_global, imax, block); // dswap
     }
