@@ -152,6 +152,8 @@ def right_looking_lu(mat):
             pivot = mat[block+i,block+i]
             dscal(mat, pivot, block+i)
 
+            print(mat)
+
             """
             Update the rest of the vertical panel.
             """
@@ -182,7 +184,8 @@ def right_looking_lu(mat):
     return np.matmul(l, u)
         
 def main():
-    a = np.power(np.arange(8*8).reshape(8,8).astype(float), 2)
+    #a = np.power(np.arange(8*8).reshape(8,8).astype(float), 2)
+    a = np.arange(8*8).reshape(8,8).astype(float)
     print("original matrix : \n")
     print(a)
     

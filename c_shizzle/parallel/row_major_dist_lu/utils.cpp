@@ -65,6 +65,26 @@ void global2local(int global, int *local, int num_procs, desc desc_a)
   *local = lrow*desc_a.lld + lcol;
 }
 
+// convert global (row, col) pair to local (row, col) pair
+void g2l(int grow, int gcol, int &lrow, int &lcol, desc desc_a, mpi_desc mpi)
+{
+  int procrow, proccol;
+  procg2l(grow, gcol, &procrow, &proccol, desc_a, mpi);
+  if (procrow != mpi.myrow || proccol != mpi.mycol) {
+    lrow = -1;
+    lcol = -1;
+  }
+  else {
+    // see page 9 of my notes for reference.
+    int dim = (int)sqrt(mpi.num_procs);
+    lcol = gcol % ((int)(desc_a.NB/dim)) +
+      ((int)(gcol/desc_a.NB))*(desc_a.NB/dim);
+  
+    lrow = grow % ((int)(desc_a.MB/dim)) +
+      ((int)(grow/desc_a.MB))*(desc_a.MB/dim);
+  }
+}
+
 void generate_data(double *a, int myrow, int mycol, desc desc_a)
 {
   int pblock_nrows = desc_a.MB/2;

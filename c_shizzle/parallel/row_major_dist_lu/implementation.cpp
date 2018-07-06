@@ -128,7 +128,33 @@ void swap_within_current_panel(double *A, desc desc_a, mpi_desc mpi,
   }
 }
 
-void pivot_column(double *A, int block, int nb, desc desc_a, mpi_desc mpi)
+void update_ipiv(int* ipiv, int orig_index, double imax, desc desc_a)
+{
+  int grow, gcol;
+  index2coords(imax, desc_a.N, grow, gcol);
+  ipiv[orig_index] = grow;
+}
+
+// grow - current global row
+// vmax - current max element in the column
+void scale_by_pivot(double *A, int diag, double vmax, desc desc_a, mpi_desc mpi)
+{
+  int lrow, lcol;
+
+  for (int i = diag+1; i < desc_a.N; i++) {
+    g2l(i, diag, lrow, lcol, desc_a, mpi);
+    if (lrow != -1 && lcol != -1) {
+      A[lrow*desc_a.lld + lcol] /= vmax;
+    }
+  }
+}
+
+void update_panel_submatrix(double *A, int diag, desc desc_a, mpi_desc mpi)
+{
+  
+}
+
+void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_desc mpi)
 {
   // iterate over columns witin this vertical panel.
   int curr_global;
@@ -154,9 +180,13 @@ void pivot_column(double *A, int block, int nb, desc desc_a, mpi_desc mpi)
       Cdgebr2d(mpi.BLACS_CONTEXT, "All", " ", 2, 1, temp_max, 2, mpi.myrow, imycol);
       imax = temp_max[0]; vmax = temp_max[1];
     }
+    update_ipiv(ipiv, block+i, imax, desc_a);
+    
     if (imax != curr_global) {
       swap_within_current_panel(A, desc_a, mpi, curr_global, imax, block); // dswap
     }
+    scale_by_pivot(A, block+i, vmax, desc_a, mpi); // dscal
+    update_panel_submatrix(A, block+i, desc_a, mpi); // dger
   }
 }
 
@@ -176,7 +206,7 @@ void diagonal_block_lu(double *A, int *ipiv, int *desca, desc desc_a, mpi_desc m
   }
   else if (ROW_MAJOR) {
     for (int block = 0; block < desc_a.N; block += desc_a.NB) {
-      pivot_column(A, block, desc_a.NB, desc_a, mpi);
+      pivot_column(A, block, desc_a.NB, ipiv, desc_a, mpi);
       // swap_panels();
       // update_upper_panel();
       // update_trailing_submatrix();

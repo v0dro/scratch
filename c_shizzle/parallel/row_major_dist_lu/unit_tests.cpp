@@ -17,6 +17,8 @@ void init_mpi(mpi_desc &mpi)
   mpi.MP = 2;
   mpi.NP = 2;
   mpi.num_procs = 4;
+  mpi.myrow = 1;
+  mpi.mycol = 0;
 }
 
 void test_global2local()
@@ -60,4 +62,22 @@ void test_procg2l()
   procg2l(grow, gcol, &newrow, &newcol, desc_a, mpi);
   assert(newrow == 1);
   assert(newcol == 0);
+}
+
+void test_g2l()
+{  
+  desc desc_a;
+  init_desc_a(desc_a);
+  mpi_desc mpi;
+  init_mpi(mpi);
+  int grow = 3, gcol = 5, lrow, lcol;
+
+  g2l(grow, gcol, lrow, lcol, desc_a, mpi);
+  assert(lrow == 1);
+  assert(lcol == 3);
+
+  grow = 4; gcol = 5;
+  g2l(grow, gcol, lrow, lcol, desc_a, mpi);
+  assert(lrow == -1);
+  assert(lcol == -1);
 }
