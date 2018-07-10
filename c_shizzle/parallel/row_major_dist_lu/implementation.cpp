@@ -155,7 +155,7 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
   double temp_row[max_panel_size*mpi.MP], temp_col[max_panel_size*mpi.NP];
   int newrow, newcol;
   int grow, gcol, lrow, lcol;
-  int panel_start, panel_size, gstart;
+  int panel_start, panel_size, gstart, row_counter=0, col_counter=0;
 
   // iterate over the row and send numbers along columns
   gstart = diag - diag % max_panel_size;
@@ -174,8 +174,9 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
       }
       Cdgerv2d(
                mpi.BLACS_CONTEXT, max_panel_size, 1,
-               &temp_row[(int)((col % desc_a.MB) / mpi.MP)*max_panel_size],
+               &temp_row[row_counter*max_panel_size],
                desc_a.lld, newrow, newcol);
+      row_counter++;
     }
   }
 
@@ -198,12 +199,13 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
         }
       }
       Cdgerv2d(mpi.BLACS_CONTEXT, max_panel_size, 1,
-               &temp_col[(int)((row % desc_a.NB) / mpi.NP)*max_panel_size],
+               &temp_col[col_counter*max_panel_size],
                desc_a.lld, newrow, newcol);
+      col_counter++;
     }
   }
 
-  if (mpi.myrow == 0 && mpi.mycol == 0) {
+  if (mpi.myrow == 1 && mpi.mycol == 1) {
     cout << "printing temp_row: ";
     for (int i = 0; i < max_panel_size*2; i++) {
       cout << temp_row[i] << " ";
@@ -217,6 +219,7 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
   }
 
   // reduce each element with values in temp_row and temp_col
+  
 }
 
 void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_desc mpi)
