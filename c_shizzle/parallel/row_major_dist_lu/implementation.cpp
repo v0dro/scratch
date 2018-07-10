@@ -149,9 +149,74 @@ void scale_by_pivot(double *A, int diag, double vmax, desc desc_a, mpi_desc mpi)
   }
 }
 
-void update_panel_submatrix(double *A, int diag, desc desc_a, mpi_desc mpi)
+void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a, mpi_desc mpi)
 {
-  
+  int max_panel_size = desc_a.MB / mpi.MP;
+  double temp_row[max_panel_size*mpi.MP], temp_col[max_panel_size*mpi.NP];
+  int newrow, newcol;
+  int grow, gcol, lrow, lcol;
+  int panel_start, panel_size, gstart;
+
+  // iterate over the row and send numbers along columns
+  gstart = diag - diag % max_panel_size;
+  for (int col = gstart; col < block + nb; col += max_panel_size) {
+    procg2l(diag, col, &newrow, &newcol, desc_a, mpi);
+    
+    if (mpi.mycol == newcol) { // send data along the column
+      g2l(diag, col, lrow, lcol, desc_a, mpi);
+      panel_start = lrow*desc_a.lld + lcol;
+      
+      if (mpi.myrow == newrow) { // the diagonal has to rest on this particular process
+        for (int proc_row = 0; proc_row < mpi.MP; proc_row++) {
+          Cdgesd2d(mpi.BLACS_CONTEXT, max_panel_size, 1, &A[panel_start], desc_a.lld,
+                   proc_row, newcol);
+        }
+      }
+      Cdgerv2d(
+               mpi.BLACS_CONTEXT, max_panel_size, 1,
+               &temp_row[(int)((col % desc_a.MB) / mpi.MP)*max_panel_size],
+               desc_a.lld, newrow, newcol);
+    }
+  }
+
+  // iterate over the col and send numbers along the rows
+  for (int row = gstart; row < desc_a.M; row += max_panel_size) {
+    procg2l(row, diag, &newrow, &newcol, desc_a, mpi);
+
+    if (mpi.myrow == newrow) {
+      g2l(row, diag, lrow, lcol, desc_a, mpi);
+      panel_start = lrow*desc_a.lld + lcol;
+
+      if (mpi.mycol == newcol) {
+        double temp[max_panel_size];
+        for (int i = 0; i < max_panel_size; i++) {
+          temp[i] = A[panel_start + i*(desc_a.lld)];
+        }
+        
+        for (int proc_col = 0; proc_col < mpi.NP; proc_col++) {
+          Cdgesd2d(mpi.BLACS_CONTEXT, max_panel_size, 1, temp, desc_a.lld, mpi.myrow, proc_col);
+        }
+      }
+      Cdgerv2d(mpi.BLACS_CONTEXT, max_panel_size, 1,
+               &temp_col[(int)((row % desc_a.NB) / mpi.NP)*max_panel_size],
+               desc_a.lld, newrow, newcol);
+    }
+  }
+
+  if (mpi.myrow == 0 && mpi.mycol == 0) {
+    cout << "printing temp_row: ";
+    for (int i = 0; i < max_panel_size*2; i++) {
+      cout << temp_row[i] << " ";
+    }
+
+    cout << endl << "printing temp_col: ";
+    for (int i = 0; i < max_panel_size*2; i++) {
+      cout << temp_col[i] << " ";
+    }
+    cout << endl;
+  }
+
+  // reduce each element with values in temp_row and temp_col
 }
 
 void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_desc mpi)
@@ -162,7 +227,7 @@ void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_de
   double temp_max[2]; // temp storage for max elements for broadcast.
   int imyrow, imycol;
 
-  for (int i = 0; i < nb; ++i) {
+  for (int i = 0; i < 1; ++i) {
     // get process row and col of diagonal element at (block+i,block+i)
     procg2l(block+i, block+i, &imyrow, &imycol, desc_a, mpi);
     // compute global array block of diagonal element.
@@ -186,7 +251,7 @@ void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_de
       swap_within_current_panel(A, desc_a, mpi, curr_global, imax, block); // dswap
     }
     scale_by_pivot(A, block+i, vmax, desc_a, mpi); // dscal
-    update_panel_submatrix(A, block+i, desc_a, mpi); // dger
+    update_panel_submatrix(A, block+i, block, nb, desc_a, mpi); // dger
   }
 }
 
@@ -205,7 +270,7 @@ void diagonal_block_lu(double *A, int *ipiv, int *desca, desc desc_a, mpi_desc m
     pdgetrf_(&desc_a.M, &desc_a.N, A, &ia, &ia, desca, ipiv, &info);
   }
   else if (ROW_MAJOR) {
-    for (int block = 0; block < desc_a.N; block += desc_a.NB) {
+    for (int block = 0; block < desc_a.NB; block += desc_a.NB) {
       pivot_column(A, block, desc_a.NB, ipiv, desc_a, mpi);
       // swap_panels();
       // update_upper_panel();

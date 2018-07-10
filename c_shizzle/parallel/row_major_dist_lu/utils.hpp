@@ -6,6 +6,7 @@
 #include <fstream>
 #include <string>
 #include <cmath>
+#include <algorithm>
 using namespace std;
 
 #define ROW_MAJOR 1

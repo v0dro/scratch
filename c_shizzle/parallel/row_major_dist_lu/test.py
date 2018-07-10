@@ -68,7 +68,6 @@ nb - block size
 def dger(mat, block, i, nb):
     mat[block+i+1:,block+i+1:block+nb] -= np.matmul(mat[block+i+1:,block+i:block+i+1],
                                                     mat[block+i:block+i+1, block+i+1:block+nb])
-    # mat[c+i+1:,c+i+1:c+i+nb] -= np.matmul(mat[c+i+1:, c+i:c+i+1], mat[c+i:c+i+1,c+i+1:c+i+nb])
 
 """
 panel is a matrix slice that contains all the rows but only the specific columns that
