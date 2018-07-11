@@ -155,7 +155,7 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
   int max_panel_size = desc_a.MB / mpi.MP;
   // store elements that are received from the diagonal row
   double temp_row[max_panel_size*mpi.MP];
-  // store elements taht are received from the diagonal column
+  // store elements that are received from the diagonal column
   double temp_col[max_panel_size*mpi.NP];
   int newrow, newcol;
   int grow, gcol, lrow, lcol;
@@ -222,46 +222,76 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
     cout << endl;
   }
 
-  // reduce each element with values in temp_row and temp_col
+  // reduce each element with values in temp_row and temp_col. Even though there might
+  //   multiple kinds of blocks in a single matrix, we can reduce them all since the
+  //   diagonal row/col always lies in top left part.
   
   // most general case where all elements in the process block should be reduced
   int ullrow, ullcol; // upper left local row and col
+  int ulgrow, ulgcol;
+  int lrlrow, lrlcol; // lower right local row and col
+  int lrgrow, lrgcol;
   int mb_row, mb_col; // matrix block inside which the diagonal element is present
 
   // get local row and col of upper left corner of proc block based matrix block of diag row/col
   mat_block(diag, diag, mb_row, mb_col, desc_a);
+  // get global (row, col) of upper left corner of process block
   ullrow = mb_row * max_panel_size;
   ullcol = mb_col * max_panel_size;
-  
-  // get global (row, col) of upper left corner of process block
-  l2g(ullrow, ullcol, grow, gcol, desc_a, mpi);
-  
+  l2g(ullrow, ullcol, ulgrow, ulgcol, desc_a, mpi);
+
+  // get global (row, col) of lower right corner of process block
+  lrlrow = ullrow + max_panel_size;
+  lrlcol = ullcol + max_panel_size;
+  l2g(lrlrow, lrlcol, lrgrow, lrgcol, desc_a, mpi);
+
+  // counters for temp arrays.
+  int tr=0, tc=0;
   // detect that block is of nature where it contains no diag row/col.
-  if (grow > diag && gcol > diag) {
+  if (ulgrow > diag && ulgcol > diag && lrgrow > diag && lrgcol > diag) {
     // iterate over all block-cyclic matrix blocks that satisfy this condition
-    int tr=0, tc=0;
     for (int i = ullrow; i < desc_a.lld; i++) {
-      for (int j = ullcol; j < ullcol + max_panel_size; j++) {
-        A[i*desc_a.lld + j] -= temp_row[tc] * temp_col[tr];
-        tc++;
+      for (int j = ullcol; j < ullcol + max_panel_size; j++) { // FIXME : upper bound
+        A[i*desc_a.lld + j] -= temp_row[tr] * temp_col[tc];
+        tr++;
       }
-      tc = 0;
-      tr++;
+      tr = 0;
+      tc++;
     }
-    tr = 0;
   }
-  //   get which  matrix block the diagonal is present in.
-  //   multiply lld with block number to get starting coords of block.
-
-
-  //   
-  
-
   // case where intersection of the diagonal row and column is in the proc block
-
+  else if (ulgrow <= diag && ulgcol <= diag && lrgrow > diag && lrgcol > diag) {
+    g2l(diag+1, diag+1, lrow, lcol, desc_a, mpi);
+    tr = (diag+1) % max_panel_size; tc = (diag+1) % max_panel_size;
+    
+    for (int i = lrow; i < desc_a.lld; i++) {
+      for (int j = lcol; j < max_panel_size; j++) { // FIXME : upper bound
+        A[i*desc_a.lld + j] -= temp_row[tr] * temp_col[tc];
+        tr++;
+      }
+      tr = (diag+1) % max_panel_size;
+      tc++;
+    }
+  }
   // case where only the diagonal col is in the proc block
+  else if (ulgrow > diag && ulgcol <= diag && lrgrow > diag && lrgcol > diag) {
+    g2l(ulgrow, diag+1, lrow, lcol, desc_a, mpi);
+    tr = (diag+1) % max_panel_size; tc = 0;
 
+    for (int i = lrow; i < desc_a.lld; i++) {
+      for (int j = lcol; j < max_panel_size; j++) { // FIXME : upper bound
+        A[i*desc_a.lld + j] -= temp_row[tr] * temp_col[tc];
+        tr++;
+      }
+      tr = (diag+1) % max_panel_size;
+      tc++;
+    }
+  }
   // case where only the diagonal row is in the proc block
+  else if (ulgrow > diag && ulgcol > diag && lrgrow < diag && lrgcol < diag) {
+    g2l(diag+1, ulgcol, lrow, lcol, desc_a, mpi);
+    
+  }
 }
 
 void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_desc mpi)

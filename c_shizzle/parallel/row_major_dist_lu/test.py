@@ -155,7 +155,7 @@ def right_looking_lu(mat):
 
             """
             Update the rest of the vertical panel.
-            """
+  p          """
             dger(mat, block, i, nb)
             # -------------------------------------------------
         """

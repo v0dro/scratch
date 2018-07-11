@@ -8,7 +8,7 @@ import numpy as np
 import math
 import sys
 
-np.set_printoptions(precision=5, linewidth=150)
+np.set_printoptions(precision=5, linewidth=150, suppress=True)
 
 def convert_to_number_list(string):
     return [float(s) for s in string.split(' ')]
