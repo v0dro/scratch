@@ -81,3 +81,16 @@ void test_g2l()
   assert(lrow == -1);
   assert(lcol == -1);
 }
+
+void test_l2g()
+{ 
+  desc desc_a;
+  init_desc_a(desc_a);
+  mpi_desc mpi;
+  init_mpi(mpi);
+  int lrow = 0, lcol = 0, grow, gcol;
+
+  l2g(lrow, lcol, grow, gcol, desc_a, mpi);
+  assert(grow == 2);
+  assert(gcol == 0);
+}

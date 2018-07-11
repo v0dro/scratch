@@ -141,4 +141,8 @@ void local2global(int local, int *global, int myrow, int mycol, int num_procs, d
 void global2local(int global, int *local, int num_procs, desc desc_a);
 
 void g2l(int grow, int gcol, int &lrow, int &lcol, desc desc_a, mpi_desc mpi);
+
+void l2g(int lrow, int lcol, int &grow, int &gcol, desc desc_a, mpi_desc mpi);
+
+void mat_block(int grow, int gcol, int &mb_row, int &mb_col, desc desc_a);
 #endif /* UTILS_H */

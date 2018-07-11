@@ -63,6 +63,7 @@ void run_unit_tests()
   test_local2global();
   test_procg2l();
   test_g2l();
+  test_l2g();
 }
 
 int main(int argc, char ** argv)

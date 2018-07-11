@@ -134,7 +134,7 @@ def right_looking_lu(mat):
     n = mat.shape[1]
     ipiv = np.arange(m)
 
-    nb = 2
+    nb = 1
 
     for block in range(0, n, nb):
         # iterations within a block of size nb.

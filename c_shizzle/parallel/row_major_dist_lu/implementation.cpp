@@ -149,13 +149,17 @@ void scale_by_pivot(double *A, int diag, double vmax, desc desc_a, mpi_desc mpi)
   }
 }
 
+// update the remaining part of the panel matrix within the panel of width NB.
 void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a, mpi_desc mpi)
 {
   int max_panel_size = desc_a.MB / mpi.MP;
-  double temp_row[max_panel_size*mpi.MP], temp_col[max_panel_size*mpi.NP];
+  // store elements that are received from the diagonal row
+  double temp_row[max_panel_size*mpi.MP];
+  // store elements taht are received from the diagonal column
+  double temp_col[max_panel_size*mpi.NP];
   int newrow, newcol;
   int grow, gcol, lrow, lcol;
-  int panel_start, panel_size, gstart, row_counter=0, col_counter=0;
+  int panel_start, gstart, row_counter=0, col_counter=0;
 
   // iterate over the row and send numbers along columns
   gstart = diag - diag % max_panel_size;
@@ -220,6 +224,44 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
 
   // reduce each element with values in temp_row and temp_col
   
+  // most general case where all elements in the process block should be reduced
+  int ullrow, ullcol; // upper left local row and col
+  int mb_row, mb_col; // matrix block inside which the diagonal element is present
+
+  // get local row and col of upper left corner of proc block based matrix block of diag row/col
+  mat_block(diag, diag, mb_row, mb_col, desc_a);
+  ullrow = mb_row * max_panel_size;
+  ullcol = mb_col * max_panel_size;
+  
+  // get global (row, col) of upper left corner of process block
+  l2g(ullrow, ullcol, grow, gcol, desc_a, mpi);
+  
+  // detect that block is of nature where it contains no diag row/col.
+  if (grow > diag && gcol > diag) {
+    // iterate over all block-cyclic matrix blocks that satisfy this condition
+    int tr=0, tc=0;
+    for (int i = ullrow; i < desc_a.lld; i++) {
+      for (int j = ullcol; j < ullcol + max_panel_size; j++) {
+        A[i*desc_a.lld + j] -= temp_row[tc] * temp_col[tr];
+        tc++;
+      }
+      tc = 0;
+      tr++;
+    }
+    tr = 0;
+  }
+  //   get which  matrix block the diagonal is present in.
+  //   multiply lld with block number to get starting coords of block.
+
+
+  //   
+  
+
+  // case where intersection of the diagonal row and column is in the proc block
+
+  // case where only the diagonal col is in the proc block
+
+  // case where only the diagonal row is in the proc block
 }
 
 void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_desc mpi)

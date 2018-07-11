@@ -85,6 +85,19 @@ void g2l(int grow, int gcol, int &lrow, int &lcol, desc desc_a, mpi_desc mpi)
   }
 }
 
+// convert local (lrow, lcol) pair to global based on MPI rank.
+void l2g(int lrow, int lcol, int &grow, int &gcol, desc desc_a, mpi_desc mpi)
+{
+  int dim = (int)sqrt(mpi.num_procs);
+  grow = lrow % (desc_a.M / desc_a.MB) +
+    desc_a.MB * (int)(lrow / dim) +
+    mpi.myrow * (desc_a.M / desc_a.MB);
+  
+  gcol = lcol % (desc_a.N / desc_a.NB) +
+    desc_a.NB * (int)(lcol / dim) +
+    mpi.mycol * (desc_a.N / desc_a.NB);
+}
+
 void generate_data(double *a, int myrow, int mycol, desc desc_a)
 {
   int pblock_nrows = desc_a.MB/2;
@@ -181,4 +194,11 @@ void print_mat(double *A, int nrows, int ncols, int myrow, int mycol, string des
     o << endl;
   }
   o << endl;
+}
+
+// get the matrix block of (grow, gcol) in a (row, col) pair.
+void mat_block(int grow, int gcol, int &mb_row, int &mb_col, desc desc_a)
+{
+  mb_row = (int)(grow / desc_a.MB);
+  mb_col = (int)(gcol / desc_a.NB);
 }
