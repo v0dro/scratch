@@ -154,9 +154,9 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
 {
   int max_panel_size = desc_a.MB / mpi.MP;
   // store elements that are received from the diagonal row
-  double temp_row[max_panel_size*mpi.MP];
+  double *temp_row = (double*)malloc(sizeof(double)*max_panel_size*mpi.MP);
   // store elements that are received from the diagonal column
-  double temp_col[max_panel_size*mpi.NP];
+  double *temp_col = (double*)malloc(sizeof(double)*max_panel_size*mpi.NP);
   int newrow, newcol;
   int grow, gcol, lrow, lcol;
   int panel_start, gstart, row_counter=0, col_counter=0;
@@ -288,9 +288,18 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
     }
   }
   // case where only the diagonal row is in the proc block
-  else if (ulgrow > diag && ulgcol > diag && lrgrow < diag && lrgcol < diag) {
+  else if (ulgrow >= diag && ulgcol >= diag && lrgrow > diag && lrgcol > diag) {
     g2l(diag+1, ulgcol, lrow, lcol, desc_a, mpi);
-    
+    tr = 0; tc = (diag+1) % max_panel_size;
+
+    for (int i = lrow; i < desc_a.lld; i++) {
+      for (int j = lcol; j < max_panel_size; j++) {
+        A[i*desc_a.lld + j] -= temp_row[tr] * temp_col[tc];
+        tr++;
+      }
+      tr = 0;
+      tc++;
+    }
   }
 }
 
@@ -302,7 +311,7 @@ void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_de
   double temp_max[2]; // temp storage for max elements for broadcast.
   int imyrow, imycol;
 
-  for (int i = 0; i < 1; ++i) {
+  for (int i = 0; i < nb; ++i) {
     // get process row and col of diagonal element at (block+i,block+i)
     procg2l(block+i, block+i, &imyrow, &imycol, desc_a, mpi);
     // compute global array block of diagonal element.
@@ -313,11 +322,14 @@ void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_de
       temp_max[0] = imax; temp_max[1] = vmax;
      
       // broadcast it to all other processes
+      print_files(A, desc_a.MB, desc_a.NB, mpi.myrow, mpi.mycol, "prebroadcast");
+      cout << "pre broadcast : " << temp_max[0] << " " << temp_max[1] << endl;
       Cdgebs2d(mpi.BLACS_CONTEXT, "All", " ", 2, 1, temp_max, 2);
     }
     else {
       // receive broadcast
       Cdgebr2d(mpi.BLACS_CONTEXT, "All", " ", 2, 1, temp_max, 2, mpi.myrow, imycol);
+      cout << "post broadcast : " << temp_max[0] << " " << temp_max[1] << endl;
       imax = temp_max[0]; vmax = temp_max[1];
     }
     update_ipiv(ipiv, block+i, imax, desc_a);
@@ -345,7 +357,7 @@ void diagonal_block_lu(double *A, int *ipiv, int *desca, desc desc_a, mpi_desc m
     pdgetrf_(&desc_a.M, &desc_a.N, A, &ia, &ia, desca, ipiv, &info);
   }
   else if (ROW_MAJOR) {
-    for (int block = 0; block < desc_a.NB; block += desc_a.NB) {
+    for (int block = 0; block < desc_a.N ; block += desc_a.NB) {
       pivot_column(A, block, desc_a.NB, ipiv, desc_a, mpi);
       // swap_panels();
       // update_upper_panel();

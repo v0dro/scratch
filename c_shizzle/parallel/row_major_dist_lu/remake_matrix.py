@@ -7,6 +7,7 @@
 import numpy as np
 import math
 import sys
+import argparse
 
 np.set_printoptions(precision=5, linewidth=150, suppress=True)
 
@@ -57,43 +58,51 @@ def get_big_matrix(files, major, n, nb, pb, num_procs):
         
     return matrix
 
-def main(major):
+def generate_file_dict(f_name, procs):
+    d = {}
+    for proc in range(0,procs):
+        d[proc] = str(proc) + f_name + ".txt"
+
+    return d
+
+def main(args):
     n = 8
     nb = 4
     pb = 2
-    
-    input_files = {
-        0 : "0input.txt",
-        1 : "1input.txt",
-        2 : "2input.txt",
-        3 : "3input.txt"
-    }
-    
-    output_files = {
-        0 : "0.txt",
-        1 : "1.txt",
-        2 : "2.txt",
-        3 : "3.txt"
-    }
+    major = args.major
 
-    num_procs = len(input_files.keys())
+    if args.default:
+        input_files = generate_file_dict("input", 4)
+        output_files = generate_file_dict("", 4)
 
-    print("printing input ... \n")
-    print(get_big_matrix(input_files, major, n, nb, pb, num_procs))
+        num_procs = len(input_files.keys())
+        
+        print("printing input ... \n")
+        print(get_big_matrix(input_files, major, n, nb, pb, num_procs))
     
-    print("printing output ... \n")
-    output = get_big_matrix(output_files, major, n, nb, pb, num_procs)
-    print(output)
+        print("printing output ... \n")
+        output = get_big_matrix(output_files, major, n, nb, pb, num_procs)
+        print(output)
 
-    print("product of lower and upper ... \n")
-    upper = np.triu(output)
-    lower = np.tril(output)
-    np.fill_diagonal(lower, 1)
-    print(np.matmul(lower, upper))
+        print("product of lower and upper ... \n")
+        upper = np.triu(output)
+        lower = np.tril(output)
+        np.fill_diagonal(lower, 1)
+        print(np.matmul(lower, upper))
+    else:
+        files = generate_file_dict(args.file, 4)
+        print(files)
+        print("printing " + args.file + "...")
+        a = get_big_matrix(files, major, n, nb, pb, 4)
+        print(a)
 
 if __name__ == "__main__":
-    major = sys.argv[1] if len(sys.argv) > 1 else None
-    if major is None:
-        major = "col"
+    parser = argparse.ArgumentParser(description="Remake matrix output by MPI processes.")
+    parser.add_argument('--file', dest="file",
+    help="file extension name to read.")
+    parser.add_argument('--major', dest="major", default="col",\
+    help="row or col major (default row)")
+    parser.add_argument('--default', dest="default", help="run with defaults")
+    args = parser.parse_args()
 
-    main(major)
+    main(args)

@@ -9,7 +9,7 @@ SOURCES = utils.o implementation.o unit_tests.o libscalapack.a
 
 sync_lu: sync_lu_decomp.o $(SOURCES)
 	$(CXX) $? -lblas -lgfortran
-	mpirun -n 4 ./a.out
+	mpirun -np 4 ./a.out
 
 clean:
 	rm -f *.o *.out
