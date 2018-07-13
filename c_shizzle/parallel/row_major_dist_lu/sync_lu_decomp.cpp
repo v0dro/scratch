@@ -15,6 +15,8 @@ void parallel_lu_decomposition()
                    &mpi_info.myrow, &mpi_info.mycol, &mpi_info.proc_id,
                    &mpi_info.num_procs);
   // end BLACS init
+
+  cout << "PROCESS ID: " << mpi_info.myrow << " , " << mpi_info.mycol << endl;
   
   // matrix properties
   // mat size, blk size, portion of block per process

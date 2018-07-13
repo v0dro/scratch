@@ -1,5 +1,7 @@
 #include "implementation.hpp"
 
+static int c = 0;
+
 // block - global block number
 // i - global column number within panel
 // lvmax [out] - local max element
@@ -91,14 +93,20 @@ void swap_within_current_panel(double *A, desc desc_a, mpi_desc mpi,
   // send the original row to the process row that contains the new row
   // communication needs to happen only between rows.
   if (mpi.myrow == orig_prow) {
+    if (mpi.myrow == 0 && mpi.mycol == 0)
+      cout << "lorow " << lo_row*desc_a.lld + num*offset << endl;
+    if (mpi.myrow == 1 && mpi.mycol == 0)
+      cout << "lorow1 " << lo_row*desc_a.lld + num*offset << endl;
     Cdgesd2d(mpi.BLACS_CONTEXT, num, 1, &A[lo_row*desc_a.lld + num*offset],
-             desc_a.lld, new_prow, mpi.mycol);
+             1, new_prow, mpi.mycol);
   }
 
   // receive the original row in the process row that contains the new row
   double originalA[num];
   if (mpi.myrow == new_prow) {
-    Cdgerv2d(mpi.BLACS_CONTEXT, num, 1, originalA, num, orig_prow, mpi.mycol);
+    cout << "original proc coord: " << go_row << endl;
+    cout << "new proc coord: " << gn_row << endl;
+    Cdgerv2d(mpi.BLACS_CONTEXT, num, 1, originalA, 1, orig_prow, mpi.mycol);
   }
 
   // send the new row to the process row that contains the original row
@@ -171,6 +179,9 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
       panel_start = lrow*desc_a.lld + lcol;
       
       if (mpi.myrow == newrow) { // the diagonal has to rest on this particular process
+        //cout << "myrow " << mpi.myrow << " mycol " << mpi.mycol <<
+        //" A " << A[panel_start] << " " << A[panel_start + 1] << endl;
+          //cout << "panel start : " << panel_start << endl;
         for (int proc_row = 0; proc_row < mpi.MP; proc_row++) {
           Cdgesd2d(mpi.BLACS_CONTEXT, max_panel_size, 1, &A[panel_start], desc_a.lld,
                    proc_row, newcol);
@@ -210,14 +221,14 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
   }
 
   if (mpi.myrow == 1 && mpi.mycol == 1) {
-    cout << "printing temp_row: ";
+    //cout << "printing temp_row: ";
     for (int i = 0; i < max_panel_size*2; i++) {
-      cout << temp_row[i] << " ";
+      // cout << temp_row[i] << " ";
     }
 
-    cout << endl << "printing temp_col: ";
+    //  cout << endl << "printing temp_col: ";
     for (int i = 0; i < max_panel_size*2; i++) {
-      cout << temp_col[i] << " ";
+      //  cout << temp_col[i] << " ";
     }
     cout << endl;
   }
@@ -301,6 +312,7 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
       tc++;
     }
   }
+
 }
 
 void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_desc mpi)
@@ -322,22 +334,24 @@ void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_de
       temp_max[0] = imax; temp_max[1] = vmax;
      
       // broadcast it to all other processes
-      print_files(A, desc_a.MB, desc_a.NB, mpi.myrow, mpi.mycol, "prebroadcast");
-      cout << "pre broadcast : " << temp_max[0] << " " << temp_max[1] << endl;
+      //cout << "pre broadcast : " << temp_max[0] << " " << temp_max[1] << endl;
       Cdgebs2d(mpi.BLACS_CONTEXT, "All", " ", 2, 1, temp_max, 2);
     }
     else {
       // receive broadcast
       Cdgebr2d(mpi.BLACS_CONTEXT, "All", " ", 2, 1, temp_max, 2, mpi.myrow, imycol);
-      cout << "post broadcast : " << temp_max[0] << " " << temp_max[1] << endl;
+      //cout << "post broadcast : " << temp_max[0] << " " << temp_max[1] << endl;
       imax = temp_max[0]; vmax = temp_max[1];
     }
     update_ipiv(ipiv, block+i, imax, desc_a);
     
     if (imax != curr_global) {
+      //cout << "block " << block << " curr_global " << curr_global << endl;
       swap_within_current_panel(A, desc_a, mpi, curr_global, imax, block); // dswap
     }
     scale_by_pivot(A, block+i, vmax, desc_a, mpi); // dscal
+    print_files(A, desc_a.MB, desc_a.NB, mpi.myrow, mpi.mycol, "panel_update" + to_string(c));
+    c += 1;
     update_panel_submatrix(A, block+i, block, nb, desc_a, mpi); // dger
   }
 }
