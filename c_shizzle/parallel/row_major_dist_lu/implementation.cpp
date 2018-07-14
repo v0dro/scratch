@@ -169,6 +169,8 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
   int grow, gcol, lrow, lcol;
   int panel_start, gstart, row_counter=0, col_counter=0;
 
+  if (mpi.myrow == 1 && mpi.mycol == 0)
+    cout << "diag :: " << diag << endl;
   // iterate over the row and send numbers along columns
   gstart = diag - diag % max_panel_size;
   for (int col = gstart; col < block + nb; col += max_panel_size) {
@@ -198,13 +200,13 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
   // iterate over the col and send numbers along the rows
   for (int row = gstart; row < desc_a.M; row += max_panel_size) {
     procg2l(row, diag, &newrow, &newcol, desc_a, mpi);
+    double temp[max_panel_size];
 
     if (mpi.myrow == newrow) {
       g2l(row, diag, lrow, lcol, desc_a, mpi);
       panel_start = lrow*desc_a.lld + lcol;
 
       if (mpi.mycol == newcol) {
-        double temp[max_panel_size];
         for (int i = 0; i < max_panel_size; i++) {
           temp[i] = A[panel_start + i*(desc_a.lld)];
         }
