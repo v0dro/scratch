@@ -3,6 +3,10 @@
 
 #include "utils.hpp"
 
-void diagonal_block_lu(double *A, int *ipiv, int *desca, desc desc_a, mpi_desc mpi);
+#define TAG_0 0
+#define TAG_1 1
+#define TAG_2 2
+
+void diagonal_block_lu(double *A, int *ipiv, desc desc_a, mpi_desc mpi);
   
 #endif

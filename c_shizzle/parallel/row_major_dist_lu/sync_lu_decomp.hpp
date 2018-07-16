@@ -1,10 +1,6 @@
 #ifndef SYNC_LU_DECOMP_H
 #define SYNC_LU_DECOMP_H
 
-#include "mpi.h"
-#include <cstdlib>
-#include <iostream>
-#include <cmath>
 #include "utils.hpp"
 #include "implementation.hpp"
 #include "unit_tests.hpp"

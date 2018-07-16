@@ -1,94 +1,42 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <iostream>
+#include "mpi.h"
 #include <cstdlib>
+#include <iostream>
+#include <cmath>
 #include <fstream>
 #include <string>
-#include <cmath>
 #include <algorithm>
 using namespace std;
 
 #define ROW_MAJOR 1
 #define COL_MAJOR NULL
 
-extern "C" {
-  /* Cblacs declarations */
-  void Cblacs_pinfo(int*, int*);
-  void Cblacs_get(int, int, int*);
-  void Cblacs_gridinit(int*, const char*, int, int);
-  void Cblacs_pcoord(int, int, int*, int*);
-  void Cblacs_gridexit(int);
-  void Cblacs_barrier(int, const char*);
- 
+extern "C" { 
   int numroc_(int*, int*, int*, int*, int*);
 
   void descinit_(int *desc, const int *m,  const int *n, const int *mb, 
     const int *nb, const int *irsrc, const int *icsrc, const int *ictxt, 
     const int *lld, int *info);
 
-  void Cdgesd2d(
-                int CBLACS_CONTEXT, // CBLACS context
-                int M, // row size of matrix block
-                int N, // col size of matrix block
-                double* A, // pointer to matrix block
-                int LDA, // leading dim of A (col size for C programs)
-                int RDEST, // row number of destination process
-                int CDEST // col number of destination process
-                );
-  
-  void Cdgerv2d(
-                int CBLACS_CONTEXT, // CBLACS context
-                int M, // row size of matrix block
-                int N, // col size of matrix block
-                double *A, // pointer to matrix data.
-                int LDA, // leading dim of A (col size for C)
-                int RSRC, // process row co-ordinate of the sending process.
-                int CSRC // process col co-ordinate of the sending process.
-                );
 
-  void Cdgebr2d(
-                int CBLACS_CONTEXT, // CBLACS context
-                char* SCOPE, // scope of the broadcast. Can be "Row", "Column" or "All"
-                char* TOP, // indicates communication pattern to use for broadcast.
-                int M, // number of rows of matrix.
-                int N, // number of columns of matrix.
-                double* A, // pointer to matrix data.
-                int LDA, // leading dim of matrix (col size for C)
-                int RSRC, // process row co-ordinate of the process who called broadcast/send.
-                int CSRC // process column co-ordinate of the process who called broadcast/send.
-                );
+  int MPI_Send(
+               const void* data,
+               int count,
+               MPI_Datatype datatype,
+               int destination,
+               int tag,
+               MPI_Comm communicator);
 
-  void Cdgebs2d(
-                int CBLACS_CONTEXT, // CBLACS context.
-                char* SCOPE, // scope of broadcast. can be "All", "Row" or "Column".
-                char* TOP, // network topology to be used.
-                int M, // num of rows of the matrix.
-                int N, // num of cols of the matrix.
-                double *A, // pointer to the matrix data.
-                int LDA // leading dimension of A.
-                );
-  
-  void pdgemm_( char* TRANSA, char* TRANSB,
-                int * M, int * N, int * K,
-                double * ALPHA,
-                double * A, int * IA, int * JA, int * DESCA,
-                double * B, int * IB, int * JB, int * DESCB,
-                double * BETA,
-                double * C, int * IC, int * JC, int * DESCC );
-
-  void pdgetrf_(int * M, int * N, double * A,
-                int * IA, int * JA, int * DESCA,
-                int * IPIV, int * INFO);
-
-  void pdgetf2_(int * M, int * N, double * A,
-                int * IA, int * JA, int * DESCA, int *IPIV,
-                int * INFO);
-
-  void pdamax_( int * N, double * AMAX, int * INDX,
-                double * X, int * IX, int * JX,
-                int * DESCX, int * INCX );
-  
+  int MPI_Recv(
+               void* data,
+               int count,
+               MPI_Datatype datatype,
+               int source,
+               int tag,
+               MPI_Comm communicator,
+               MPI_Status* status);
 }
 
 // Descriptor of a matrix.
@@ -107,17 +55,18 @@ typedef struct desc {
 typedef struct mpi_desc {
   int myrow;     // current process row number.
   int mycol;     // current process column number.
-  int proc_id;
+  int proc_id;   // process ID
   int BLACS_CONTEXT;
   int num_procs; // total number of processes.
   int MP;        // no. of rows of process grid.
   int NP;        // no. of cols of process grid.
+  MPI_Comm comm; // MPI communicator
 } mpi_desc;
 
 extern ofstream err_file;
 
-void initialize_blacs(int *BLACS_CONTEXT, int *proc_nrows, int *proc_ncols,
-                      int *myrow, int *mycol, int *proc_id, int *num_procs);
+void init_mpi(int *myrow, int *mycol, int *proc_id, int *num_procs,
+              int *proc_nrows, int *proc_ncols);
 
 void generate_data(double *a, int myrow, int mycol, desc desc_a);
 
@@ -145,4 +94,13 @@ void g2l(int grow, int gcol, int &lrow, int &lcol, desc desc_a, mpi_desc mpi);
 void l2g(int lrow, int lcol, int &grow, int &gcol, desc desc_a, mpi_desc mpi);
 
 void mat_block(int grow, int gcol, int &mb_row, int &mb_col, desc desc_a);
+
+void init_mpi(int *myrow, int *mycol, int *proc_id, int *num_procs,
+              int *proc_nrows, int *proc_ncols);
+
+int send(void* data, int dest_row, int dest_col, int count, int tag,
+         MPI_Datatype type, mpi_desc mpi);
+
+int recv(void *data, int srow, int scol, int count, int tag,
+         MPI_Datatype type, mpi_desc mpi, MPI_Status* status);
 #endif /* UTILS_H */

@@ -14,8 +14,8 @@ sync_lu_tsubame: sync_lu_decomp.o $(SOURCES)
 
 sync_lu: sync_lu_decomp.o $(SOURCES)
 	$(CXX) $? -lblas -lgfortran
-	mpirun -np 4 xterm -e gdb ./a.out
-#	mpirun -np 4 ./a.out
+#	mpirun -np 4 xterm -e gdb ./a.out
+	mpirun -np 4 ./a.out
 
 clean:
 	rm -f *.o *.out

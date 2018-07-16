@@ -10,6 +10,18 @@ void initialize_blacs(int *BLACS_CONTEXT, int *proc_nrows, int *proc_ncols,
   Cblacs_pcoord(*BLACS_CONTEXT, *proc_id, myrow, mycol);
 }
 
+void init_mpi(int *myrow, int *mycol, int *proc_id, int *num_procs,
+              int *proc_nrows, int *proc_ncols)
+{ 
+  *proc_nrows = 2; *proc_ncols = 2;
+
+  MPI_Comm_rank(MPI_COMM_WORLD, proc_id);
+  MPI_Comm_size(MPI_COMM_WORLD, num_procs);
+
+  *myrow = (int)((*proc_id) / (*proc_nrows));
+  *mycol = (*proc_id) % (*proc_ncols);
+}
+
 void generate_data(double *a, int block_size_per_process_r,
                    int block_size_per_process_c, int process_block_size,
                    int num_blocks_per_process, int myrow, int mycol, int N)

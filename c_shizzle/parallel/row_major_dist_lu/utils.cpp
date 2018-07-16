@@ -1,13 +1,27 @@
 #include "utils.hpp"
 
-void initialize_blacs(int *BLACS_CONTEXT, int *proc_nrows, int *proc_ncols,
-                      int *myrow, int *mycol, int *proc_id, int *num_procs)
-{
+void init_mpi(int *myrow, int *mycol, int *proc_id, int *num_procs,
+              int *proc_nrows, int *proc_ncols)
+{ 
   *proc_nrows = 2; *proc_ncols = 2;
-  Cblacs_pinfo(proc_id, num_procs);
-  Cblacs_get( -1, 0, BLACS_CONTEXT );
-  Cblacs_gridinit( BLACS_CONTEXT, "Row", *proc_nrows, *proc_ncols );
-  Cblacs_pcoord(*BLACS_CONTEXT, *proc_id, myrow, mycol);
+
+  MPI_Comm_rank(MPI_COMM_WORLD, proc_id);
+  MPI_Comm_size(MPI_COMM_WORLD, num_procs);
+
+  *myrow = (int)((*proc_id) / (*proc_nrows));
+  *mycol = (*proc_id) % (*proc_ncols);
+}
+
+int send(void* data, int dest_row, int dest_col, int count, int tag,
+         MPI_Datatype type, mpi_desc mpi)
+{
+  return MPI_Send(data, count, type, dest_row*mpi.NP + dest_col, tag, mpi.comm);
+}
+
+int recv(void *data, int srow, int scol, int count, int tag,
+         MPI_Datatype type, mpi_desc mpi, MPI_Status* status)
+{
+  return MPI_Recv(data, count, type, srow*mpi.NP + scol, tag, mpi.comm, status);
 }
 
 // Convert index to (row, col) pair.

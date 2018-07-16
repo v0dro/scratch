@@ -40,6 +40,12 @@ extern "C" {
   void pdgetf2_(int * M, int * N, double * A,
                 int * IA, int * JA, int * DESCA, int *IPIV,
                 int * INFO);
+
+  int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest, int tag,
+               MPI_Comm comm);
+
+  int MPI_Recv(void *buf, int count, MPI_Datatype datatype,
+               int source, int tag, MPI_Comm comm, MPI_Status *status)
   
 }
 

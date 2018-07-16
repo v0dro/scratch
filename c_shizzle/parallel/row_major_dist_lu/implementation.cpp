@@ -1,7 +1,5 @@
 #include "implementation.hpp"
 
-static int c = 0;
-
 // block - global block number
 // i - global column number within panel
 // lvmax [out] - local max element
@@ -32,7 +30,8 @@ void find_max_element_in_col(double *A, int block, int i, double * imax,
   // convert global index to local index
   double lvmax, limax;
   int imyrow, imycol;
-  double send[2], receive[2];
+  double _send[2], receive[2];
+  MPI_Status *status;
 
   if (mpi.proc_id == 0) {
     cout << "proc: " << mpi.proc_id << " diag : " << block+i << endl;
@@ -51,12 +50,12 @@ void find_max_element_in_col(double *A, int block, int i, double * imax,
     // Send the local imax and vmax to all processes in the same column:
     for (int r = 0; r < mpi.MP; r++) {
       if (r != mpi.myrow)
-        Cdgesd2d(mpi.BLACS_CONTEXT, 2, 1, &max[mpi.myrow*mpi.MP], 2, r, mpi.mycol);
+        send(&max[mpi.myrow*mpi.MP], r, mpi.mycol, 2, 0, MPI_DOUBLE, mpi);
     }
     // Receive the imax and vmax of all processes in the same column:
     for (int r = 0; r < mpi.MP; r++) {
       if (r != mpi.myrow)
-        Cdgerv2d(mpi.BLACS_CONTEXT, 2, 1, &max[r*mpi.MP], 2, r, mpi.mycol);
+        recv(&max[r*mpi.MP], r, mpi.mycol, 2, 0, MPI_DOUBLE, mpi, status);
     }
     // choose max element and corresponding global index among broadcasted numbers.
     *vmax = max[0]; *imax = max[1];
@@ -67,17 +66,17 @@ void find_max_element_in_col(double *A, int block, int i, double * imax,
       }
     }
 
-    send[0] = *vmax;
-    send[1] = *imax;
+    _send[0] = *vmax;
+    _send[1] = *imax;
     // send to each process in the same row (except this process)
     for (int i = 0; i < mpi.NP; ++i) {
       if (i != imycol) {
-        Cdgesd2d(mpi.BLACS_CONTEXT, 2, 1, send, 2, mpi.myrow, i);
+        send(_send, mpi.myrow, i, 2, 1, MPI_DOUBLE, mpi);
       }
     }
   }
   else { // other process listen for the max elements
-    Cdgerv2d(mpi.BLACS_CONTEXT, 2, 1, receive, 2, mpi.myrow, imycol);
+    recv(receive, mpi.myrow, imycol, 2, 1, MPI_DOUBLE, mpi, status);
     *vmax = receive[0]; *imax = receive[1];
   }
 }
@@ -86,6 +85,7 @@ void find_max_element_in_col(double *A, int block, int i, double * imax,
 void swap_within_current_panel(double *A, desc desc_a, mpi_desc mpi,
                                int goriginal, int gnew, int block)
 {
+  MPI_Status *status;
   // get original global row and col
   int go_row, go_col;
   index2coords(goriginal, desc_a.N, go_row, go_col);
@@ -119,26 +119,26 @@ void swap_within_current_panel(double *A, desc desc_a, mpi_desc mpi,
   // send the original row to the process row that contains the new row
   // communication needs to happen only between rows.
   if (mpi.myrow == orig_prow) {
-    Cdgesd2d(mpi.BLACS_CONTEXT, num, 1, &A[lo_row*desc_a.lld + num*offset],
-             1, new_prow, mpi.mycol);
+    send(&A[lo_row*desc_a.lld + num*offset], new_prow, mpi.mycol, num, 0,
+         MPI_DOUBLE, mpi);
   }
 
   // receive the original row in the process row that contains the new row
   double originalA[num];
   if (mpi.myrow == new_prow) {
-    Cdgerv2d(mpi.BLACS_CONTEXT, num, 1, originalA, 1, orig_prow, mpi.mycol);
+    recv(originalA, orig_prow, mpi.mycol, num, 0, MPI_DOUBLE, mpi, status);
   }
 
   // send the new row to the process row that contains the original row
   if (mpi.myrow == new_prow) {
-    Cdgesd2d(mpi.BLACS_CONTEXT, num, 1, &A[ln_row*desc_a.lld + num*offset],
-             1, orig_prow, mpi.mycol);
+    send(&A[ln_row*desc_a.lld + num*offset], orig_prow, mpi.mycol, num,
+         1, MPI_DOUBLE, mpi);
   }
 
   // receive the new row in the process row that contains the original row
   double newA[num];
   if (mpi.myrow == orig_prow) {
-    Cdgerv2d(mpi.BLACS_CONTEXT, num, 1, newA, 1, new_prow, mpi.mycol);
+    recv(newA, new_prow, mpi.mycol, num, 1, MPI_DOUBLE, mpi, status);
   }
 
   // copy from new
@@ -188,9 +188,8 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
   int newrow, newcol;
   int grow, gcol, lrow, lcol;
   int panel_start, gstart, row_counter=0, col_counter=0;
+  MPI_Status *status;
 
-  if (mpi.myrow == 1 && mpi.mycol == 0)
-    cout << "diag :: " << diag << endl;
   // iterate over the row and send numbers along columns
   gstart = diag - diag % max_panel_size;
   for (int col = gstart; col < block + nb; col += max_panel_size) {
@@ -201,18 +200,13 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
       panel_start = lrow*desc_a.lld + lcol;
       
       if (mpi.myrow == newrow) { // the diagonal has to rest on this particular process
-        //cout << "myrow " << mpi.myrow << " mycol " << mpi.mycol <<
-        //" A " << A[panel_start] << " " << A[panel_start + 1] << endl;
-          //cout << "panel start : " << panel_start << endl;
         for (int proc_row = 0; proc_row < mpi.MP; proc_row++) {
-          Cdgesd2d(mpi.BLACS_CONTEXT, max_panel_size, 1, &A[panel_start], desc_a.lld,
-                   proc_row, newcol);
+          send(&A[panel_start], proc_row, newcol, max_panel_size, TAG_0, MPI_DOUBLE, mpi);
         }
       }
-      Cdgerv2d(
-               mpi.BLACS_CONTEXT, max_panel_size, 1,
-               &temp_row[row_counter*max_panel_size],
-               desc_a.lld, newrow, newcol);
+      recv(&temp_row[row_counter*max_panel_size], newrow, newcol, max_panel_size,
+           TAG_0, MPI_DOUBLE, mpi, status);
+
       row_counter++;
     }
   }
@@ -232,27 +226,13 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
         }
         
         for (int proc_col = 0; proc_col < mpi.NP; proc_col++) {
-          Cdgesd2d(mpi.BLACS_CONTEXT, max_panel_size, 1, temp, desc_a.lld, mpi.myrow, proc_col);
+          send(temp, mpi.myrow, proc_col, max_panel_size, TAG_1, MPI_DOUBLE, mpi);
         }
       }
-      Cdgerv2d(mpi.BLACS_CONTEXT, max_panel_size, 1,
-               &temp_col[col_counter*max_panel_size],
-               desc_a.lld, newrow, newcol);
+      recv(&temp_col[col_counter*max_panel_size], newrow, newcol, max_panel_size,
+           TAG_1, MPI_DOUBLE, mpi, status);
       col_counter++;
     }
-  }
-
-  if (mpi.myrow == 1 && mpi.mycol == 1) {
-    //cout << "printing temp_row: ";
-    for (int i = 0; i < max_panel_size*2; i++) {
-      // cout << temp_row[i] << " ";
-    }
-
-    //  cout << endl << "printing temp_col: ";
-    for (int i = 0; i < max_panel_size*2; i++) {
-      //  cout << temp_col[i] << " ";
-    }
-    cout << endl;
   }
 
   // reduce each element with values in temp_row and temp_col. Even though there might
@@ -268,6 +248,7 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
 
   // get local row and col of upper left corner of proc block based matrix block of diag row/col
   mat_block(diag, diag, mb_row, mb_col, desc_a);
+  
   // get global (row, col) of upper left corner of process block
   ullrow = mb_row * max_panel_size;
   ullcol = mb_col * max_panel_size;
@@ -334,7 +315,6 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
       tc++;
     }
   }
-
 }
 
 void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_desc mpi)
@@ -346,11 +326,8 @@ void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_de
   int imyrow, imycol;
 
   for (int i = 0; i < nb; ++i) {
-    // get process row and col of diagonal element at (block+i,block+i)
-
     // compute global array block of diagonal element.
     curr_global = (block + i)*desc_a.N + block + i;
-    // vmax = 1; imax=1;
     find_max_element_in_col(A, block, i, &imax, &vmax, desc_a, mpi); // idamax
     // if (imycol == mpi.mycol) { // find max element in the columns
     //   find_max_element_in_col(A, block, i, &imax, &vmax, desc_a, mpi); // idamax
@@ -373,8 +350,6 @@ void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_de
       swap_within_current_panel(A, desc_a, mpi, curr_global, imax, block); // dswap
     }
     scale_by_pivot(A, block+i, vmax, desc_a, mpi); // dscal
-    print_files(A, desc_a.MB, desc_a.NB, mpi.myrow, mpi.mycol, "panel_update" + to_string(c));
-    c += 1;
     update_panel_submatrix(A, block+i, block, nb, desc_a, mpi); // dger
   }
 }
@@ -386,28 +361,12 @@ void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_de
 //   is the matrix block of size MB * NB, which belongs to a global matrix of size M * N.
 //
 // The implementation is a right-looking block LU decomposition.
-void diagonal_block_lu(double *A, int *ipiv, int *desca, desc desc_a, mpi_desc mpi)
+void diagonal_block_lu(double *A, int *ipiv, desc desc_a, mpi_desc mpi)
 {
-  if (COL_MAJOR) {
-    int info;
-    int ia = 1;
-    pdgetrf_(&desc_a.M, &desc_a.N, A, &ia, &ia, desca, ipiv, &info);
+  for (int block = 0; block < desc_a.N ; block += desc_a.NB) {
+    pivot_column(A, block, desc_a.NB, ipiv, desc_a, mpi);
+    // swap_panels();
+    // update_upper_panel();
+    // update_trailing_submatrix();
   }
-  else if (ROW_MAJOR) {
-    for (int block = 0; block < desc_a.N ; block += desc_a.NB) {
-      pivot_column(A, block, desc_a.NB, ipiv, desc_a, mpi);
-      // swap_panels();
-      // update_upper_panel();
-      // update_trailing_submatrix();
-      
-      // perfrom pivoting of a column
-      // update panels to the right and left of pivoted column
-      // do a trsm to update the upper panel
-      // update the trailing matrix
-    }
-  }
-
-  // compute LU of diagonal block.
-  // broadcast block along rows and cols.
-  // broadcast row and col blocks along the lower right block of the matrix and multiply.
 }
