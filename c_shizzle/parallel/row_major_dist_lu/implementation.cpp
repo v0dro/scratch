@@ -31,28 +31,52 @@ void find_max_element_in_col(double *A, int block, int i, double * imax,
 {
   // convert global index to local index
   double lvmax, limax;
-  find_local_max_element(A, block, i, desc_a, lvmax, limax, mpi.num_procs);
-  // broadcast local max indexes and numbers along the process columns.
-  double max[mpi.MP*2];
-  int temp_imax;
-  local2global(limax, &temp_imax, mpi.myrow, mpi.mycol, mpi.num_procs, desc_a);
-  max[mpi.myrow*mpi.MP]     = lvmax;
-  max[mpi.myrow*mpi.MP + 1] = temp_imax;
-  // Send the local imax and vmax to all processes in the same column:
-  for (int r = 0; r < mpi.MP; r++) {
-    Cdgesd2d(mpi.BLACS_CONTEXT, 2, 1, &max[mpi.myrow*mpi.MP], 2, r, mpi.mycol);
+  int imyrow, imycol;
+  double send[2], receive[2];
+
+  if (mpi.proc_id == 0) {
+    cout << "proc: " << mpi.proc_id << " diag : " << block+i << endl;
   }
-  // Receive the imax and vmax of all processes in the same column:
-  for (int r = 0; r < mpi.MP; r++) {
-    Cdgerv2d(mpi.BLACS_CONTEXT, 2, 1, &max[r*mpi.MP], 2, r, mpi.mycol);
-  }
-  // choose max element and corresponding global index among broadcasted numbers.
-  *vmax = max[0]; *imax = max[1];
-  for (int i = 2; i < mpi.MP*2; i += 2) {
-    if (*vmax < max[i]) {
-      *vmax = max[i];
-      *imax = max[i+1];
+  
+  procg2l(block+i, block+i, &imyrow, &imycol, desc_a, mpi);
+
+  if (imycol == mpi.mycol) { // find the max in the same column
+    find_local_max_element(A, block, i, desc_a, lvmax, limax, mpi.num_procs);
+    // broadcast local max indexes and numbers along the process columns.
+    double max[mpi.MP*2];
+    int temp_imax;
+    local2global(limax, &temp_imax, mpi.myrow, mpi.mycol, mpi.num_procs, desc_a);
+    max[mpi.myrow*mpi.MP]     = lvmax;
+    max[mpi.myrow*mpi.MP + 1] = temp_imax;
+    // Send the local imax and vmax to all processes in the same column:
+    for (int r = 0; r < mpi.MP; r++) {
+      Cdgesd2d(mpi.BLACS_CONTEXT, 2, 1, &max[mpi.myrow*mpi.MP], 2, r, mpi.mycol);
     }
+    // Receive the imax and vmax of all processes in the same column:
+    for (int r = 0; r < mpi.MP; r++) {
+      Cdgerv2d(mpi.BLACS_CONTEXT, 2, 1, &max[r*mpi.MP], 2, r, mpi.mycol);
+    }
+    // choose max element and corresponding global index among broadcasted numbers.
+    *vmax = max[0]; *imax = max[1];
+    for (int i = 2; i < mpi.MP*2; i += 2) {
+      if (*vmax < max[i]) {
+        *vmax = max[i];
+        *imax = max[i+1];
+      }
+    }
+
+    send[0] = *vmax;
+    send[1] = *imax;
+    // send to each process in the same row (except this process)
+    for (int i = 0; i < mpi.NP; ++i) {
+      if (i != imycol) {
+        Cdgesd2d(mpi.BLACS_CONTEXT, 2, 1, send, 2, mpi.myrow, i);
+      }
+    }
+  }
+  else { // other process listen for the max elements
+    Cdgerv2d(mpi.BLACS_CONTEXT, 2, 1, receive, 2, mpi.myrow, imycol);
+    *vmax = receive[0]; *imax = receive[1];
   }
 }
 
@@ -93,10 +117,6 @@ void swap_within_current_panel(double *A, desc desc_a, mpi_desc mpi,
   // send the original row to the process row that contains the new row
   // communication needs to happen only between rows.
   if (mpi.myrow == orig_prow) {
-    if (mpi.myrow == 0 && mpi.mycol == 0)
-      cout << "lorow " << lo_row*desc_a.lld + num*offset << endl;
-    if (mpi.myrow == 1 && mpi.mycol == 0)
-      cout << "lorow1 " << lo_row*desc_a.lld + num*offset << endl;
     Cdgesd2d(mpi.BLACS_CONTEXT, num, 1, &A[lo_row*desc_a.lld + num*offset],
              1, new_prow, mpi.mycol);
   }
@@ -104,21 +124,19 @@ void swap_within_current_panel(double *A, desc desc_a, mpi_desc mpi,
   // receive the original row in the process row that contains the new row
   double originalA[num];
   if (mpi.myrow == new_prow) {
-    cout << "original proc coord: " << go_row << endl;
-    cout << "new proc coord: " << gn_row << endl;
     Cdgerv2d(mpi.BLACS_CONTEXT, num, 1, originalA, 1, orig_prow, mpi.mycol);
   }
 
   // send the new row to the process row that contains the original row
   if (mpi.myrow == new_prow) {
     Cdgesd2d(mpi.BLACS_CONTEXT, num, 1, &A[ln_row*desc_a.lld + num*offset],
-             num, orig_prow, mpi.mycol);
+             1, orig_prow, mpi.mycol);
   }
 
   // receive the new row in the process row that contains the original row
   double newA[num];
   if (mpi.myrow == orig_prow) {
-    Cdgerv2d(mpi.BLACS_CONTEXT, num, 1, newA, num, new_prow, mpi.mycol);
+    Cdgerv2d(mpi.BLACS_CONTEXT, num, 1, newA, 1, new_prow, mpi.mycol);
   }
 
   // copy from new
@@ -327,24 +345,25 @@ void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_de
 
   for (int i = 0; i < nb; ++i) {
     // get process row and col of diagonal element at (block+i,block+i)
-    procg2l(block+i, block+i, &imyrow, &imycol, desc_a, mpi);
+
     // compute global array block of diagonal element.
     curr_global = (block + i)*desc_a.N + block + i;
-    
-    if (imycol == mpi.mycol) { // find max element in the columns
-      find_max_element_in_col(A, block, i, &imax, &vmax, desc_a, mpi); // idamax
-      temp_max[0] = imax; temp_max[1] = vmax;
+    // vmax = 1; imax=1;
+    find_max_element_in_col(A, block, i, &imax, &vmax, desc_a, mpi); // idamax
+    // if (imycol == mpi.mycol) { // find max element in the columns
+    //   find_max_element_in_col(A, block, i, &imax, &vmax, desc_a, mpi); // idamax
+    //   temp_max[0] = imax; temp_max[1] = vmax;
      
-      // broadcast it to all other processes
-      //cout << "pre broadcast : " << temp_max[0] << " " << temp_max[1] << endl;
-      Cdgebs2d(mpi.BLACS_CONTEXT, "All", " ", 2, 1, temp_max, 2);
-    }
-    else {
-      // receive broadcast
-      Cdgebr2d(mpi.BLACS_CONTEXT, "All", " ", 2, 1, temp_max, 2, mpi.myrow, imycol);
-      //cout << "post broadcast : " << temp_max[0] << " " << temp_max[1] << endl;
-      imax = temp_max[0]; vmax = temp_max[1];
-    }
+    //   // broadcast it to all other processes
+    //   //cout << "pre broadcast : " << temp_max[0] << " " << temp_max[1] << endl;
+    //   Cdgebs2d(mpi.BLACS_CONTEXT, "All", " ", 2, 1, temp_max, 2);
+    // }
+    // else {
+    //   // receive broadcast
+    //   Cdgebr2d(mpi.BLACS_CONTEXT, "All", " ", 2, 1, temp_max, 2, mpi.myrow, imycol);
+    //   //cout << "post broadcast : " << temp_max[0] << " " << temp_max[1] << endl;
+    //   imax = temp_max[0]; vmax = temp_max[1];
+    // }
     update_ipiv(ipiv, block+i, imax, desc_a);
     
     if (imax != curr_global) {
