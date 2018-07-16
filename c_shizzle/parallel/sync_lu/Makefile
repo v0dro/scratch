@@ -1,6 +1,6 @@
-CXX = mpicxx -ggdb3 -Wall -fPIC -std=c++11 -O3 -fopenmp -lm -I.
+CXX = mpicxx -ggdb3 -Wall -fPIC -std=c++11 -O0 -fopenmp -lm -I.
 CFLAGS=-I.
-SOURCES = utils.o implementation.o libscalapack.a
+SOURCES = utils.o implementation.o /home/sameer/gitrepos/scalapack-2.0.2/libscalapack.a
 
 .PHONY: clean
 

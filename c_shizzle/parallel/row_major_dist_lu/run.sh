@@ -10,6 +10,6 @@ else
     rm *.txt
     make clean
     make -j8 -k sync_lu_tsubame
-    python remake_matrix.py --major $1 --default
+    python remake_matrix.py --major $1 --default 1
 fi
 
