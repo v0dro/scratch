@@ -50,11 +50,13 @@ void find_max_element_in_col(double *A, int block, int i, double * imax,
     max[mpi.myrow*mpi.MP + 1] = temp_imax;
     // Send the local imax and vmax to all processes in the same column:
     for (int r = 0; r < mpi.MP; r++) {
-      Cdgesd2d(mpi.BLACS_CONTEXT, 2, 1, &max[mpi.myrow*mpi.MP], 2, r, mpi.mycol);
+      if (r != mpi.myrow)
+        Cdgesd2d(mpi.BLACS_CONTEXT, 2, 1, &max[mpi.myrow*mpi.MP], 2, r, mpi.mycol);
     }
     // Receive the imax and vmax of all processes in the same column:
     for (int r = 0; r < mpi.MP; r++) {
-      Cdgerv2d(mpi.BLACS_CONTEXT, 2, 1, &max[r*mpi.MP], 2, r, mpi.mycol);
+      if (r != mpi.myrow)
+        Cdgerv2d(mpi.BLACS_CONTEXT, 2, 1, &max[r*mpi.MP], 2, r, mpi.mycol);
     }
     // choose max element and corresponding global index among broadcasted numbers.
     *vmax = max[0]; *imax = max[1];

@@ -1,6 +1,6 @@
-CXX = mpicxx -ggdb3 -Wall -fPIC -std=c++11 -O0 -fopenmp -lm -I.
+CXX = mpicxx -g -DUSE_BLAS -fPIC -std=c++11 -O0 -fopenmp -lm -I.
 CFLAGS=-I.
-SOURCES = utils.o implementation.o /home/sameer/gitrepos/scalapack-2.0.2/libscalapack.a
+SOURCES = utils.o implementation.o ~/gitrepos/scalapack-2.0.2/libscalapack.a
 
 .PHONY: clean
 
@@ -8,7 +8,7 @@ SOURCES = utils.o implementation.o /home/sameer/gitrepos/scalapack-2.0.2/libscal
 	$(CXX) -c $? -o $@
 
 sync_lu: sync_lu_decomp.o $(SOURCES)
-	$(CXX) $? -lblas -lgfortran
+	$(CXX) $? -lgfortran
 	mpirun -n 4 ./a.out
 
 clean:
