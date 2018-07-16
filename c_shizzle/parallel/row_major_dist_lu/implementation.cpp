@@ -49,14 +49,14 @@ void find_max_element_in_col(double *A, int block, int i, double * imax,
     max[mpi.myrow*mpi.MP + 1] = temp_imax;
     // Send the local imax and vmax to all processes in the same column:
     for (int r = 0; r < mpi.MP; r++) {
-      if (r != mpi.myrow)
-        send(&max[mpi.myrow*mpi.MP], r, mpi.mycol, 2, 0, MPI_DOUBLE, mpi);
+      if (r != imyrow)
+        send(&max[mpi.myrow*mpi.MP], r, mpi.mycol, 2, TAG_0, MPI_DOUBLE, mpi);
     }
-    // Receive the imax and vmax of all processes in the same column:
-    for (int r = 0; r < mpi.MP; r++) {
-      if (r != mpi.myrow)
-        recv(&max[r*mpi.MP], r, mpi.mycol, 2, 0, MPI_DOUBLE, mpi, status);
+    // Receive the imax and vmax unless its from the same process as sender
+    if (mpi.myrow != imyrow) {
+      recv(&max[mpi.myrow*mpi.MP], mpi.myrow, mpi.mycol, 2, TAG_0, MPI_DOUBLE, mpi, status);
     }
+
     // choose max element and corresponding global index among broadcasted numbers.
     *vmax = max[0]; *imax = max[1];
     for (int i = 2; i < mpi.MP*2; i += 2) {
