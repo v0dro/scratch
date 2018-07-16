@@ -37,6 +37,24 @@ extern "C" {
                int tag,
                MPI_Comm communicator,
                MPI_Status* status);
+
+  int MPI_Isend(
+                const void *buf,
+                int count,
+                MPI_Datatype datatype,
+                int dest,
+                int tag,
+                MPI_Comm comm,
+                MPI_Request *request);
+
+  int MPI_Irecv(
+                void *buf,
+                int count,
+                MPI_Datatype datatype,
+                int source,
+                int tag,
+                MPI_Comm comm,
+                MPI_Request *request);
 }
 
 // Descriptor of a matrix.
@@ -100,6 +118,9 @@ void init_mpi(int *myrow, int *mycol, int *proc_id, int *num_procs,
 
 int send(void* data, int dest_row, int dest_col, int count, int tag,
          MPI_Datatype type, mpi_desc mpi);
+
+int isend(void *buffer, int drow, int dcol, int count, int tag,
+          MPI_Datatype type, mpi_desc mpi, MPI_Request *req);
 
 int recv(void *data, int srow, int scol, int count, int tag,
          MPI_Datatype type, mpi_desc mpi, MPI_Status* status);

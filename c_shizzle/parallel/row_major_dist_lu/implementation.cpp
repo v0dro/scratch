@@ -31,11 +31,10 @@ void find_max_element_in_col(double *A, int block, int i, double * imax,
   double lvmax, limax;
   int imyrow, imycol;
   double _send[2], receive[2];
-  MPI_Status *status;
+  MPI_Status status;
+  MPI_Request req;
 
-  if (mpi.proc_id == 0) {
-    cout << "proc: " << mpi.proc_id << " diag : " << block+i << endl;
-  }
+  cout << "proc: " << mpi.proc_id << " diag : " << block+i << endl;
   
   procg2l(block+i, block+i, &imyrow, &imycol, desc_a, mpi);
 
@@ -49,13 +48,19 @@ void find_max_element_in_col(double *A, int block, int i, double * imax,
     max[mpi.myrow*mpi.MP + 1] = temp_imax;
     // Send the local imax and vmax to all processes in the same column:
     for (int r = 0; r < mpi.MP; r++) {
-      if (r != imyrow)
-        send(&max[mpi.myrow*mpi.MP], r, mpi.mycol, 2, TAG_0, MPI_DOUBLE, mpi);
+      if (r != mpi.myrow) {
+        cout << "sending: " << r << ", " << mpi.mycol << endl;
+        isend(&max[mpi.myrow*mpi.MP], r, mpi.mycol, 2, TAG_0, MPI_DOUBLE, mpi, &req);
+      }
     }
-    // Receive the imax and vmax unless its from the same process as sender
+    
+    // Receive the imax and vmax
     if (mpi.myrow != imyrow) {
-      recv(&max[mpi.myrow*mpi.MP], mpi.myrow, mpi.mycol, 2, TAG_0, MPI_DOUBLE, mpi, status);
+      cout << "getting : " << mpi.myrow << " , " << mpi.mycol << endl;
+      recv(&max[mpi.myrow*mpi.MP], mpi.myrow, mpi.mycol, 2, TAG_0, MPI_DOUBLE, mpi, &status);
     }
+
+    MPI_Wait(&req, &status);
 
     // choose max element and corresponding global index among broadcasted numbers.
     *vmax = max[0]; *imax = max[1];
@@ -65,6 +70,8 @@ void find_max_element_in_col(double *A, int block, int i, double * imax,
         *imax = max[i+1];
       }
     }
+
+    cout << "maxness : " << max[0] << " " << max[1] << " " << max[2] << " " << max[3] << endl;
 
     _send[0] = *vmax;
     _send[1] = *imax;
@@ -76,7 +83,7 @@ void find_max_element_in_col(double *A, int block, int i, double * imax,
     }
   }
   else { // other process listen for the max elements
-    recv(receive, mpi.myrow, imycol, 2, 1, MPI_DOUBLE, mpi, status);
+    recv(receive, mpi.myrow, imycol, 2, 1, MPI_DOUBLE, mpi, &status);
     *vmax = receive[0]; *imax = receive[1];
   }
 }
@@ -85,7 +92,8 @@ void find_max_element_in_col(double *A, int block, int i, double * imax,
 void swap_within_current_panel(double *A, desc desc_a, mpi_desc mpi,
                                int goriginal, int gnew, int block)
 {
-  MPI_Status *status;
+  MPI_Status status;
+  MPI_Request req;
   // get original global row and col
   int go_row, go_col;
   index2coords(goriginal, desc_a.N, go_row, go_col);
@@ -119,27 +127,32 @@ void swap_within_current_panel(double *A, desc desc_a, mpi_desc mpi,
   // send the original row to the process row that contains the new row
   // communication needs to happen only between rows.
   if (mpi.myrow == orig_prow) {
-    send(&A[lo_row*desc_a.lld + num*offset], new_prow, mpi.mycol, num, 0,
-         MPI_DOUBLE, mpi);
+    isend(&A[lo_row*desc_a.lld + num*offset], new_prow, mpi.mycol, num, TAG_2,
+          MPI_DOUBLE, mpi, &req);
   }
 
   // receive the original row in the process row that contains the new row
   double originalA[num];
   if (mpi.myrow == new_prow) {
-    recv(originalA, orig_prow, mpi.mycol, num, 0, MPI_DOUBLE, mpi, status);
+    recv(originalA, orig_prow, mpi.mycol, num, TAG_2, MPI_DOUBLE, mpi, &status);
   }
+
+  if (mpi.myrow == orig_prow)
+    MPI_Wait(&req, &status);
 
   // send the new row to the process row that contains the original row
   if (mpi.myrow == new_prow) {
-    send(&A[ln_row*desc_a.lld + num*offset], orig_prow, mpi.mycol, num,
-         1, MPI_DOUBLE, mpi);
+    isend(&A[ln_row*desc_a.lld + num*offset], orig_prow, mpi.mycol, num,
+          TAG_1, MPI_DOUBLE, mpi, &req);
   }
 
   // receive the new row in the process row that contains the original row
   double newA[num];
   if (mpi.myrow == orig_prow) {
-    recv(newA, new_prow, mpi.mycol, num, 1, MPI_DOUBLE, mpi, status);
+    recv(newA, new_prow, mpi.mycol, num, TAG_1, MPI_DOUBLE, mpi, &status);
   }
+
+  MPI_Wait(&req, &status);
 
   // copy from new
   if (mpi.myrow == orig_prow) {
@@ -188,7 +201,7 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
   int newrow, newcol;
   int grow, gcol, lrow, lcol;
   int panel_start, gstart, row_counter=0, col_counter=0;
-  MPI_Status *status;
+  MPI_Status status;
 
   // iterate over the row and send numbers along columns
   gstart = diag - diag % max_panel_size;
@@ -205,7 +218,7 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
         }
       }
       recv(&temp_row[row_counter*max_panel_size], newrow, newcol, max_panel_size,
-           TAG_0, MPI_DOUBLE, mpi, status);
+           TAG_0, MPI_DOUBLE, mpi, &status);
 
       row_counter++;
     }
@@ -230,7 +243,7 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
         }
       }
       recv(&temp_col[col_counter*max_panel_size], newrow, newcol, max_panel_size,
-           TAG_1, MPI_DOUBLE, mpi, status);
+           TAG_1, MPI_DOUBLE, mpi, &status);
       col_counter++;
     }
   }
@@ -329,6 +342,7 @@ void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_de
     // compute global array block of diagonal element.
     curr_global = (block + i)*desc_a.N + block + i;
     find_max_element_in_col(A, block, i, &imax, &vmax, desc_a, mpi); // idamax
+    //cout << "proc " << mpi.proc_id << " vmax " << vmax << " imax " << imax << endl;
     // if (imycol == mpi.mycol) { // find max element in the columns
     //   find_max_element_in_col(A, block, i, &imax, &vmax, desc_a, mpi); // idamax
     //   temp_max[0] = imax; temp_max[1] = vmax;

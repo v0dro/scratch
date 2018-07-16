@@ -18,10 +18,22 @@ int send(void* data, int dest_row, int dest_col, int count, int tag,
   return MPI_Send(data, count, type, dest_row*mpi.NP + dest_col, tag, mpi.comm);
 }
 
+int isend(void *buffer, int drow, int dcol, int count, int tag,
+          MPI_Datatype type, mpi_desc mpi, MPI_Request *req)
+{
+  MPI_Isend(buffer, count, type, drow*mpi.NP + dcol, tag, mpi.comm, req);
+}
+
 int recv(void *data, int srow, int scol, int count, int tag,
          MPI_Datatype type, mpi_desc mpi, MPI_Status* status)
 {
   return MPI_Recv(data, count, type, srow*mpi.NP + scol, tag, mpi.comm, status);
+}
+
+int irecv(void *data, int srow, int scol, int count, int tag,
+          MPI_Datatype type, mpi_desc mpi, MPI_Status* status, MPI_Request *req)
+{
+  return MPI_Irecv(data, count, type, srow*mpi.NP + scol, tag, mpi.comm, req);
 }
 
 // Convert index to (row, col) pair.
