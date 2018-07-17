@@ -10,12 +10,12 @@ SOURCES = utils.o implementation.o unit_tests.o libscalapack.a
 
 sync_lu_tsubame: sync_lu_decomp.o $(SOURCES)
 	$(CXX_TSUBAME) $? -lgfortran
-#	ddt a.out
-	mpirun -np 4 ./a.out
+	ddt a.out
+#	mpirun -np 4 ./a.out
 
 sync_lu: sync_lu_decomp.o $(SOURCES)
 	$(CXX) $? -lblas -lgfortran
-	mpirun -np 4 xterm -e gdb ./a.out
+#	mpirun -np 4 xterm -e gdb ./a.out
 	mpirun -np 4 ./a.out
 
 clean:

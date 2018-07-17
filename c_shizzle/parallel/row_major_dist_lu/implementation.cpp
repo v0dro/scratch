@@ -7,18 +7,23 @@
 void find_local_max_element(double *A, int block, int i, desc desc_a,
                             double &lvmax, double &limax, mpi_desc mpi)
 { 
-  int global_index = (block+i)*desc_a.N + (block+i); int local_index;
-  global2local(global_index, &local_index, mpi.num_procs, desc_a);
-  if (mpi.proc_id == 2)
-    cout << "block + i: " << block + i << " local_index: " << local_index << endl;
-  lvmax = A[local_index];
-  limax = local_index;
+
   int lrow, lcol;
   g2l(block+i, block+i, lrow, lcol, desc_a, mpi);
-  if (mpi.proc_id == 2)
-    cout << "lrow: " << lrow << " lcol: " << lcol << endl; 
-  
-  for (int row = lrow; row < desc_a.lld; row += 1) {
+
+  int temp = block + i;
+  while (lrow == -1) { // get the co-ordinate in this process closest to the diag (below)
+    temp += 1;
+    g2l(temp, block+i, lrow, lcol, desc_a, mpi);
+  }
+
+  int global_index = (temp)*desc_a.N + (block+i); int local_index;
+  global2local(global_index, &local_index, mpi.num_procs, desc_a);
+    
+  lvmax = A[local_index];
+  limax = local_index;
+
+  for (int row = lrow; row < desc_a.lld; row += 1) {    
     local_index += desc_a.lld;
     if (lvmax < A[local_index]) {
       lvmax = A[local_index];
@@ -40,8 +45,6 @@ void find_max_element_in_col(double *A, int block, int i, double * imax,
   double _send[2], receive[2];
   MPI_Status status;
   MPI_Request req[mpi.MP];
-
-  cout << "proc: " << mpi.proc_id << " diag : " << block+i << endl;
   
   procg2l(block+i, block+i, &imyrow, &imycol, desc_a, mpi);
 
@@ -53,10 +56,9 @@ void find_max_element_in_col(double *A, int block, int i, double * imax,
     int temp_imax;
     local2global(limax, &temp_imax, mpi.myrow, mpi.mycol, mpi.num_procs, desc_a);
 
-    if (mpi.proc_id == 2)
-      cout << "limax: " << limax << " lvmax : " << lvmax << " temp imax : " << temp_imax << endl;
-    final[0]     = lvmax;
+    final[0] = lvmax;
     final[1] = temp_imax;
+
     // Send the local imax and vmax to all processes in the same column:
     for (int r = 0; r < mpi.MP; r++) {
       isend(final, r, mpi.mycol, 2, TAG_0, MPI_DOUBLE, mpi, &req[r]);
@@ -77,13 +79,6 @@ void find_max_element_in_col(double *A, int block, int i, double * imax,
         *vmax = max[i];
         *imax = max[i+1];
       }
-    }
-
-    if (mpi.proc_id == 0) {
-      cout << "maxness : " << max[0] << " " << max[1] << " " << max[2] << " " << max[3] << endl;
-
-      for (int i = 0; i < 16; i++)
-        cout << "A(" << i << ") = " << A[i] << endl; 
     }
 
     _send[0] = *vmax;
@@ -236,9 +231,6 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
            TAG_0, MPI_DOUBLE, mpi, &status);
 
       row_counter++;
-
-      // for (int i = 0;i < mpi.MP; i++)
-      //   MPI_Wait(&req[i], &status);
     }
   }
 
@@ -264,10 +256,6 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
       recv(&temp_col[col_counter*max_panel_size], newrow, newcol, max_panel_size,
            TAG_1, MPI_DOUBLE, mpi, &status);
       col_counter++;
-
-      
-      // for (int i = 0; i < mpi.NP; i++)
-      //   MPI_Wait(&req[i], &status);
     }
   }
 
@@ -364,27 +352,12 @@ void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_de
   for (int i = 0; i < nb; ++i) {
     // compute global array block of diagonal element.
     curr_global = (block + i)*desc_a.N + block + i;
+    
     find_max_element_in_col(A, block, i, &imax, &vmax, desc_a, mpi); // idamax
-    //cout << "found max: " << mpi.proc_id << " " << vmax << " " << imax << endl;
-    //cout << "proc " << mpi.proc_id << " vmax " << vmax << " imax " << imax << endl;
-    // if (imycol == mpi.mycol) { // find max element in the columns
-    //   find_max_element_in_col(A, block, i, &imax, &vmax, desc_a, mpi); // idamax
-    //   temp_max[0] = imax; temp_max[1] = vmax;
-     
-    //   // broadcast it to all other processes
-    //   //cout << "pre broadcast : " << temp_max[0] << " " << temp_max[1] << endl;
-    //   Cdgebs2d(mpi.BLACS_CONTEXT, "All", " ", 2, 1, temp_max, 2);
-    // }
-    // else {
-    //   // receive broadcast
-    //   Cdgebr2d(mpi.BLACS_CONTEXT, "All", " ", 2, 1, temp_max, 2, mpi.myrow, imycol);
-    //   //cout << "post broadcast : " << temp_max[0] << " " << temp_max[1] << endl;
-    //   imax = temp_max[0]; vmax = temp_max[1];
-    // }
+    
     update_ipiv(ipiv, block+i, imax, desc_a);
     
     if (imax != curr_global) {
-      //cout << "block " << block << " curr_global " << curr_global << endl;
       swap_within_current_panel(A, desc_a, mpi, curr_global, imax, block); // dswap
     }
     scale_by_pivot(A, block+i, vmax, desc_a, mpi); // dscal
