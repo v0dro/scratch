@@ -5,13 +5,20 @@
 // lvmax [out] - local max element
 // limax [out] - local max index
 void find_local_max_element(double *A, int block, int i, desc desc_a,
-                            double &lvmax, double &limax, int num_procs)
+                            double &lvmax, double &limax, mpi_desc mpi)
 { 
   int global_index = (block+i)*desc_a.N + (block+i); int local_index;
-  global2local(global_index, &local_index, num_procs, desc_a);
+  global2local(global_index, &local_index, mpi.num_procs, desc_a);
+  if (mpi.proc_id == 2)
+    cout << "block + i: " << block + i << " local_index: " << local_index << endl;
   lvmax = A[local_index];
   limax = local_index;
-  for (int row = block+i; row < desc_a.N; row += 1) {
+  int lrow, lcol;
+  g2l(block+i, block+i, lrow, lcol, desc_a, mpi);
+  if (mpi.proc_id == 2)
+    cout << "lrow: " << lrow << " lcol: " << lcol << endl; 
+  
+  for (int row = lrow; row < desc_a.lld; row += 1) {
     local_index += desc_a.lld;
     if (lvmax < A[local_index]) {
       lvmax = A[local_index];
@@ -39,13 +46,15 @@ void find_max_element_in_col(double *A, int block, int i, double * imax,
   procg2l(block+i, block+i, &imyrow, &imycol, desc_a, mpi);
 
   if (imycol == mpi.mycol) { // find the max in the same column
-    find_local_max_element(A, block, i, desc_a, lvmax, limax, mpi.num_procs);
+    find_local_max_element(A, block, i, desc_a, lvmax, limax, mpi);
     // broadcast local max indexes and numbers along the process columns.
     double max[mpi.MP*2];
     double final[2];
     int temp_imax;
     local2global(limax, &temp_imax, mpi.myrow, mpi.mycol, mpi.num_procs, desc_a);
 
+    if (mpi.proc_id == 2)
+      cout << "limax: " << limax << " lvmax : " << lvmax << " temp imax : " << temp_imax << endl;
     final[0]     = lvmax;
     final[1] = temp_imax;
     // Send the local imax and vmax to all processes in the same column:
@@ -68,6 +77,13 @@ void find_max_element_in_col(double *A, int block, int i, double * imax,
         *vmax = max[i];
         *imax = max[i+1];
       }
+    }
+
+    if (mpi.proc_id == 0) {
+      cout << "maxness : " << max[0] << " " << max[1] << " " << max[2] << " " << max[3] << endl;
+
+      for (int i = 0; i < 16; i++)
+        cout << "A(" << i << ") = " << A[i] << endl; 
     }
 
     _send[0] = *vmax;
@@ -199,6 +215,7 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
   int grow, gcol, lrow, lcol;
   int panel_start, gstart, row_counter=0, col_counter=0;
   MPI_Status status;
+  MPI_Request req[mpi.MP];
 
   // iterate over the row and send numbers along columns
   gstart = diag - diag % max_panel_size;
@@ -211,13 +228,17 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
       
       if (mpi.myrow == newrow) { // the diagonal has to rest on this particular process
         for (int proc_row = 0; proc_row < mpi.MP; proc_row++) {
-          send(&A[panel_start], proc_row, newcol, max_panel_size, TAG_0, MPI_DOUBLE, mpi);
+          isend(&A[panel_start], proc_row, newcol, max_panel_size, TAG_0,
+                MPI_DOUBLE, mpi, &req[proc_row]);
         }
       }
       recv(&temp_row[row_counter*max_panel_size], newrow, newcol, max_panel_size,
            TAG_0, MPI_DOUBLE, mpi, &status);
 
       row_counter++;
+
+      // for (int i = 0;i < mpi.MP; i++)
+      //   MPI_Wait(&req[i], &status);
     }
   }
 
@@ -236,12 +257,17 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
         }
         
         for (int proc_col = 0; proc_col < mpi.NP; proc_col++) {
-          send(temp, mpi.myrow, proc_col, max_panel_size, TAG_1, MPI_DOUBLE, mpi);
+          isend(temp, mpi.myrow, proc_col, max_panel_size, TAG_1, MPI_DOUBLE,
+                mpi, &req[proc_col]);
         }
       }
       recv(&temp_col[col_counter*max_panel_size], newrow, newcol, max_panel_size,
            TAG_1, MPI_DOUBLE, mpi, &status);
       col_counter++;
+
+      
+      // for (int i = 0; i < mpi.NP; i++)
+      //   MPI_Wait(&req[i], &status);
     }
   }
 
@@ -339,7 +365,7 @@ void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_de
     // compute global array block of diagonal element.
     curr_global = (block + i)*desc_a.N + block + i;
     find_max_element_in_col(A, block, i, &imax, &vmax, desc_a, mpi); // idamax
-    cout << "found max: " << mpi.proc_id << " " << vmax << " " << imax << endl;
+    //cout << "found max: " << mpi.proc_id << " " << vmax << " " << imax << endl;
     //cout << "proc " << mpi.proc_id << " vmax " << vmax << " imax " << imax << endl;
     // if (imycol == mpi.mycol) { // find max element in the columns
     //   find_max_element_in_col(A, block, i, &imax, &vmax, desc_a, mpi); // idamax
@@ -363,6 +389,8 @@ void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_de
     }
     scale_by_pivot(A, block+i, vmax, desc_a, mpi); // dscal
     update_panel_submatrix(A, block+i, block, nb, desc_a, mpi); // dger
+
+    print_files(A, 4, 4, mpi.myrow, mpi.mycol, "first" + to_string(block+i));
   }
 }
 

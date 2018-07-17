@@ -32,7 +32,7 @@ def get_big_matrix(files, major, n, nb, pb, num_procs):
     nb_c = int(math.sqrt(nb))
     
     for proc, file_name in files.items():
-        f = open(file_name, "r").read().rstrip()
+        f = open(file_name, "r").read().strip()
         arr = convert_to_number_list(f)
         myrow = int(proc // width)
         mycol = int(proc - (myrow * width))
