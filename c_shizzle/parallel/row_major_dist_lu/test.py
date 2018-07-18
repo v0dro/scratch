@@ -157,23 +157,23 @@ def right_looking_lu(mat):
             dger(mat, block, i, nb)
             print(mat)
             # -------------------------------------------------
-        """
-        This function updates the panels to the left and right of the current
-        vertical panel with the pivoting updates applied in the previous step.
-        """
-        k1 = block
-        k2 = n
-        dlaswp(mat, ipiv, k1, k2, block, nb, n)
-        """
-        This function calculates the U panel in the upper part of the matrix
-        my multiplying it with the inverse of the L11 part of the A11 panel
-        of the overall matrix.
-        """
-        dtrsm(mat, block, nb, n)
-        """
-        Update the rest of the matrix with the updated L and U.
-        """
-        dgemm(mat, block, nb, n)
+        # """
+        # This function updates the panels to the left and right of the current
+        # vertical panel with the pivoting updates applied in the previous step.
+        # """
+        # k1 = block
+        # k2 = n
+        # dlaswp(mat, ipiv, k1, k2, block, nb, n)
+        # """
+        # This function calculates the U panel in the upper part of the matrix
+        # my multiplying it with the inverse of the L11 part of the A11 panel
+        # of the overall matrix.
+        # """
+        # dtrsm(mat, block, nb, n)
+        # """
+        # Update the rest of the matrix with the updated L and U.
+        # """
+        # dgemm(mat, block, nb, n)
 
     l = np.tril(mat)
     np.fill_diagonal(l, 1)
