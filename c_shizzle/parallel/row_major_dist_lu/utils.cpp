@@ -175,6 +175,10 @@ void generate_data(double *a, int myrow, int mycol, desc desc_a)
       a[8] = 50; a[9] = 51; a[10] = 54; a[11] = 55;
       a[12] = 58; a[13] = 59; a[14] = 62; a[15] = 63;
     }
+
+    for (int i = 0; i < 16; i++) {
+      a[i] = a[i] * a[i];
+    }
   }
 }
 

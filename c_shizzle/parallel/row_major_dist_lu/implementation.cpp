@@ -262,83 +262,94 @@ void update_panel_submatrix(double *A, int diag, int block, int nb, desc desc_a,
   // reduce each element with values in temp_row and temp_col. Even though there might
   //   multiple kinds of blocks in a single matrix, we can reduce them all since the
   //   diagonal row/col always lies in top left part.
-  
-  // most general case where all elements in the process block should be reduced
-  int ullrow, ullcol; // upper left local row and col
-  int ulgrow, ulgcol;
-  int lrlrow, lrlcol; // lower right local row and col
-  int lrgrow, lrgcol;
-  int mb_row, mb_col; // matrix block inside which the diagonal element is present
 
-  // get local row and col of upper left corner of proc block based matrix block of diag row/col
-  mat_block(diag, diag, mb_row, mb_col, desc_a);
-  
-  // get global (row, col) of upper left corner of process block
-  ullrow = mb_row * max_panel_size;
-  ullcol = mb_col * max_panel_size;
-  l2g(ullrow, ullcol, ulgrow, ulgcol, desc_a, mpi);
+  for (int row = diag+1; row < desc_a.M; row++) {
+    for (int col = diag+1; col < block+nb; col++) {
+      g2l(row, col, lrow, lcol, desc_a, mpi);
 
-  // get global (row, col) of lower right corner of process block
-  lrlrow = ullrow + max_panel_size;
-  lrlcol = ullcol + max_panel_size;
-  l2g(lrlrow, lrlcol, lrgrow, lrgcol, desc_a, mpi);
-
-  // counters for temp arrays.
-  int tr=0, tc=0;
-  // detect that block is of nature where it contains no diag row/col.
-  if (ulgrow > diag && ulgcol > diag && lrgrow > diag && lrgcol > diag) {
-    // iterate over all block-cyclic matrix blocks that satisfy this condition
-    for (int i = ullrow; i < desc_a.lld; i++) {
-      for (int j = ullcol; j < ullcol + max_panel_size; j++) { // FIXME : upper bound
-        A[i*desc_a.lld + j] -= temp_row[tr] * temp_col[tc];
-        tr++;
+      if (lrow != -1) { // if this element is present in this process
+        A[lrow*desc_a.lld + lcol] -= temp_row[(mpi.mycol+1)*(row % max_panel_size)] *
+          temp_col[(mpi.myrow+1)*(col % max_panel_size)];
       }
-      tr = 0;
-      tc++;
     }
   }
-  // case where intersection of the diagonal row and column is in the proc block
-  else if (ulgrow <= diag && ulgcol <= diag && lrgrow > diag && lrgcol > diag) {
-    g2l(diag+1, diag+1, lrow, lcol, desc_a, mpi);
-    tr = (diag+1) % max_panel_size; tc = (diag+1) % max_panel_size;
+  
+  // // most general case where all elements in the process block should be reduced
+  // int ullrow, ullcol; // upper left local row and col
+  // int ulgrow, ulgcol;
+  // int lrlrow, lrlcol; // lower right local row and col
+  // int lrgrow, lrgcol;
+  // int mb_row, mb_col; // matrix block inside which the diagonal element is present
+
+  // // get local row and col of upper left corner of proc block based matrix block of diag row/col
+  // mat_block(diag, diag, mb_row, mb_col, desc_a);
+  
+  // // get global (row, col) of upper left corner of process block
+  // ullrow = mb_row * max_panel_size;
+  // ullcol = mb_col * max_panel_size;
+  // l2g(ullrow, ullcol, ulgrow, ulgcol, desc_a, mpi);
+
+  // // get global (row, col) of lower right corner of process block
+  // lrlrow = ullrow + max_panel_size;
+  // lrlcol = ullcol + max_panel_size;
+  // l2g(lrlrow, lrlcol, lrgrow, lrgcol, desc_a, mpi);
+
+  // // counters for temp arrays.
+  // int tr=0, tc=0;
+  // // detect that block is of nature where it contains no diag row/col.
+  // if (ulgrow > diag && ulgcol > diag && lrgrow > diag && lrgcol > diag) {
+  //   // iterate over all block-cyclic matrix blocks that satisfy this condition
+  //   for (int i = ullrow; i < desc_a.lld; i++) {
+  //     for (int j = ullcol; j < ullcol + max_panel_size; j++) { // FIXME : upper bound
+  //       A[i*desc_a.lld + j] -= temp_row[tr] * temp_col[tc];
+  //       tr++;
+  //     }
+  //     tr = 0;
+  //     tc++;
+  //   }
+  // }
+  // // case where intersection of the diagonal row and column is in the proc block
+  // else if (ulgrow <= diag && ulgcol <= diag && lrgrow > diag && lrgcol > diag) {
+  //   g2l(diag+1, diag+1, lrow, lcol, desc_a, mpi);
+  //   tr = (diag+1) % max_panel_size; tc = (diag+1) % max_panel_size;
     
-    for (int i = lrow; i < desc_a.lld; i++) {
-      for (int j = lcol; j < max_panel_size; j++) { // FIXME : upper bound
-        A[i*desc_a.lld + j] -= temp_row[tr] * temp_col[tc];
-        tr++;
-      }
-      tr = (diag+1) % max_panel_size;
-      tc++;
-    }
-  }
-  // case where only the diagonal col is in the proc block
-  else if (ulgrow > diag && ulgcol <= diag && lrgrow > diag && lrgcol > diag) {
-    g2l(ulgrow, diag+1, lrow, lcol, desc_a, mpi);
-    tr = (diag+1) % max_panel_size; tc = 0;
+  //   for (int i = lrow; i < desc_a.lld; i++) {
+  //     for (int j = lcol; j < max_panel_size; j++) { // FIXME : upper bound
+  //       A[i*desc_a.lld + j] -= temp_row[tr] * temp_col[tc];
+  //       tr++;
+  //     }
+  //     tr = (diag+1) % max_panel_size;
+  //     tc++;
+  //   }
+  // }
+  // // case where only the diagonal col is in the proc block
+  // else if (ulgrow > diag && ulgcol <= diag && lrgrow > diag && lrgcol > diag) {
+  //   g2l(ulgrow, diag+1, lrow, lcol, desc_a, mpi);
+  //   tr = (diag+1) % max_panel_size; tc = 0;
 
-    for (int i = lrow; i < desc_a.lld; i++) {
-      for (int j = lcol; j < max_panel_size; j++) { // FIXME : upper bound
-        A[i*desc_a.lld + j] -= temp_row[tr] * temp_col[tc];
-        tr++;
-      }
-      tr = (diag+1) % max_panel_size;
-      tc++;
-    }
-  }
-  // case where only the diagonal row is in the proc block
-  else if (ulgrow >= diag && ulgcol >= diag && lrgrow > diag && lrgcol > diag) {
-    g2l(diag+1, ulgcol, lrow, lcol, desc_a, mpi);
-    tr = 0; tc = (diag+1) % max_panel_size;
+  //   for (int i = lrow; i < desc_a.lld; i++) {
+  //     for (int j = lcol; j < max_panel_size; j++) { // FIXME : upper bound
+  //       A[i*desc_a.lld + j] -= temp_row[tr] * temp_col[tc];
+  //       tr++;
+  //     }
+  //     tr = (diag+1) % max_panel_size;
+  //     tc++;
+  //   }
+  // }
+  // // case where only the diagonal row is in the proc block
+  // else if (ulgrow >= diag && ulgcol >= diag && lrgrow > diag && lrgcol > diag) {
+  //   g2l(diag+1, ulgcol, lrow, lcol, desc_a, mpi);
+  //   tr = 0; tc = (diag+1) % max_panel_size;
 
-    for (int i = lrow; i < desc_a.lld; i++) {
-      for (int j = lcol; j < max_panel_size; j++) {
-        A[i*desc_a.lld + j] -= temp_row[tr] * temp_col[tc];
-        tr++;
-      }
-      tr = 0;
-      tc++;
-    }
-  }
+  //   for (int i = lrow; i < desc_a.lld; i++) {
+  //     for (int j = lcol; j < max_panel_size; j++) {
+  //       A[i*desc_a.lld + j] -= temp_row[tr] * temp_col[tc];
+  //       tr++;
+  //     }
+  //     tr = 0;
+  //     tc++;
+  //   }
+  // }
 }
 
 void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_desc mpi)
@@ -346,8 +357,6 @@ void pivot_column(double *A, int block, int nb, int * ipiv,  desc desc_a, mpi_de
   // iterate over columns witin this vertical panel.
   int curr_global;
   double vmax, imax; // imax - max index. vmax - max element.
-  double temp_max[2]; // temp storage for max elements for broadcast.
-  int imyrow, imycol;
 
   for (int i = 0; i < nb; ++i) {
     // compute global array block of diagonal element.
