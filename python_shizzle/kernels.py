@@ -29,7 +29,9 @@ print("random values for RHS:")
 print(' ,'.join([str(e) for e in x]))
 
 q = laplace1d(r, m, n)
-b += np.matmul(q, x)
+b -= np.matmul(q, x)
+print("after mult:")
+print(b)
 p,l,u=scipy.linalg.lu(q)
 
 print("X:")
