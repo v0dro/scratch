@@ -43,14 +43,16 @@ class ConvTranspos1d(torch.nn.ConvTranspose1d):
         shape = ctx.shape
         # call forward again with grad and shape as parameters.
         print("backward shape: " , shape)
+        print("grad shape: ", grad.shape)
         return _NewEmptyTensorOp.apply(grad, shape), None
 
-y = torch.ones(1,1,1)
+y = torch.ones(0,1,1)
 d1 = ConvTranspos1d(1, 1, 3)
 d1.weight.data = torch.ones(1,1,3)
-b = y.new_empty([0,1,1])
-q = d1(b)
+#b = y.new_empty([0,1,1])
+q = d1(y)
 print(q)
+print(ConvTranspos1d.backward(y, q))
 # q *= 2
 # q.backward(torch.ones(q.shape))
 
