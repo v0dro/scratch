@@ -1,8 +1,9 @@
 import numpy as np
 
-a = np.random.randn(50, 50) + 50 * np.eye(50)
-b = np.ones((50,1))
-k = b
+A = np.random.randn(50, 50) + 50 * np.eye(50)
+v = np.ones((50,1))
 
-for m in range(10):
-    print(m)
+for j in np.arange(10):
+    print(j)
+    w = np.matmul(A, v)
+    print(w)
