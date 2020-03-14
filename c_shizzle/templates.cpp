@@ -18,6 +18,36 @@ FUNCTOR_NAME FUNCTOR_NAME ## _func;
 
 REDUCE_FUNCTOR(ReduceAdd, +=);
 
+class ReduceFunctor {
+public:
+  ReduceFunctor() {};
+  template <typename scalar_t, typename func_t>
+  void operator() (scalar_t* self_data, const scalar_t* src_data,
+                   func_t op) {
+    op(self_data, src_data);
+  };
+};
+
+ReduceFunctor reduce_func;
+int a = 10, b = 20;
+auto lamb_foo = [&](auto * foo, const auto * bar) {
+                  *foo += *bar;
+                };
+
+auto lamb_sub = [&](auto * foo, const auto * bar) {
+                  *foo -= *bar;
+                };
+
+int main(int argc, char *argv[])
+{
+  reduce_func(&a, &b, lamb_foo);
+  std::cout << "a: " << a << std::endl;
+
+  reduce_func(&a, &b, lamb_sub);
+  std::cout << "a: " << a << std::endl;
+  return 0;
+}
+
 // template <typename T>
 // void foo(T& a, T val) {
 //   std::atomic<T> bar(a);
