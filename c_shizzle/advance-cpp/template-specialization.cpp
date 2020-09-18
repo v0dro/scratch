@@ -19,27 +19,27 @@ using sub_op = std::integral_constant<int, 1>;
 
 template <typename operation>
 struct func {
-  template <typename T>
-  inline void operator() (T *self, T * src) {
+  template <typename T, typename func_t>
+  inline void operator() (T *self, T * src, const func_t& func) {
     return;
   }  
 };
 
 template <>
 struct func<add_op> {
-  template <typename T>
-  inline void operator() (T *self, T * src) {
+  template <typename T, typename func_t>
+  inline void operator() (T *self, T * src, const func_t& func) {
 
-    *self += *src;
+    *self += *src * func(self, src);
   
   }
 };
 
 template <>
 struct func<sub_op> {
-  template <typename T>
-  void operator() (T *self, T * src) {
-    *self -= *src;
+  template <typename T, typename func_t>
+  void operator() (T *self, T * src, const func_t &func) {
+    *self -= *src * func(self, src);
   }
 };
 
@@ -53,13 +53,17 @@ int main(int argc, char *argv[])
   double b = atoi(argv[2]);
   
   asm volatile ("# add_op begin");
-  func<add_op>()(&a, &b);
+  func<add_op>()(&a, &b, [](auto * self, auto * src) {
+                           return (*self) * (*src);
+                         });
   asm volatile ("# add_op end");
     
   std::cout << "a: " << a << std::endl;
   
   asm volatile ("# sub_op begin");
-  func<sub_op>()(&a, &b);
+  func<sub_op>()(&a, &b, [](auto *self, auto *src) {
+                           return (*self) / (*src);
+                         });
   asm volatile ("# sub_op begin");
   
   std::cout << "a: " << a << std::endl;
