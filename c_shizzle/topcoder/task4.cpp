@@ -25,7 +25,16 @@ int main(int argc, char *argv[])
   long long int max = sum;
   int cntr;
 
+
+  // This solution is wrong because it assumes that the sum of absolute numbers
+  // is the same as absolute of the sum.
   
+  // It is merely taking abs(val) for each number, summing it and appending it
+  // to the list. Then taking the top numbers and showing their sum.
+
+  // The approach would be add M numbers of each column, get their abs and then
+  // add this absolute. This can then be done for every set and then we can only
+  // report the largest of these numbers as the result.
   for (int i = 0; i < N; ++i) {
     if (sum > max) {
       max = sum;
