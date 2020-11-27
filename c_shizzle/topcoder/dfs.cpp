@@ -2,6 +2,15 @@
 #include <vector>
 using namespace std;
 
+// from the ICPC book section 4.2.1
+
+// The section also adds that using a backtracking technique where
+// the visited nodes are marked unvisited, it can be possible to
+// change the time of DFS but backtracking has exponential cost.
+
+// Using an adjacency list has the advantage that the DFS can
+// be done in O(V+E) time.
+
 typedef pair<int, int> ii;      // pair of (neighbour, weight)
 typedef vector<ii> vii;
 typedef vector<int> vi;
