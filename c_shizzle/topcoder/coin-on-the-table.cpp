@@ -4,6 +4,11 @@ using namespace std;
 
 // https://www.hackerrank.com/challenges/coin-on-the-table/problem?h_r=internal-search&h_r=next-challenge&h_v=zen
 
+// conduct a BFS to figure out the shortest path.
+void shortest_path(int start) {
+}
+  
+
 void search(int m, int n, int k, vector<vector<char>> grid) {
   int i = 1, j = 1;
 }

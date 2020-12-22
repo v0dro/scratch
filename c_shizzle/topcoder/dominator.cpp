@@ -32,19 +32,18 @@ bool dfs(int start_node, int check_exists, vector<vector<ii>>& graph) {
 
 // check if dominated node is still acceesible given that all edges of dominator
 // have been cut off.
-bool dfs_cut_off(int start_node, int dominator, int dominated, vector<vector<ii>>& graph) {
+void dfs_cut_off(int start_node, int dominator, int dominated, vector<vector<ii>>& graph,
+                 bool * found_dominator) {
   tracker[start_node] = VISITED;
 
-  cout << "c1: " << start_node << endl;
-  
   for (int i = 0; i < graph[start_node].size(); ++i) {
     int cur_node = graph[start_node][i].first;
-    cout << "cn: " << cur_node << endl;
     if (tracker[cur_node] == UNVISITED) {
       if (cur_node == dominator) {
-        return true;
+        *found_dominator = true;
+        break;
       }
-      return dfs_cut_off(cur_node, dominator, dominated, graph);
+      dfs_cut_off(cur_node, dominator, dominated, graph, found_dominator);
     }
   }
 }
@@ -54,9 +53,11 @@ void dominator(int x, int y, vector<vector<ii>>& graph) {
   bool reachable = dfs(0, y, graph);
 
   if (reachable) {
-    tracker.resize(m, UNVISITED);
-    int dominator = dfs_cut_off(0, x, y, graph);
-    cout << "dom: " << dominator << endl;
+    for (int i = 0; i < m; ++i) {
+      tracker[i]= UNVISITED;
+    }
+    bool dominator = false;
+    dfs_cut_off(0, x, y, graph, &dominator);
   }
 }
 
