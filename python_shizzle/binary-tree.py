@@ -33,6 +33,12 @@ class BinaryTree:
                     self.right = BinaryTree()
                 self.right.insert(value)
 
+    def first_common_ancestor(self, n1, n2):
+        pass
+
+    def is_descendant(self, parent, child):
+        pass
+        
 t = BinaryTree()
 t.insert(4)
 t.insert(1)
