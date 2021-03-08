@@ -19,6 +19,15 @@ class BinaryTree:
                 self.left.preorder()
             if self.right:
                 self.right.preorder()
+
+    def postorder_search(self, value):
+        if self.left:
+            self.left.postorder_search(value)
+        if self.right:
+            self.right.postorder_search(value)
+
+        if self.data == value:
+            return True
                 
     def insert(self, value):
         if self.data == None:
@@ -37,7 +46,7 @@ class BinaryTree:
         pass
 
     def is_descendant(self, parent, child):
-        pass
+        is_in_child = self.postorder_search(child)
         
 t = BinaryTree()
 t.insert(4)
