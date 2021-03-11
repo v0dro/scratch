@@ -35,15 +35,20 @@ class BinaryTree:
         else:
             return 0
 
+    # https://www.geeksforgeeks.org/how-to-determine-if-a-binary-tree-is-balanced/
+    def actual_is_balanced(self, root):
+        left_balanced = False
+        right_balanced = False
+
+        if not self.data:
+            return True, 0
+
+        left_balanced, left_height = self.actual_is_balanced(root.left, left_height)
+        right_balanced, right_height = self.actual_is_balanced(root.right, right_height)
+
     # heights of two subtress never differ by more than 1.
     def is_balanced(self):
-        left_height = left_subtree_height(self.left)
-        right_height = right_subtree_height(self.right)
-
-        if right_height - left_height > 1:
-            return False
-        else:
-            return True
+        return self.actual_is_balanced(self)
 
     def actual_get_height(self, root):
         if root:
