@@ -35,21 +35,6 @@ class BinaryTree:
         else:
             return 0
 
-    # https://www.geeksforgeeks.org/how-to-determine-if-a-binary-tree-is-balanced/
-    def actual_is_balanced(self, root):
-        left_balanced = False
-        right_balanced = False
-
-        if not self.data:
-            return True, 0
-
-        left_balanced, left_height = self.actual_is_balanced(root.left, left_height)
-        right_balanced, right_height = self.actual_is_balanced(root.right, right_height)
-
-    # heights of two subtress never differ by more than 1.
-    def is_balanced(self):
-        return self.actual_is_balanced(self)
-
     def actual_get_height(self, root):
         if root:
             if not root.data:
@@ -63,8 +48,37 @@ class BinaryTree:
             return 0
 
     def get_height(self):
-        height = 0
         return self.actual_get_height(self)
+
+    # https://www.geeksforgeeks.org/how-to-determine-if-a-binary-tree-is-balanced/
+    def actual_is_balanced(self, root):
+        if root:
+            left_height = 0
+            right_height = 0
+            
+            if root and not root.data:
+                return True
+
+            if root.left:
+                left_height = root.left.get_height()
+
+            if root.right:
+                right_height = root.right.get_height()
+
+
+            if (abs(left_height - right_height) <= 1) and (self.actual_is_balanced(root.left)) \
+               and (self.actual_is_balanced(root.right)):
+                return True
+            else:
+                return False
+        else:
+            return True
+
+    # heights of two subtress never differ by more than 1.
+    def is_balanced(self):
+        return self.actual_is_balanced(self)
+
+
 
 t = BinaryTree()
 t.binsert(4)
@@ -75,7 +89,10 @@ t.binsert(11)
 t.binsert(9)
 t.binsert(23)
 t.binsert(-1)
+t.binsert(8)
+t.binsert(2)
 
 # t.inorder()
 
-print(t.get_height())
+# print(t.left.get_height())
+print(t.is_balanced())
