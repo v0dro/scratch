@@ -30,3 +30,16 @@ def abbrev(a, b):
         return "NO"
 
 print(abbrev("KXzQ", "K"))
+
+def abbrev_rec(a, b):
+    if a[0].islower():
+        abbrev_rec(a[0].upper() + a[1:], b)
+        abbrev_rec(a[1:], b)
+    else:
+        if a == b:
+            return True
+        else:
+            return False
+
+print(abbrev_rec("daBcd", "ABC"))
+print(abbrev_rec("KXzQ", "K"))
