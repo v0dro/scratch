@@ -46,8 +46,6 @@ class Node:
 class Graph:
     def __init__(self, num_nodes):
         self.data = {}
-        for i in range(num_nodes):
-            self.data[i] = list()
 
     def edge_exists(self, from_node, to_node):
         graph_list = self.data[from_node]
@@ -121,9 +119,9 @@ def findShortest(graph_nodes, graph_from, graph_to, ids, val):
         if id == val:
             values_connected_nodes.append(i)
 
-    for k in range(graph_nodes):
-        for i in range(graph_nodes):
-            for j in range(graph_nodes):
+    for i in range(graph_nodes):
+        for j in range(graph_nodes):
+            for k in range(graph_nodes):
                 if i != j:
                     new_weight = graph.edge_length(i, k) + graph.edge_length(k, j)
                     old_weight = graph.edge_length(i, j)
