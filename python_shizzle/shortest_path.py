@@ -6,6 +6,8 @@ import sys
 import copy
 import bisect
 import functools
+import heapq
+from collections import defaultdict
 
 # Complete the findShortest function below.
 
@@ -98,11 +100,43 @@ class UndirectedGraph:
         else:                   # create new weight between nodes
             self.insert_edge(to_node, from_node, new_weight)
 
+    def connected_nodes(self, node):
+        return self.data[node]
+
     def __str__(self):
         return str(self.data)
 
-def shortest_path(start_node, graph):
-    pass
+def shortest_path(start_node, end_node, graph):
+    visited = set()
+    queue = list()              # priority queue of lengths
+    parents_map = dict()        # hash showing a map of the edges
+    # length from the start node until various nodes in the graph
+    node_costs = defaultdict(lambda : float('inf'))
+    node_costs[start_node] = 0
+
+    heapq.heappush(queue, (0, start_node))
+
+    while queue:
+        _, node = heapq.heappop(queue)
+        visited.add(node)
+
+        for _n in graph.connected_nodes(node):
+            print("_n: " , _n)
+            n = _n.node
+            w = _n.weight
+
+            if n in visited:
+                continue
+
+            new_cost = node_costs[node] + w
+
+            if new_cost < node_costs[n]:
+                parents_map[n] = node
+                node_costs[n] = new_cost
+                heapq.heappush(queue, (new_cost, n))
+
+    print(parents_map, node_costs)
+
 
 
 graph_nodes = 5
@@ -114,3 +148,7 @@ for i in range(len(graph_from)):
     graph.insert_edge(graph_from[i], graph_to[i])
 
 print(graph)
+
+start_node = 1
+end_node = 5
+shortest_path(start_node, end_node, graph)
