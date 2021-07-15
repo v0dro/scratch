@@ -121,7 +121,6 @@ def shortest_path(start_node, end_node, graph):
         visited.add(node)
 
         for _n in graph.connected_nodes(node):
-            print("_n: " , _n)
             n = _n.node
             w = _n.weight
 
@@ -137,8 +136,6 @@ def shortest_path(start_node, end_node, graph):
 
     print(parents_map, node_costs)
 
-
-
 graph_nodes = 5
 graph_from = [1, 1, 2, 3]
 graph_to = [2, 3, 4, 5]
@@ -146,8 +143,6 @@ graph_to = [2, 3, 4, 5]
 graph = UndirectedGraph(graph_nodes)
 for i in range(len(graph_from)):
     graph.insert_edge(graph_from[i], graph_to[i])
-
-print(graph)
 
 start_node = 1
 end_node = 5
