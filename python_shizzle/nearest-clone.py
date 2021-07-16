@@ -1,3 +1,5 @@
+#!/bin/python3
+
 import math
 import os
 import random
@@ -135,10 +137,6 @@ def findShortest(graph_nodes, graph_from, graph_to, ids, val):
     for i in range(len(graph_from)):
         graph.insert_edge(graph_from[i], graph_to[i])
 
-    start_node = 1
-    end_node = 5
-    shortest_path(start_node, graph)
-
     node_maps = {}
     node_costs = {}
     memo = {}
@@ -153,14 +151,36 @@ def findShortest(graph_nodes, graph_from, graph_to, ids, val):
     for source in useful_nodes:
         for end in useful_nodes:
             if source != end:
-                cost = node_costs[source][end]
-                if cost < min_path:
-                    min_path = cost
+                if source in node_costs:
+                    source_graph = node_costs[source]
+                    if end in source_graph:
+                        cost = node_costs[source][end]
+                        if cost < min_path:
+                            min_path = cost
 
-    return min_path
+    if min_path == float('inf'):
+        return -1
+    else:
+        return min_path
 
-graph_to = [2, 3, 4, 5]
-ids = [1, 2, 3, 3, 2]
-val = 2
 
-findShortest(graph_nodes, graph_from, graph_to, ids, val)
+if __name__ == '__main__':
+    fptr = open(os.environ['OUTPUT_PATH'], 'w')
+
+    graph_nodes, graph_edges = map(int, input().split())
+
+    graph_from = [0] * graph_edges
+    graph_to = [0] * graph_edges
+
+    for i in range(graph_edges):
+        graph_from[i], graph_to[i] = map(int, input().split())
+
+    ids = list(map(int, input().rstrip().split()))
+
+    val = int(input())
+
+    ans = findShortest(graph_nodes, graph_from, graph_to, ids, val)
+
+    fptr.write(str(ans) + '\n')
+
+    fptr.close()
