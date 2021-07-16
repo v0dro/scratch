@@ -6,17 +6,9 @@ import sys
 import copy
 import bisect
 import functools
+import heapq
+from collections import defaultdict
 
-# Complete the findShortest function below.
-
-#
-# For the weighted graph, <name>:
-#
-# 1. The number of nodes is <name>_nodes.
-# 2. The number of edges is <name>_edges.
-# 3. An edge exists between <name>_from[i] to <name>_to[i].
-#
-#
 INFINITY = 999999
 
 @functools.total_ordering
@@ -43,7 +35,7 @@ class Node:
     def __repr__(self):
         return "<" + str(self.node) + "," + str(self.weight) + ">"
 
-class Graph:
+class UndirectedGraph:
     def __init__(self, num_nodes):
         self.data = {}
 
@@ -98,50 +90,75 @@ class Graph:
         else:                   # create new weight between nodes
             self.insert_edge(to_node, from_node, new_weight)
 
+    def connected_nodes(self, node):
+        return self.data[node]
+
     def __str__(self):
         return str(self.data)
+
+def shortest_path(start_node, graph):
+    visited = set()
+    queue = list()              # priority queue of lengths
+    parents_map = dict()        # hash showing a map of the edges
+    # length from the start node until various nodes in the graph
+    node_costs = defaultdict(lambda : float('inf'))
+    node_costs[start_node] = 0
+
+    heapq.heappush(queue, (0, start_node))
+
+    while queue:
+        _, node = heapq.heappop(queue)
+        visited.add(node)
+
+        for _n in graph.connected_nodes(node):
+            n = _n.node
+            w = _n.weight
+
+            if n in visited:
+                continue
+
+            new_cost = node_costs[node] + w
+
+            if new_cost < node_costs[n]:
+                parents_map[n] = node
+                node_costs[n] = new_cost
+                heapq.heappush(queue, (new_cost, n))
+
+    return (parents_map, node_costs)
 
 
 def findShortest(graph_nodes, graph_from, graph_to, ids, val):
     if ids.count(val) == 1:
         return -1
 
-    graph = Graph(graph_nodes)
-
+    graph = UndirectedGraph(graph_nodes)
     for i in range(len(graph_from)):
-        from_node = graph_from[i] - 1
-        to_node = graph_to[i] - 1
-        graph.insert_edge(from_node, to_node)
-    print(graph)
+        graph.insert_edge(graph_from[i], graph_to[i])
 
-    values_connected_nodes = []
-    for i, id in enumerate(ids):
-        if id == val:
-            values_connected_nodes.append(i)
+    start_node = 1
+    end_node = 5
+    shortest_path(start_node, graph)
 
-    for i in range(graph_nodes):
-        for j in range(graph_nodes):
-            for k in range(graph_nodes):
-                if i != j:
-                    new_weight = graph.edge_length(i, k) + graph.edge_length(k, j)
-                    old_weight = graph.edge_length(i, j)
+    node_maps = {}
+    node_costs = {}
+    memo = {}
+    useful_nodes = [i+1 for i, node in enumerate(ids) if node == val]
 
-                    print("min weight: ", min(new_weight, old_weight))
-                    graph.update_edge(i, j, min(new_weight, old_weight))
-                    # if old_weight > new_weight:
-                    #     print("i: ", i, " j: ", j, " k: ", k, " graph: ", graph)
-                    #     graph.update_edge(i, j, new_weight)
-    print(graph)
+    for node in useful_nodes:
+        node_map, node_cost = shortest_path(node, graph)
+        node_maps[node] = node_map
+        node_costs[node] = node_cost
 
-    min_length = INFINITY
-    for i in values_connected_nodes:
-        if graph[val-1][i] < min_length and i != val - 1:
-            min_length = graph[val-1][i]
+    min_path = float('inf')
+    for source in useful_nodes:
+        for end in useful_nodes:
+            if source != end:
+                cost = node_costs[source][end]
+                if cost < min_path:
+                    min_path = cost
 
-    return min_length
+    return min_path
 
-graph_nodes = 5
-graph_from = [1, 1, 2, 3]
 graph_to = [2, 3, 4, 5]
 ids = [1, 2, 3, 3, 2]
 val = 2

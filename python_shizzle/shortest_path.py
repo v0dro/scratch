@@ -106,7 +106,7 @@ class UndirectedGraph:
     def __str__(self):
         return str(self.data)
 
-def shortest_path(start_node, end_node, graph):
+def shortest_path(start_node, graph):
     visited = set()
     queue = list()              # priority queue of lengths
     parents_map = dict()        # hash showing a map of the edges
@@ -134,11 +134,13 @@ def shortest_path(start_node, end_node, graph):
                 node_costs[n] = new_cost
                 heapq.heappush(queue, (new_cost, n))
 
-    print(parents_map, node_costs)
+    return (parents_map, node_costs)
 
 graph_nodes = 5
 graph_from = [1, 1, 2, 3]
 graph_to = [2, 3, 4, 5]
+ids = [1, 2, 3, 3, 2]
+val = 2
 
 graph = UndirectedGraph(graph_nodes)
 for i in range(len(graph_from)):
@@ -146,4 +148,29 @@ for i in range(len(graph_from)):
 
 start_node = 1
 end_node = 5
-shortest_path(start_node, end_node, graph)
+shortest_path(start_node, graph)
+
+node_maps = {}
+node_costs = {}
+memo = {}
+useful_nodes = [i+1 for i, node in enumerate(ids) if node == val]
+
+for node in useful_nodes:
+    node_map, node_cost = shortest_path(node, graph)
+    node_maps[node] = node_map
+    node_costs[node] = node_cost
+
+print("node maps")
+print(node_maps)
+print("node costs")
+print(str(node_costs))
+
+min_path = float('inf')
+for source in useful_nodes:
+    for end in useful_nodes:
+        if source != end:
+            cost = node_costs[source][end]
+            print("s: ", source, " e: ", end, " cost: ", cost)
+            if cost < min_path:
+                min_path = cost
+print(min_path)
