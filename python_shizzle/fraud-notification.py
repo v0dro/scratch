@@ -1,7 +1,10 @@
+#!/bin/python3
+
 import math
 import os
 import random
 import re
+import bisect
 import sys
 from statistics import median
 
@@ -14,29 +17,57 @@ from statistics import median
 #  2. INTEGER d
 #
 
-# https://www.programiz.com/dsa/counting-sort
 def activityNotifications(expenditure, d):
     # Write your code here
     notifications = 0
+    max_count = 201
+    median = None
+
     if d == len(expenditure):
         return 0
 
-    counts = [0] * 201
+    counts = [0] * max_count
+    for j in range(0, d):
+        counts[expenditure[j]] += 1
 
     for i in range(d, len(expenditure)):
-        for j in range(i-d, i):
-            counts[expenditure[j]] += 1
+        nums = 0
+        for c in range(max_count):
+            nums += counts[c]
+            if d % 2 == 1:
+                if nums > int(d/2):
+                    median = c
+                    break
+            else:
+                if nums > int(d/2):
+                    median = c
+                    median1 = 0
+                    for c1 in range(c, max_count):
+                        nums += counts[c1]
+                        if nums > int(d/2) + 1:
+                            median1 = c1
+                            break
+                    median = (median + median1) / 2
+                    break
 
+        if expenditure[i] >= 2 * median:
+            notifications += 1
 
+        counts[expenditure[i-d]] -= 1
+        counts[expenditure[i]] += 1
 
+    return notifications
 
-    print(counts)
+if __name__ == '__main__':
 
+    first_multiple_input = input().rstrip().split()
 
-    # for i in range(d, len(expenditure)):
-    #     median_price = median(expenditure[i-d:i])
+    n = int(first_multiple_input[0])
 
-    #     if expenditure[i] >= 2 * median_price:
-    #         notifications += 1
+    d = int(first_multiple_input[1])
 
-    # return notifications
+    expenditure = list(map(int, input().rstrip().split()))
+
+    result = activityNotifications(expenditure, d)
+
+    print("result: ", result)
