@@ -2,6 +2,8 @@
 
 # https://www.youtube.com/watch?v=DW92IHf8KK8
 
+# https://iawale.medium.com/abbreviation-hackerrank-medium-4601219c07d1
+
 # Simple solution (no dyn prog)
 # Failing case:
 
@@ -19,11 +21,11 @@ def abbrev(a, b):
             i += 1
             j += 1
             continue
-        
+
         if a[i] != b[j] or a[i].upper() != b[j]:
             i += 1
             continue
-            
+
     if j == len(b):
         return "YES"
     else:
