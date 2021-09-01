@@ -43,5 +43,43 @@ def abbrev_rec(a, b):
         else:
             return False
 
-print(abbrev_rec("daBcd", "ABC"))
-print(abbrev_rec("KXzQ", "K"))
+#print(abbrev_rec("daBcd", "ABC"))
+#print(abbrev_rec("KXzQ", "K"))
+
+import copy
+
+def abbreviation(a, b):
+    memo = list()
+    for _ in range(len(a)+1):
+        memo.append([False] * (len(b) + 1))
+
+    memo[0][0] = True
+
+    for i in range(1, len(a) + 1):
+        if a[i - 1].isupper():
+            memo[i][0] = False
+        else:
+            memo[i][0] = True
+
+
+    for i in range(1, len(a) + 1):
+        for j in range(1, len(b) + 1):
+            if a[i-1] == b[j-1]:
+                memo[i][j] = memo[i-1][j-1]
+            elif a[i-1].upper() == b[j-1]:
+                memo[i][j] = memo[i-1][j-1] or memo[i-1][j]
+            elif a[i-1].isupper():
+                memo[i][j] = False
+            else:
+                memo[i][j] = memo[i-1][j]
+
+
+    if memo[len(a)][len(b)]:
+        return "YES"
+    else:
+        return "NO"
+
+
+
+
+print(abbreviation("daBcd", "ABC"))
