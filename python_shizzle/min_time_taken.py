@@ -27,4 +27,24 @@
 
 # Complete the minTime function below.
 def minTime(machines, goal):
-    pass
+    min_time = min(machines)
+    max_time = max(machines)
+
+    lower = int(goal // (len(machines) / min_time))
+    upper = int(goal // (len(machines) / max_time)) + 1
+
+    while lower < upper:
+        mid = (lower + upper) // 2
+        # sum of number of days needed per machine.
+        total_items = sum([mid // machine for machine in machines])
+
+        print("mid: ", mid, "total: " , total_items)
+
+        if total_items >= goal:
+            upper = mid
+        else:
+            lower = mid + 1
+
+    return lower
+
+print(minTime([2, 3, 2], 10))
