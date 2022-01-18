@@ -1,6 +1,52 @@
 #include <memory>
 #include <iostream>
 #include <vector>
+#include <tuple>
+
+class Mover {
+public:
+  std::shared_ptr<double> data;
+  int size = -1;
+
+  Mover() = default;
+
+  ~Mover() = default;
+
+  Mover(Mover&& A) = default;
+
+  Mover(int num) {
+    data = std::make_shared<double>(num);
+    size = num;
+  }
+
+  Mover& operator=(Mover&& A) {
+    std::cout << "move assign\n";
+    std::swap(size, A.size);
+    std::swap(data, A.data);
+
+    return *this;
+  }
+
+  std::tuple<Mover, Mover>
+  move_this(int n1, int n2) {
+    Mover obj_n1(n1), obj_n2(n2);
+
+    return {std::move(obj_n1), std::move(obj_n2)};
+  }
+};
+
+void test_move_semantics() {
+  std::cout << "TEST move semantics with shared_ptr\n";
+  Mover m(100);
+
+  Mover a, b;
+
+  std::cout << "pre a.size: " << a.size << std::endl;
+
+  std::tie(a, b) = m.move_this(3, 3);
+
+  std::cout << "post a.size: " << a.size << std::endl;
+}
 
 int main(int argc, char *argv[])
 {
@@ -31,7 +77,7 @@ int main(int argc, char *argv[])
 
   std::cout << "post x:\n";
   std::cout << "&x[0]= " << &(*x.get())[0] << std::endl;
-  std::cout << "&p[0]= " << &(*p.get())[0] << std::endl;
-  std::cout << "&b[0]= " << &(*b.get())[0] << std::endl; 
+
+  test_move_semantics();
   return 0;
 }
