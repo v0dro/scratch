@@ -5,6 +5,7 @@
 
 class Mover {
 public:
+  // https://stackoverflow.com/questions/13061979/shared-ptr-to-an-array-should-it-be-used
   std::shared_ptr<double> data;
   int size = -1;
 
@@ -17,6 +18,11 @@ public:
   Mover(int num) {
     data = std::make_shared<double>(num);
     size = num;
+    double *d = data.get();
+
+    for (int i = 0; i < num; ++i) {
+      d[i] = i;
+    }
   }
 
   Mover& operator=(Mover&& A) {
@@ -33,6 +39,13 @@ public:
 
     return {std::move(obj_n1), std::move(obj_n2)};
   }
+
+  void print() {
+    for (int i = 0; i < size; ++i) {
+      std::cout << data.get()[i] << " ";
+    }
+    std::cout << std::endl;
+  }
 };
 
 void test_move_semantics() {
@@ -44,6 +57,8 @@ void test_move_semantics() {
   std::cout << "pre a.size: " << a.size << std::endl;
 
   std::tie(a, b) = m.move_this(3, 3);
+
+  a.print();
 
   std::cout << "post a.size: " << a.size << std::endl;
 }
