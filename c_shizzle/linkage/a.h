@@ -1,3 +1,3 @@
 typedef long long int AWESOME_int;
 
-void foo(AWESOME_int a);
+void foo(AWESOME_int a, void *ptr);

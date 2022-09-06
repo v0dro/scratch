@@ -17,11 +17,11 @@ extern "C" {
   void Cblacs_pcoord(int, int, int*, int*);
   void Cblacs_gridexit(int);
   void Cblacs_barrier(int, const char*);
- 
+
   int numroc_(int*, int*, int*, int*, int*);
 
-  void descinit_(int *desc, const int *m,  const int *n, const int *mb, 
-    const int *nb, const int *irsrc, const int *icsrc, const int *ictxt, 
+  void descinit_(int *desc, const int *m,  const int *n, const int *mb,
+    const int *nb, const int *irsrc, const int *icsrc, const int *ictxt,
     const int *lld, int *info);
   void pdgetrf_(
                 int *m, int *n, double *a, int *ia, int *ja, int *desca,
@@ -39,7 +39,7 @@ void print_arr(double *A, int size, string desc, ostream &o)
 
 void print_files(double *A, int nrows, int ncols, int myrow, int mycol, string post="")
 {
-  string n = to_string(myrow*2 + mycol); 
+  string n = to_string(myrow*2 + mycol);
   std::ofstream file;
 
   file.open(n + post + ".txt");
@@ -53,12 +53,10 @@ int main(int argc, char ** argv)
   // MPI init
   MPI_Init(&argc, &argv);
   // end MPI Init
-  
+
   // BLACS init
   int BLACS_CONTEXT, proc_nrows, proc_ncols, myrow, mycol;
-  int proc_id, num_procs;
   proc_nrows = 2; proc_ncols = 2;
-  Cblacs_pinfo(&proc_id, &num_procs);
   Cblacs_get( -1, 0, &BLACS_CONTEXT );
   Cblacs_gridinit( &BLACS_CONTEXT, "Row", proc_nrows, proc_ncols );
   Cblacs_pcoord(BLACS_CONTEXT, proc_id, &myrow, &mycol);
@@ -72,7 +70,7 @@ int main(int argc, char ** argv)
   int pblock_nrows = nb/2;
   int pblock_ncols = nb/2;
   int num_blocks_per_process = 4;
-  
+
   // loop over block cols
   for (int bc = 0; bc < pblock_ncols; ++bc) {
     // loop over block rows
@@ -123,6 +121,6 @@ int main(int argc, char ** argv)
     for(int i = 0; i < N; ++i) {
       cout << ipiv[i] << " ";
     }
-  }  
+  }
   MPI_Finalize();
 }
