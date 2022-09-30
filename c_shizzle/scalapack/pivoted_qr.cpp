@@ -1,3 +1,8 @@
+#include <iostream>
+#include <vector>
+#include <random>
+#include "mpi.h"
+
 extern "C" {
   /* Cblacs declarations */
   void Cblacs_pinfo(int*, int*);
@@ -27,8 +32,8 @@ extern "C" {
 
 int MYROW, MYCOL, MPISIZE, MPIRANK;
 int MPIGRID[2];
-
-int zero = 0;
+int ZERO = 0, MINUS_ONE = -1;
+int info;
 
 int main(int argc, char** argv) {
   // MPI init
@@ -47,9 +52,33 @@ int main(int argc, char** argv) {
   Cblacs_pcoord(BLACS_CONTEXT, MPIRANK, &MYROW, &MYCOL);
 
   int N = 100, NB = 20;
-  int A_lrows = numroc_(&N, &NB, &MYROW, &zero, &MPIGRID[0]);
-  int A_lcols = numroc_(&N, &NB, &MYCOL, &zero, &MPIGRID[1]);
-  double* a = (double*)malloc(sizeof(double)*A_lrows*A_lcols);
+  int A_lrows = numroc_(&N, &NB, &MYROW, &ZERO, &MPIGRID[0]);
+  int A_lcols = numroc_(&N, &NB, &MYCOL, &ZERO, &MPIGRID[1]);
+  std::vector<int> A(9);
+  std::vector<double> A_mem(A_lrows*A_lcols);
+
+  descinit_(A.data(), &N, &N, &NB, &NB, &ZERO, &ZERO,
+            &BLACS_CONTEXT, &A_lrows, &info);
+
+  std::mt19937 gen(MPIRANK);
+  std::uniform_real_distribution<double> dist(0.0, 1.0);
+
+  for (int i = 0; i < A_lrows * A_lcols; ++i) {
+    A_mem[i] = dist(gen);
+  }
+  std::vector<int> IPIV(A_lrows);
+  std::vector<double> TAU(A_lcols);
+  std::vector<double> WORK(1);
+
+  int IA = 1;
+  int JA = 1;
+
+  pdgeqpf_(&N, &N,
+           A_mem.data(), &IA, &JA, A.data(),
+           IPIV.data(), TAU.data(), WORK.data(),
+           &MINUS_ONE, &info); // workspace query
+  int LWORK = WORK[0];
+
 
   MPI_Finalize();
 }
