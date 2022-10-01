@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
   int A_lrows = numroc_(&N, &NB, &MYROW, &ZERO, &MPIGRID[0]);
   int A_lcols = numroc_(&N, &NB, &MYCOL, &ZERO, &MPIGRID[1]);
   std::vector<int> A(9);
-  std::vector<double> A_mem(A_lrows*A_lcols);
+  std::vector<double> A_mem(A_lrows*A_lcols), original(A_lrows * A_lcols);
 
   descinit_(A.data(), &N, &N, &NB, &NB, &ZERO, &ZERO,
             &BLACS_CONTEXT, &A_lrows, &info);
@@ -83,6 +83,7 @@ int main(int argc, char** argv) {
 
   for (int i = 0; i < A_lrows * A_lcols; ++i) {
     A_mem[i] = dist(gen);
+    original[i] = A_mem[i];
   }
 
   std::vector<int> IPIV(A_lcols);
@@ -162,6 +163,8 @@ int main(int argc, char** argv) {
               Q.data(), N, R.data(), N,
               0.0,
               product.data(), N);
+
+
 
 
   MPI_Finalize();
