@@ -2,6 +2,7 @@
 #include <vector>
 #include <random>
 #include "mpi.h"
+#include "cblas.h"
 
 extern "C" {
   /* Cblacs declarations */
@@ -103,6 +104,13 @@ int main(int argc, char** argv) {
            IPIV.data(), TAU.data(), WORK.data(),
            &LWORK, &info); // pivoted QR
 
+  std::vector<double> R(N * N, 0);
+  for (int i = 0; i < N; ++i) {
+    for (int j = i+1; j < N; ++j) {
+      R[i + j * N] = A_mem[i + j * N];
+    }
+  }
+
   // Determine diagaonal values of the QR factorized matrix.
   std::vector<double> RANKVECTOR(A_lrows);
   int min_MN = std::min(N, N);
@@ -133,6 +141,28 @@ int main(int argc, char** argv) {
            A_mem.data(), &IA, &JA, A.data(),
            TAU.data(), WORK.data(),
            &LWORK, &info); // compute Q factors
+
+  // copy data from the lower triangle into Q.
+  std::vector<double> Q(N * N, 0);
+  for (int i = 0; i < N; ++i) {
+    for (int j = 0; j <= i; ++j) {
+      if (i == j) {
+        Q[i + j * N] = 1.0;
+      }
+      else {
+        Q[i + j * N] = A_mem[i + j * A_lrows];
+      }
+    }
+  }
+
+  std::vector<double> product(N * N, 0);
+
+  cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, N, N, N,
+              1.0,
+              Q.data(), N, R.data(), N,
+              0.0,
+              product.data(), N);
+
 
   MPI_Finalize();
 }
