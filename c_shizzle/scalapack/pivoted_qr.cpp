@@ -30,6 +30,23 @@ extern "C" {
                  const int* lwork, int* info);
 }
 
+int
+indxg2l(int INDXGLOB, int NB, int NPROCS) {
+  return NB * ((INDXGLOB - 1) / ( NB * NPROCS)) + (INDXGLOB - 1) % NB + 1;
+}
+
+int
+indxl2g(int indxloc, int nb, int iproc, int isrcproc, int nprocs) {
+  return nprocs * nb * ((indxloc - 1) / nb) +
+    (indxloc-1) % nb + ((nprocs + iproc - isrcproc) % nprocs) * nb + 1;
+}
+
+int
+indxg2p(int INDXGLOB, int NB, int ISRCPROC, int NPROCS) {
+  return (ISRCPROC + (INDXGLOB - 1) / NB) % NPROCS;
+}
+
+
 int MYROW, MYCOL, MPISIZE, MPIRANK;
 int MPIGRID[2];
 int ZERO = 0, MINUS_ONE = -1;
@@ -66,7 +83,8 @@ int main(int argc, char** argv) {
   for (int i = 0; i < A_lrows * A_lcols; ++i) {
     A_mem[i] = dist(gen);
   }
-  std::vector<int> IPIV(A_lrows);
+
+  std::vector<int> IPIV(A_lcols);
   std::vector<double> TAU(A_lcols);
   std::vector<double> WORK(1);
 
@@ -78,7 +96,43 @@ int main(int argc, char** argv) {
            IPIV.data(), TAU.data(), WORK.data(),
            &MINUS_ONE, &info); // workspace query
   int LWORK = WORK[0];
+  WORK.resize(LWORK);
 
+  pdgeqpf_(&N, &N,
+           A_mem.data(), &IA, &JA, A.data(),
+           IPIV.data(), TAU.data(), WORK.data(),
+           &LWORK, &info); // pivoted QR
+
+  // Determine diagaonal values of the QR factorized matrix.
+  std::vector<double> RANKVECTOR(A_lrows);
+  int min_MN = std::min(N, N);
+
+  int diagonals = 0;
+  for (int i = 0; i < min_MN; ++i) {
+    int g_row = IA + i;
+    int g_col = JA + i;
+    int row_proc = indxg2p(g_row, NB, 0, MPIGRID[0]);
+    int col_proc = indxg2p(g_col, NB, 0, MPIGRID[1]);
+
+    if (row_proc == MYROW && col_proc == MYCOL) {
+      int lrow = indxg2l(g_row, NB, MPIGRID[0]) - 1;
+      int lcol = indxg2l(g_col, NB, MPIGRID[1]) - 1;
+
+      RANKVECTOR[diagonals++] = abs(A_mem[lrow + lcol * A_lrows]);
+    }
+  }
+
+  pdorgqr_(&N, &min_MN, &min_MN,
+           A_mem.data(), &IA, &JA, A.data(),
+           TAU.data(), WORK.data(),
+           &MINUS_ONE, &info); // workspace query
+
+  LWORK = WORK[0];
+  WORK.resize(LWORK);
+  pdorgqr_(&N, &min_MN, &min_MN,
+           A_mem.data(), &IA, &JA, A.data(),
+           TAU.data(), WORK.data(),
+           &LWORK, &info); // compute Q factors
 
   MPI_Finalize();
 }
