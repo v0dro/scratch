@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
 
   std::vector<double> R(N * N, 0);
   for (int i = 0; i < N; ++i) {
-    for (int j = i+1; j < N; ++j) {
+    for (int j = i; j < N; ++j) {
       R[i + j * N] = A_mem[i + j * N];
     }
   }
@@ -158,14 +158,18 @@ int main(int argc, char** argv) {
 
   std::vector<double> product(N * N, 0);
 
-  cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, N, N, N,
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, N, N, N,
               1.0,
               Q.data(), N, R.data(), N,
               0.0,
               product.data(), N);
 
 
-
+  double error = 0;
+  for (int i = 0; i < A_lrows * A_lcols; ++i) {
+    error += (original[i] - product[i]);
+  }
+  std::cout << "e: " << error << std::endl;
 
   MPI_Finalize();
 }
