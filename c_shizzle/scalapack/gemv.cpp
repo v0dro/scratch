@@ -51,7 +51,7 @@ indxg2p(int INDXGLOB, int NB, int ISRCPROC, int NPROCS) {
 
 int MYROW, MYCOL, MPISIZE, MPIRANK;
 int MPIGRID[2];
-int ZERO = 0, MINUS_ONE = -1;
+int ONE=1, ZERO = 0, MINUS_ONE = -1;
 int info;
 
 int main(int argc, char** argv) {
@@ -73,67 +73,26 @@ int main(int argc, char** argv) {
   int N = 40, NB = 20;
   int A_lrows = numroc_(&N, &NB, &MYROW, &ZERO, &MPIGRID[0]);
   int A_lcols = numroc_(&N, &NB, &MYCOL, &ZERO, &MPIGRID[1]);
-  std::vector<int> A(9);
-  std::vector<double> A_mem(A_lrows*A_lcols), original(A_lrows * A_lcols);
+
+  int VECTOR_lrows = numroc_(&N, &NB, &MYROW, &ZERO, &MPIGRID[0]);
+  int VECTOR_lcols = numroc_(&ONE, &ONE, &MYCOL, &ZERO, &MPIGRID[1]);
+  std::vector<int> A(9), VECTOR(9);
+  std::vector<double> A_mem(A_lrows*A_lcols), VECTOR_mem(VECTOR_lrows * VECTOR_lcols, 0);
 
   descinit_(A.data(), &N, &N, &NB, &NB, &ZERO, &ZERO,
             &BLACS_CONTEXT, &A_lrows, &info);
+  descinit_(VECTOR.data(), &N, &ONE, &NB, &ONE, &ZERO, &ZERO,
+            &BLACS_CONTEXT, &VECTOR_lrows, &info);
 
   std::mt19937 gen(MPIRANK);
   std::uniform_real_distribution<double> dist(0.0, 1.0);
 
   for (int i = 0; i < A_lrows * A_lcols; ++i) {
     A_mem[i] = dist(gen);
-    original[i] = A_mem[i];
   }
+  // for (int i = 0; i < VECTOR_lrows; ++i) {
 
-  std::vector<int> IPIV(A_lcols);
-  std::vector<double> TAU(A_lcols);
-  std::vector<double> WORK(1);
-
-  int IA = 1;
-  int JA = 1;
-
-  pdgeqpf_(&N, &N,
-           A_mem.data(), &IA, &JA, A.data(),
-           IPIV.data(), TAU.data(), WORK.data(),
-           &MINUS_ONE, &info); // workspace query
-  int LWORK = WORK[0];
-  WORK.resize(LWORK);
-
-  pdgeqpf_(&N, &N,
-           A_mem.data(), &IA, &JA, A.data(),
-           IPIV.data(), TAU.data(), WORK.data(),
-           &LWORK, &info); // pivoted QR
-
-  std::cout << "INFO: " << info << std::endl;
-
-  std::vector<double> R(N * N, 0);
-  for (int i = 0; i < N; ++i) {
-    for (int j = i; j < N; ++j) {
-      R[i + j * N] = A_mem[i + j * N];
-    }
-  }
-
-  pdorgqr_(&N, &N, &N,
-           A_mem.data(), &IA, &JA, A.data(),
-           TAU.data(), WORK.data(),
-           &MINUS_ONE, &info); // workspace query
-
-  LWORK = WORK[0];
-  WORK.resize(LWORK);
-  pdorgqr_(&N, &N, &N,
-           A_mem.data(), &IA, &JA, A.data(),
-           TAU.data(), WORK.data(),
-           &LWORK, &info); // compute Q factors
-
-  // copy data from the lower triangle into Q.
-  std::vector<double> Q(N * N, 0);
-  for (int i = 0; i < N; ++i) {
-    for (int j = 0; j < N; ++j) {
-      Q[i + j * N] = A_mem[i + j * N];
-    }
-  }
+  // }
 
   std::vector<double> product(N * N, 0);
 
