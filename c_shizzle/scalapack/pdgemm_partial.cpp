@@ -54,7 +54,18 @@ int MPIGRID[2];
 int ONE=1, ZERO = 0, MINUS_ONE = -1;
 int info;
 
+int RAND[9], DENSE[9], AY[9];
+int N, P;
+
+double *DENSE_MEM, *RAND_MEM, *AY_MEM;
+
+// generate three matrices DENSE, AY, and RAND. Perform block wise multiplication
+// to generate AY slice-by-slice.
+
 int main(int argc, char** argv) {
+  N = atoi(argv[1]);
+  P = atoi(argv[2]);
+
   // MPI init
   MPI_Init(&argc, &argv);
 
@@ -62,4 +73,23 @@ int main(int argc, char** argv) {
   MPI_Comm_rank(MPI_COMM_WORLD, &MPIRANK);
   MPI_Dims_create(MPISIZE, 2, MPIGRID);
 
+  int BLACS_CONTEXT;
+
+  Cblacs_get(-1, 0, &BLACS_CONTEXT);
+  Cblacs_gridinit(&BLACS_CONTEXT, "Row", MPIGRID[0], MPIGRID[1]);
+  Cblacs_pcoord(BLACS_CONTEXT, MPIRANK, &MYROW, &MYCOL);
+
+  int DENSE_NB_ROW = N / MPIGRID[0], DENSE_NB_COL = P / MPIGRID[1];
+  int RAND_NB_ROW = N / MPIGRID[0], RAND_NB_COL = P / MPIGRID[1];
+  int AY_NB_ROW = N / MPIGRID[0], AY_NB_COL = P / MPIGRID[1];
+
+  int DENSE_local_rows = numroc_(&N, &DENSE_NB_ROW, &MYROW, &ZERO, &MPIGRID[0]);
+  int DENSE_local_cols = numroc_(&N, &DENSE_NBCOL, &MYCOL, &ZERO, &MPIGRID[1]);
+  DENSE_MEM = new double[DENSE_local_rows * DENSE_local_cols];
+
+
+  descinit_(DENSE, &N, &P, &DENSE_NB_ROW, &DENSE_NB_COL, &ZERO, &ZERO,
+            &BLACS_CONTEXT, &DENSE_local_rows, &info);
+
+  MPI_Finalize();
 }
