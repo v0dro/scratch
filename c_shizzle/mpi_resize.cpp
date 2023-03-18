@@ -40,16 +40,21 @@ int main(int argc, char** argv) {
   MPI_Type_vector(NB, NB, N, MPI_DOUBLE, &SUBMATRIX);
 
   MPI_Datatype BOTTOM_RIGHT;
-  const int array_of_sizes[2] = {N, N};
-  const int array_of_subsizes[2] = {NB, NB};
-  const int array_of_starts[2] = {NB * (nblocks-1), NB * (nblocks-1)};
-  MPI_Type_create_subarray(2,
-                           array_of_sizes,
-                           array_of_subsizes,
-                           array_of_starts,
-                           MPI_ORDER_FORTRAN,
-                           MPI_DOUBLE,
-                           &BOTTOM_RIGHT);
+  // const int array_of_sizes[2] = {N, N};
+  // const int array_of_subsizes[2] = {NB, NB};
+  // const int array_of_starts[2] = {NB * (nblocks-1), NB * (nblocks-1)};
+  // MPI_Type_create_subarray(2,
+  //                          array_of_sizes,
+  //                          array_of_subsizes,
+  //                          array_of_starts,
+  //                          MPI_ORDER_FORTRAN,
+  //                          MPI_DOUBLE,
+  //                          &BOTTOM_RIGHT);
+
+  MPI_Type_create_resized(SUBMATRIX,
+                          NB * sizeof(double),
+                          N * sizeof(double),
+                          &BOTTOM_RIGHT);
   MPI_Type_commit(&BOTTOM_RIGHT);
 
   MPI_Datatype SMALL_TILE;
